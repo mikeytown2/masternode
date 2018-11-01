@@ -17,7 +17,11 @@ COLLATERAL=25000
 if [ -x "$( command -v hxnormalize )" ]
 then
   echo "Getting collateral from explorer"
-  COLLATERAL=$( wget -4qO- -o- "${EXPLORER_URL}"/coininfo | hxnormalize -x | hxselect -i -c '.coin-info .panel-body .row .col-md-9 .panel-body .info-row:nth-child(3) .col-md-4:nth-child(2) h4' )
+  COLLATERAL_ALT=$( wget -4qO- -o- "${EXPLORER_URL}"/coininfo | hxnormalize -x | hxselect -i -c '.coin-info .panel-body .row .col-md-9 .panel-body .info-row:nth-child(3) .col-md-4:nth-child(2) h4' )
+  if [[ ! -z "${COLLATERAL_ALT}" ]]
+  then
+    COLLATERAL=${COLLATERAL_ALT}
+  fi
 fi
 
 ASCII_ART () {
