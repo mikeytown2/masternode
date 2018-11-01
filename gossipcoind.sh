@@ -11,20 +11,11 @@
 # Github user and project.
 GITHUB_REPO='g0ssipcoin/GossipCoinCore'
 # Explorer URL
-EXPLORER_URL='http://chain.gossipcoin.net/'
+EXPLORER_URL='https://goss.ccore.online/'
 # Rate limit explorer
 EXPLORER_SLEEP=1
 # Amount of Collateral needed
 COLLATERAL=25000
-if [ -x "$( command -v hxnormalize )" ]
-then
-  echo "Getting collateral from explorer"
-  COLLATERAL_ALT=$( wget -4qO- -o- "${EXPLORER_URL}"/coininfo | hxnormalize -x | hxselect -i -c '.coin-info .panel-body .row .col-md-9 .panel-body .info-row:nth-child(3) .col-md-4:nth-child(2) h4' )
-  if [[ ! -z "${COLLATERAL_ALT}" ]]
-  then
-    COLLATERAL=${COLLATERAL_ALT}
-  fi
-fi
 
 ASCII_ART () {
 echo -e "\\e[0m"
