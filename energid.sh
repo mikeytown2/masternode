@@ -6,8 +6,8 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 # Run this file
-# bash -i <(wget -4qO- -o- https://gist.githubusercontent.com/mikeytown2/24a3e2862a612524f8ca449b69ad4a35/raw/energid.sh) ; source ~/.bashrc
-# bash -ic "$(wget -4qO- -o- goo.gl/FbS6XB)" ; source ~/.bashrc
+# bash -i <(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/energid.sh) ; source ~/.bashrc
+# bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/energid.sh)" ; source ~/.bashrc
 
 # Directory.
 DIRECTORY='.energicore'

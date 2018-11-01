@@ -6,8 +6,8 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 # Run this file
-# bash -i <(wget -4qO- -o- https://gist.githubusercontent.com/mikeytown2/5c72c1ded740d210146c550faaf76eb7/raw/venoxd.sh) ; source ~/.bashrc
-# bash -ic "$(wget -4qO- -o- goo.gl/ncErX1)" ; source ~/.bashrc
+# bash -i <(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/venoxd.sh) ; source ~/.bashrc
+# bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/venoxd.sh)" ; source ~/.bashrc
 
 # Directory
 DIRECTORY='.venox'

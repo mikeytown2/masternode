@@ -6,8 +6,8 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 # Run this file
-# bash -i <(wget -4qO- -o- https://gist.githubusercontent.com/mikeytown2/346f0791b607c02de182b5ffb3a9ecd3/raw/huzud.sh) ; source ~/.bashrc
-# bash -ic "$(wget -4qO- -o- goo.gl/JZnQtx)" ; source ~/.bashrc
+# bash -i <(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/huzud.sh) ; source ~/.bashrc
+# bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/huzud.sh)" ; source ~/.bashrc
 
 # Directory.
 DIRECTORY='.huzu'

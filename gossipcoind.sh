@@ -6,7 +6,7 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 # Run this file
-# bash -i <(wget -4qO- -o- https://gist.githubusercontent.com/mikeytown2/7eadd1eca109189a14c95860f307590d/raw/gossipcoind.sh) ; source ~/.bashrc
+# bash -i <(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/gossipcoind.sh) ; source ~/.bashrc
 
 # Github user and project.
 GITHUB_REPO='g0ssipcoin/GossipCoinCore'

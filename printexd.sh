@@ -6,8 +6,8 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 # Run this file
-# bash -i <(wget -4 -qO- -o- https://gist.githubusercontent.com/mikeytown2/62cf326c67a5ddac49e522c6138785c4/raw/printexd.sh) ; source ~/.bashrc
-# bash -ic "$(wget -4 -qO- -o- goo.gl/Rtwr2i)" ; source ~/.bashrc
+# bash -i <(wget -4 -qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/printexd.sh) ; source ~/.bashrc
+# bash -ic "$(wget -4 -qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/printexd.sh)" ; source ~/.bashrc
 
 # Directory
 DIRECTORY='.printex'

@@ -6,7 +6,7 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 # Run this file
-# bash -i <(wget -4qO- -o- https://gist.githubusercontent.com/mikeytown2/1b4639e53df9d420f5b99882f7065377/raw/galiled.sh) ; source ~/.bashrc
+# bash -i <(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/galiled.sh) ; source ~/.bashrc
 
 # Directory
 DIRECTORY='.galilel'

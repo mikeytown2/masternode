@@ -6,7 +6,7 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 # Run this file
-# bash -i <(wget -4qO- -o- https://gist.githubusercontent.com/mikeytown2/72ac827a3992796ca9d752ff1d3c160e/raw/smartcashd.sh) ; source ~/.bashrc
+# bash -i <(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/smartcashd.sh) ; source ~/.bashrc
 
 # Github user and project.
 GITHUB_REPO='SmartCash/Core-Smart'
