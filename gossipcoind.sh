@@ -12,6 +12,8 @@
 GITHUB_REPO='g0ssipcoin/GossipCoinCore'
 # Explorer URL
 EXPLORER_URL='http://chain.gossipcoin.net/'
+# Rate limit explorer
+EXPLORER_SLEEP=1
 # Amount of Collateral needed
 COLLATERAL=25000
 if [ -x "$( command -v hxnormalize )" ]
