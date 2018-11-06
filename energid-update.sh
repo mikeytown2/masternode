@@ -5,6 +5,9 @@
 # All rights reserved.
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
+# Run this file
+# bash -i <(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/energid-update.sh) ; source ~/.bashrc
+
 # Github user and project.
 GITHUB_REPO='energicryptocurrency/energi'
 # Display Name.
@@ -23,6 +26,8 @@ DEFAULT_PORT=9797
 COLLATERAL=10000
 # Explorer URL.
 EXPLORER_URL='https://explore.energi.network/'
+# Direct Daemon Download if github has no releases.
+DAEMON_DOWNLOAD=''
 
 ASCII_ART () {
 stty sane
