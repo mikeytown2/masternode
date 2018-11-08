@@ -26,6 +26,8 @@ DEFAULT_PORT=40000
 COLLATERAL=1000
 # Blocktime in seconds.
 BLOCKTIME=120
+# Explorer URL
+EXPLORER_URL='https://www.coinexplorer.net/api/v1/SCC/'
 
 ASCII_ART () {
 echo -e "\\e[0m"

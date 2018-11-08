@@ -78,6 +78,8 @@ done
 # shellcheck disable=SC1091
 # shellcheck source=/root/___mn.sh
 . ~/___mn.sh
+# shellcheck source=/root/.bashrc
+. ~/.bashrc
 
 MN_USRNAME=''
 find /home/* -maxdepth 0 -type d | tr '/' ' ' | awk '{print $2}' | while read -r MN_USRNAME
