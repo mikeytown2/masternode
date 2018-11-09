@@ -81,6 +81,7 @@ done
 # shellcheck source=/root/.bashrc
 source ~/.bashrc
 source /var/multi-masternode-data/.bashrc
+source /var/multi-masternode-data/___temp.sh
 
 MN_USRNAME=''
 find /home/* -maxdepth 0 -type d | tr '/' ' ' | awk '{print $2}' | while read -r MN_USRNAME
