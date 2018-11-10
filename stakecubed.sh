@@ -28,6 +28,8 @@ COLLATERAL=1000
 BLOCKTIME=120
 # Explorer URL
 EXPLORER_URL='https://www.coinexplorer.net/api/v1/SCC/'
+# Cycle Daemon on first start
+DAEMON_CYCLE=1
 
 ASCII_ART () {
 echo -e "\\e[0m"
