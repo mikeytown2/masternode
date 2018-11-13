@@ -55,7 +55,7 @@ MINI_MONITOR_MN_COUNT_JSON=1
 
 ASCII_ART () {
 echo -e "\\e[0m"
-# clear 2> /dev/null
+clear 2> /dev/null
 cat << "STAKESHARE"
  _______________________ _       _______ _______         _______ _______ ______
 (  ____ \__   __(  ___  | |   /(  ____ (  ____ |\     /(  ___  (  ____ (  ____ \
