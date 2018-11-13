@@ -6,7 +6,6 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 # Run this file
-# bash -i <(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/catocoind.sh) ; source ~/.bashrc
 # if skip_last_confirm is set use bash -c instead of bash -ic
 # bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/catocoind.sh)" -- starting_username_number txhash outputindex genkey skip_last_confirm ; source ~/.bashrc
 # screen -d -m bash -c "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/catocoind.sh)" -- -1 0 -1 -1 Y ; source ~/.bashrc
