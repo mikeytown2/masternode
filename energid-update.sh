@@ -29,6 +29,17 @@ EXPLORER_URL='https://explore.energi.network/'
 # Direct Daemon Download if github has no releases.
 DAEMON_DOWNLOAD=''
 
+# Dropbox Addnodes.
+DROPBOX_ADDNODES='ayu1r026swtmoat'
+# If set to 1 then use addnodes from dropbox.
+USE_DROPBOX_ADDNODES=1
+# Dropbox Bootstrap.
+DROPBOX_BOOTSTRAP='j9wb0stn3c6nwyf'
+# If set to 1 then use bootstrap from dropbox.
+USE_DROPBOX_BOOTSTRAP=1
+# Dropbox blocks and chainstake folders.
+DROPBOX_BLOCKS_N_CHAINS='gsaqiry3h1ho3nh'
+
 ASCII_ART () {
 stty sane
 echo
@@ -79,7 +90,7 @@ done
 # shellcheck source=/root/___mn.sh
 . ~/___mn.sh
 . ~/.bashrc
-UPDATE_DAEMON_ADD_CRON "${BIN_BASE}" "${GITHUB_REPO}" "${CONF_FILE}" "${DAEMON_DOWNLOAD}" "${DIRECTORY}"
+UPDATE_DAEMON_ADD_CRON "${BIN_BASE}" "${GITHUB_REPO}" "${CONF_FILE}" "${DAEMON_DOWNLOAD}" "${DIRECTORY}" "${DROPBOX_ADDNODES}" "${DROPBOX_BOOTSTRAP}" "${DROPBOX_BLOCKS_N_CHAINS}"
 # shellcheck source=/root/.bashrc
 . ~/.bashrc
 stty sane
