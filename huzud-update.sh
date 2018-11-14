@@ -87,6 +87,7 @@ done
 # shellcheck disable=SC1091
 # shellcheck source=/root/___mn.sh
 . ~/___mn.sh
+. ~/.bashrc
 UPDATE_DAEMON_ADD_CRON "${BIN_BASE}" "${GITHUB_REPO}" "${CONF_FILE}" "${DAEMON_DOWNLOAD}"
 # shellcheck source=/root/.bashrc
 . ~/.bashrc
