@@ -6,7 +6,7 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 # Run this file
-# bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/qmcd.sh)" ; source ~/.bashrc
+# bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/qmcd-update.sh)" ; source ~/.bashrc
 
 # Github user and project.
 GITHUB_REPO='project-qmc/QMC'
