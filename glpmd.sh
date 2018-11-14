@@ -26,6 +26,8 @@ DEFAULT_PORT=31999
 EXPLORER_URL='http://glpm.dynu.net/'
 # Amount of Collateral needed.
 COLLATERAL=10000
+# Blocktime in seconds.
+BLOCKTIME=120
 
 ASCII_ART () {
 echo -e "\\e[0m"
