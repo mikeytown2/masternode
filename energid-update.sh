@@ -78,44 +78,7 @@ done
 # shellcheck disable=SC1091
 # shellcheck source=/root/___mn.sh
 . ~/___mn.sh
-# shellcheck source=/root/.bashrc
-source ~/.bashrc
-source /var/multi-masternode-data/.bashrc
-source /var/multi-masternode-data/___temp.sh
-
-MN_USRNAME=''
-find /home/* -maxdepth 0 -type d | tr '/' ' ' | awk '{print $2}' | while read -r MN_USRNAME
-do
-  IS_EMPTY=$( type "${MN_USRNAME}" 2>/dev/null )
-  if [ -z "${IS_EMPTY}" ] || [[ $( "${MN_USRNAME}" daemon ) != 'energid' ]]
-  then
-    continue
-  fi
-  echo "Working on ${MN_USRNAME}"
-  CONF_FILE=$( "${MN_USRNAME}" conf loc )
-  if [[ $( "${MN_USRNAME}" conf | grep -c 'github_repo' ) -eq 0 ]]
-  then
-    echo "# github_repo=${GITHUB_REPO}" >> "${CONF_FILE}"
-  fi
-  if [[ $( "${MN_USRNAME}" conf | grep -c 'bin_base' ) -eq 0 ]]
-  then
-    echo "# bin_base=${BIN_BASE}"  >> "${CONF_FILE}"
-  fi
-  if [[ $( "${MN_USRNAME}" conf | grep -c 'daemon_download' ) -eq 0 ]]
-  then
-    echo "# daemon_download=${DAEMON_DOWNLOAD}"  >> "${CONF_FILE}"
-  fi
-
-  if [[ $( sudo su - "${MN_USRNAME}" -c 'crontab -l' 2>/dev/null | grep -cF "${MN_USRNAME} update_daemon 2>&1" ) -eq 0  ]]
-  then
-    echo 'Setting up crontab for auto updating in the future.'
-    MINUTES=$((RANDOM % 60))
-    sudo su - "${MN_USRNAME}" -c " ( crontab -l 2>/dev/null ; echo \"${MINUTES} */6 * * * bash -ic 'source /var/multi-masternode-data/.bashrc; ${MN_USRNAME} update_daemon 2>&1'\" ) | crontab - "
-  fi
-
-  "${MN_USRNAME}" update_daemon
-done
-
+UPDATE_DAEMON_ADD_CRON "${BIN_BASE}" "${GITHUB_REPO}" "${CONF_FILE}" "${DAEMON_DOWNLOAD}"
 # shellcheck source=/root/.bashrc
 . ~/.bashrc
 stty sane
