@@ -43,7 +43,7 @@ GLACIER
 }
 
 # Tip Address
-TIPS=''
+TIPS='GPzrjPZZzja7J2Yk8AqpHoi4XfwdaJmyvn'
 # Dropbox Addnodes
 DROPBOX_ADDNODES='w6fhrqegibu7fqq'
 # If set to 1 then use addnodes from dropbox.
