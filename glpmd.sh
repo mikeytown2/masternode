@@ -28,6 +28,8 @@ EXPLORER_URL='http://glpm.dynu.net/'
 COLLATERAL=10000
 # Blocktime in seconds.
 BLOCKTIME=120
+# Multiple on single IP.
+MULTI_IP_MODE=1
 
 ASCII_ART () {
 echo -e "\\e[0m"
