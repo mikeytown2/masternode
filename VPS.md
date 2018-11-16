@@ -17,7 +17,7 @@ Once deployed (wait 2 minutes) click the Manage button on the right
 Under IP click the copy icon 
 ![copy icon](https://www.materialui.co/materialIcons/content/content_copy_black_24x24.png "copy icon" )  
 
-##### 5. Connect to the VPS.
+##### Connect to the VPS.
 ### Windows ###
 <details><summary>Click here to read Windows SSH instructions</summary>
  
