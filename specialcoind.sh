@@ -27,7 +27,7 @@ EXPLORER_URL='http://192.241.138.224:3001/'
 # Amount of Collateral needed.
 COLLATERAL=1000
 # Number of Connections to wait for.
-DAEMON_CONNECTIONS=1
+DAEMON_CONNECTIONS=2
 # Cycle Daemon on first start.
 DAEMON_CYCLE=1
 
