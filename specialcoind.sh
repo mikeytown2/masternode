@@ -23,7 +23,7 @@ CONF='specialcoin.conf'
 # Port.
 DEFAULT_PORT=21013
 # Explorer URL
-EXPLORER_URL='http://192.241.138.224:3001/'
+EXPLORER_URL='http://192.241.138.224:3003/'
 # Amount of Collateral needed.
 COLLATERAL=1000
 # Number of Connections to wait for.
