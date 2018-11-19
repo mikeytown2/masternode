@@ -15,13 +15,13 @@ EXPLORER_URL='http://explorer.qmc.network/'
 # Rate limit explorer
 EXPLORER_SLEEP=1
 # Directory
-DIRECTORY='.qmc2'
+DIRECTORY='.qmc'
 # Binary base name.
 BIN_BASE='qmc'
 # Port
 DEFAULT_PORT=28443
 # Conf File
-CONF='qmc2.conf'
+CONF='qmc.conf'
 # Display Name
 DAEMON_NAME='QMCoin'
 # Coin Ticker
@@ -47,15 +47,15 @@ QMCoin
 # Tip Address
 TIPS='Qji2oZBD2QzZ3Nk5q4ickFpDYfSLSAtG5q'
 # Dropbox Addnodes
-DROPBOX_ADDNODES='xbgib98dzd005df'
+#DROPBOX_ADDNODES='xbgib98dzd005df'
 # If set to 1 then use addnodes from dropbox.
 USE_DROPBOX_ADDNODES=1
 # Dropbox Bootstrap
-DROPBOX_BOOTSTRAP='0yz7z1zt6752rr2'
+#DROPBOX_BOOTSTRAP='0yz7z1zt6752rr2'
 # If set to 1 then use bootstrap from dropbox.
-USE_DROPBOX_BOOTSTRAP=1
+#USE_DROPBOX_BOOTSTRAP=1
 # Dropbox blocks and chainstake folders.
-DROPBOX_BLOCKS_N_CHAINS='gckue7v4ytq791c'
+#DROPBOX_BLOCKS_N_CHAINS='gckue7v4ytq791c'
 
 # Mini Monitor check masternode list.
 MINI_MONITOR_MN_LIST=1
