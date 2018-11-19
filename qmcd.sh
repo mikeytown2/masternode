@@ -47,15 +47,15 @@ QMCoin
 # Tip Address
 TIPS='Qji2oZBD2QzZ3Nk5q4ickFpDYfSLSAtG5q'
 # Dropbox Addnodes
-#DROPBOX_ADDNODES='xbgib98dzd005df'
+DROPBOX_ADDNODES='xbgib98dzd005df'
 # If set to 1 then use addnodes from dropbox.
 USE_DROPBOX_ADDNODES=1
 # Dropbox Bootstrap
-#DROPBOX_BOOTSTRAP='0yz7z1zt6752rr2'
+DROPBOX_BOOTSTRAP='0yz7z1zt6752rr2'
 # If set to 1 then use bootstrap from dropbox.
-#USE_DROPBOX_BOOTSTRAP=1
+USE_DROPBOX_BOOTSTRAP=1
 # Dropbox blocks and chainstake folders.
-#DROPBOX_BLOCKS_N_CHAINS='gckue7v4ytq791c'
+DROPBOX_BLOCKS_N_CHAINS='gckue7v4ytq791c'
 
 # Mini Monitor check masternode list.
 MINI_MONITOR_MN_LIST=1
@@ -71,6 +71,7 @@ MINI_MONITOR_MN_COUNT_JSON=1
 # 401161988744544258
 cd ~/ || exit
 COUNTER=0
+rm -rf /var/multi-masternode-data/QMC/
 rm -f ~/___mn.sh
 while [[ ! -f ~/___mn.sh ]] || [[ $( grep -Fxc "# End of masternode setup script." ~/___mn.sh ) -eq 0 ]]
 do
