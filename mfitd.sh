@@ -1,4 +1,4 @@
-#!/bin/bash
+#/bin/bash
 # shellcheck disable=SC2034
 
 # Copyright (c) 2018
