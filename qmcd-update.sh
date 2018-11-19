@@ -15,7 +15,7 @@ EXPLORER_URL='http://explorer.qmc.network/'
 # Rate limit explorer
 EXPLORER_SLEEP=1
 # Directory
-DIRECTORY='.qmc2'
+DIRECTORY='.qmc'
 # Binary base name.
 BIN_BASE='qmc'
 # Port
