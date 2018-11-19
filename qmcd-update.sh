@@ -21,7 +21,7 @@ BIN_BASE='qmc'
 # Port
 DEFAULT_PORT=28443
 # Conf File
-CONF='qmc2.conf'
+CONF='qmc.conf'
 # Display Name
 DAEMON_NAME='QMCoin'
 # Coin Ticker
@@ -29,7 +29,7 @@ TICKER='QMC'
 # Amount of Collateral needed
 COLLATERAL=$(wget -4qO- -o- "${EXPLORER_URL}api/getinfo" | grep 'MN collateral' | cut -d ':' -f2 | sed 's/ //g' |  sed 's/,//g')
 # Fallback Blockcount
-BLOCKCOUNT_FALLBACK_VALUE=59000
+BLOCKCOUNT_FALLBACK_VALUE=70000
 # Multiple on single IP.
 MULTI_IP_MODE=3
 
@@ -47,15 +47,15 @@ QMCoin
 # Tip Address
 TIPS='Qji2oZBD2QzZ3Nk5q4ickFpDYfSLSAtG5q'
 # Dropbox Addnodes
-DROPBOX_ADDNODES='xbgib98dzd005df'
+#DROPBOX_ADDNODES='xbgib98dzd005df'
 # If set to 1 then use addnodes from dropbox.
-USE_DROPBOX_ADDNODES=1
+#USE_DROPBOX_ADDNODES=1
 # Dropbox Bootstrap
-DROPBOX_BOOTSTRAP='0yz7z1zt6752rr2'
+#DROPBOX_BOOTSTRAP='0yz7z1zt6752rr2'
 # If set to 1 then use bootstrap from dropbox.
-USE_DROPBOX_BOOTSTRAP=1
+#USE_DROPBOX_BOOTSTRAP=1
 # Dropbox blocks and chainstake folders.
-DROPBOX_BLOCKS_N_CHAINS='gckue7v4ytq791c'
+#DROPBOX_BLOCKS_N_CHAINS='gckue7v4ytq791c'
 
 # Mini Monitor check masternode list.
 MINI_MONITOR_MN_LIST=1
