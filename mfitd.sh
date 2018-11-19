@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 # shellcheck disable=SC2034
 
 # Copyright (c) 2018
@@ -6,7 +6,7 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
 # Run this file
-# bash -ic "\$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/mfitd.sh)" ; source ~/.bashrc
+# bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/mfitd.sh)" ; source ~/.bashrc
 
 # Github user and project.
 GITHUB_REPO='muayfitcoin/muayfitcoin'
