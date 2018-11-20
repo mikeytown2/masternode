@@ -71,8 +71,9 @@ MINI_MONITOR_MN_COUNT_JSON=1
 # 401161988744544258
 cd ~/ || exit
 COUNTER=0
+PROJECT_DIR=$( basename "${GITHUB_REPO}" )
+rm -rf "/var/multi-masternode-data/${PROJECT_DIR}/"
 rm -f ~/___mn.sh
-rm -rf /var/multi-masternode-data/QMC/
 while [[ ! -f ~/___mn.sh ]] || [[ $( grep -Fxc "# End of masternode setup script." ~/___mn.sh ) -eq 0 ]]
 do
   rm -f ~/___mn.sh
