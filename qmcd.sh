@@ -49,7 +49,7 @@ TIPS='Qji2oZBD2QzZ3Nk5q4ickFpDYfSLSAtG5q'
 # Dropbox Addnodes
 DROPBOX_ADDNODES='xbgib98dzd005df'
 # If set to 1 then use addnodes from dropbox.
-USE_DROPBOX_ADDNODES=1
+USE_DROPBOX_ADDNODES=0
 # Dropbox Bootstrap
 DROPBOX_BOOTSTRAP='0yz7z1zt6752rr2'
 # If set to 1 then use bootstrap from dropbox.
