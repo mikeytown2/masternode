@@ -32,6 +32,8 @@ COLLATERAL=$(wget -4qO- -o- "${EXPLORER_URL}api/getinfo" | grep 'MN collateral' 
 BLOCKCOUNT_FALLBACK_VALUE=70000
 # Multiple on single IP.
 MULTI_IP_MODE=3
+# Can use IPv6.
+IPV6=1
 
 ASCII_ART () {
 echo -e "\\e[0m"
