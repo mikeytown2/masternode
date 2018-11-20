@@ -32,7 +32,7 @@ BLOCKTIME=150
 DAEMON_CYCLE=1
 
 # Tip Address
-TIPS=''
+TIPS='QVLGsb3byATeLGxggGB9ajY5uFRLZUAxtH'
 # Dropbox Addnodes
 DROPBOX_ADDNODES='0i7bqbwnit5dh1u'
 # If set to 1 then use addnodes from dropbox.
@@ -45,7 +45,7 @@ USE_DROPBOX_BOOTSTRAP=0
 DROPBOX_BLOCKS_N_CHAINS='v41turql84hqx0s'
 
 # Multiple on single IP.
-MULTI_IP_MODE=1
+MULTI_IP_MODE=3
 # Mini Monitor check masternode list.
 MINI_MONITOR_MN_LIST=1
 # Mini Monitor Status to check for.
