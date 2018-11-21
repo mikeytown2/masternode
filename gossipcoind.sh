@@ -10,6 +10,18 @@
 
 # Github user and project.
 GITHUB_REPO='g0ssipcoin/GossipCoinCore'
+# Display Name.
+DAEMON_NAME='Gossipcoin Core'
+# Coin Ticker.
+TICKER='GOSS'
+# Binary base name.
+BIN_BASE='gossipcoin'
+# Directory.
+DIRECTORY='.gossipcoin'
+# Conf File.
+CONF='gossipcoin.conf'
+# Port.
+DEFAULT_PORT=22123
 # Explorer URL
 EXPLORER_URL='https://goss.ccore.online/'
 # Rate limit explorer
