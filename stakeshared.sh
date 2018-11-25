@@ -32,7 +32,7 @@ DAEMON_CYCLE=1
 BLOCKCOUNT_FALLBACK_VALUE=60000
 
 # Tip Address
-TIPS=''
+TIPS='SUJMipVM4P3osy1k1ptfJRDwX7RZZzrt76'
 # Dropbox Addnodes
 DROPBOX_ADDNODES='nzga4ytczi2bnc8'
 # If set to 1 then use addnodes from dropbox.
