@@ -8,36 +8,31 @@
 # Run this file
 # bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/huzud.sh)" ; source ~/.bashrc
 
-# Directory.
-DIRECTORY='.huzu'
-# Port.
-DEFAULT_PORT=51992
-# Conf File.
-CONF='huzu.conf'
-# Display Name.
-DAEMON_NAME='HUZU'
 # Github user and project.
 GITHUB_REPO='HUZU-Project/HUZU'
-# Binary base name.
-BIN_BASE='huzu'
-# Direct Daemon Download if github has no releases.
-DAEMON_DOWNLOAD=''
-# Username Prefix.
-DAEMON_PREFIX='huzu_mn'
-# RPC username.
-RPC_USERNAME='huzu'
-# Explorer URL.
-EXPLORER_URL='http://explorer.huzu.io/'
-# Log filename.
-DAEMON_SETUP_LOG='/tmp/huzu.log'
-# Masternode output file.
-DAEMON_SETUP_INFO="${HOME}/huzu.mn.txt"
-# Project Folder.
-PROJECT_DIR='HUZU'
-# Amount of Collateral needed.
-COLLATERAL=3000
+# Display Name.
+DAEMON_NAME='HUZU Core'
 # Coin Ticker.
 TICKER='HUZU'
+# Binary base name.
+BIN_BASE='huzu'
+# Directory.
+DIRECTORY='.huzu'
+# Conf File.
+CONF='huzu.conf'
+# Port.
+DEFAULT_PORT=51992
+# Explorer URL.
+EXPLORER_URL='http://explorer.huzu.io/'
+# Amount of Collateral needed.
+COLLATERAL=3000
+# Fallback Blockcount.
+BLOCKCOUNT_FALLBACK_VALUE=9000
+# Multiple on single IP.
+MULTI_IP_MODE=0
+# Daemon can use IPv6.
+IPv6=1
+
 # Tip Address.
 TIPS='HKSgkhmsbcHLSXHPtLXCFcHuxtCCJjhLFM'
 # Dropbox Addnodes.
@@ -52,43 +47,13 @@ USE_DROPBOX_BOOTSTRAP=1
 DROPBOX_BLOCKS_N_CHAINS='vew2ymhmhj5mqh7'
 # Dropbox has more than blocks and chainstake.
 DROPBOX_BLOCKS_N_CHAINS_ALL=1
-# Cycle Daemon.
-DAEMON_CYCLE=0
-# Slow Daemon Start.
-SLOW_DAEMON_START=0
-# Fallback Blockcount.
-BLOCKCOUNT_FALLBACK_VALUE=9000
-# Bad Explorer SSL.
-BAD_SSL_HACK=''
-# Extra configuation for the conf file.
-EXTRA_CONFIG=''
-# Auto Recovery.
-RESTART_IN_SYNC=1
-# Multiple on single IP.
-MULTI_IP_MODE=0
-# Number of Connections to wait for.
-DAEMON_CONNECTIONS=3
-# Wait for MNSYNC
-#MNSYNC_WAIT_FOR='"RequestedMasternodeAssets": 999,'
-MNSYNC_WAIT_FOR=''
-# Run Mini Monitor.
-MINI_MONITOR_RUN=1
+
 # Mini Monitor check masternode list.
 MINI_MONITOR_MN_LIST=1
 # Mini Monitor Status to check for.
 MINI_MONITOR_MN_STATUS='4'
-# Mini Monitor Queue Payouts.
-MINI_MONITOR_MN_QUEUE=1
 # Mini Monitor masternode count is a json string.
 MINI_MONITOR_MN_COUNT_JSON=1
-
-# Log to a file.
-rm -f "${DAEMON_SETUP_LOG}"
-touch "${DAEMON_SETUP_LOG}"
-chmod 600 "${DAEMON_SETUP_LOG}"
-exec >  >(tee -ia "${DAEMON_SETUP_LOG}")
-exec 2> >(tee -ia "${DAEMON_SETUP_LOG}" >&2)
-
 
 ASCII_ART () {
 echo -e "\\e[0m"
@@ -103,10 +68,6 @@ cat << "HUZU"
 |/    \|
 
 HUZU
-}
-
-SENTINEL_SETUP () {
-  echo
 }
 
 # Discord User Info
@@ -135,10 +96,12 @@ done
   rm ~/___mn.sh
 ) & disown
 
+(
 # shellcheck disable=SC1091
 # shellcheck source=/root/___mn.sh
 . ~/___mn.sh
 DAEMON_SETUP_THREAD
+)
 # shellcheck source=/root/.bashrc
 . ~/.bashrc
 stty sane
