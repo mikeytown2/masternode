@@ -37,6 +37,10 @@ then
     COLLATERAL=${COLLATERAL_ALT}
   fi
 fi
+# Multiple on single IP.
+MULTI_IP_MODE=1
+# Daemon can use IPv6.
+IPv6=1
 
 ASCII_ART () {
 echo -e "\\e[0m"
@@ -51,44 +55,24 @@ GOSSIPCOIN
 }
 
 # Tip Address
-TIPS=''
+TIPS='GciRiMuibYsaCJKHVNWjh1TPH9jz3U4T7d'
 # Dropbox Addnodes
-DROPBOX_ADDNODES=''
+DROPBOX_ADDNODES='f2x1ng632abzy7e'
 # If set to 1 then use addnodes from dropbox.
-USE_DROPBOX_ADDNODES=0
+USE_DROPBOX_ADDNODES=1
 # Dropbox Bootstrap
-DROPBOX_BOOTSTRAP=''
+DROPBOX_BOOTSTRAP='f7byrr4avojncpv'
 # If set to 1 then use bootstrap from dropbox.
-USE_DROPBOX_BOOTSTRAP=0
+USE_DROPBOX_BOOTSTRAP=1
 # Dropbox blocks and chainstake folders.
-DROPBOX_BLOCKS_N_CHAINS=''
-# Cycle Daemon
-DAEMON_CYCLE=0
+DROPBOX_BLOCKS_N_CHAINS='flyt8k5m18as6gq'
 # Fallback Blockcount
-BLOCKCOUNT_FALLBACK_VALUE=223000
-# Slow Daemon Start.
-SLOW_DAEMON_START=0
-# Bad Explorer SSL.
-BAD_SSL_HACK=''
-# Extra configuation for the conf file.
-EXTRA_CONFIG=''
-# Auto Recovery.
-RESTART_IN_SYNC=1
-# Multiple on single IP.
-MULTI_IP_MODE=1
-# Number of Connections to wait for.
-DAEMON_CONNECTIONS=6
-# Wait for MNSYNC
-#MNSYNC_WAIT_FOR='"RequestedMasternodeAssets": 999,'
-MNSYNC_WAIT_FOR=''
-# Run Mini Monitor.
-MINI_MONITOR_RUN=1
+BLOCKCOUNT_FALLBACK_VALUE=280000
+
 # Mini Monitor check masternode list.
 MINI_MONITOR_MN_LIST=1
 # Mini Monitor Status to check for.
 MINI_MONITOR_MN_STATUS='4'
-# Mini Monitor Queue Payouts.
-MINI_MONITOR_MN_QUEUE=1
 # Mini Monitor masternode count is a json string.
 MINI_MONITOR_MN_COUNT_JSON=1
 
@@ -118,10 +102,12 @@ done
   rm ~/___mn.sh
 ) & disown
 
+(
 # shellcheck disable=SC1091
 # shellcheck source=/root/___mn.sh
 . ~/___mn.sh
 DAEMON_SETUP_THREAD
+)
 # shellcheck source=/root/.bashrc
 . ~/.bashrc
 stty sane
