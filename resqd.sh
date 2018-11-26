@@ -49,7 +49,7 @@ MULTI_IP_MODE=3
 # Mini Monitor check masternode list.
 MINI_MONITOR_MN_LIST=1
 # Mini Monitor Status to check for.
-MINI_MONITOR_MN_STATUS='4'
+MINI_MONITOR_MN_STATUS='Masternode successfully started'
 # Mini Monitor masternode count is a json string.
 MINI_MONITOR_MN_COUNT_JSON=1
 
