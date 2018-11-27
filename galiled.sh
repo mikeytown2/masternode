@@ -30,6 +30,12 @@ COLLATERAL=15000
 BLOCKCOUNT_FALLBACK_VALUE=223000
 # Multiple on single IP.
 MULTI_IP_MODE=1
+# Daemon can use IPv4.
+IPV4=1
+# Daemon can use IPv6.
+IPV6=1
+# Daemon can use TOR.
+TOR=0
 
 # Tip Address
 TIPS='UYFEvLMguJaLDXAZPtynAPKWC3hWh6vXKY'
@@ -91,10 +97,12 @@ done
   rm ~/___mn.sh
 ) & disown
 
+(
 # shellcheck disable=SC1091
 # shellcheck source=/root/___mn.sh
 . ~/___mn.sh
 DAEMON_SETUP_THREAD
+)
 # shellcheck source=/root/.bashrc
 . ~/.bashrc
 stty sane
