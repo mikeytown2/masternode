@@ -31,7 +31,7 @@ BLOCKCOUNT_FALLBACK_VALUE=9000
 # Multiple on single IP.
 MULTI_IP_MODE=0
 # Daemon can use IPv6.
-IPV6=0
+IPV6=1
 
 # Tip Address.
 TIPS='HKSgkhmsbcHLSXHPtLXCFcHuxtCCJjhLFM'
