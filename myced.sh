@@ -24,6 +24,8 @@ CONF='myce.conf'
 DEFAULT_PORT=23511
 # Explorer URL
 EXPLORER_URL='https://explorer.myce.world/'
+# Bad Explorer SSL.
+BAD_SSL_HACK='--no-check-certificate'
 # Rate limit explorer
 EXPLORER_SLEEP=1
 # Amount of Collateral needed.
