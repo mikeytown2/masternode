@@ -27,9 +27,11 @@ EXPLORER_URL='https://explorer.galilel.cloud/'
 # Amount of Collateral needed
 COLLATERAL=15000
 # Fallback Blockcount
-BLOCKCOUNT_FALLBACK_VALUE=223000
+BLOCKCOUNT_FALLBACK_VALUE=269000
 # Multiple on single IP.
 MULTI_IP_MODE=1
+# Direct Daemon Download if github has no releases.
+DAEMON_DOWNLOAD='https://galilel.cloud/downloads/wallets/galilel-v3.0.1-lin64.tar.gz'
 # Daemon can use IPv4.
 IPV4=1
 # Daemon can use IPv6.
