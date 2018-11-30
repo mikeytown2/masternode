@@ -31,7 +31,7 @@ BLOCKTIME=90
 # Cycle Daemon on first start.
 DAEMON_CYCLE=1
 # Daemon can use IPv6.
-IPV6=1
+IPV6=0
 # Username Prefix.
 DAEMON_PREFIX='apol_mn'
 
