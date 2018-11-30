@@ -35,7 +35,7 @@ DAEMON_DOWNLOAD='https://galilel.cloud/downloads/wallets/galilel-v3.0.1-lin64.ta
 # Daemon can use IPv4.
 IPV4=1
 # Daemon can use IPv6.
-IPV6=1
+IPV6=0
 # Daemon can use TOR.
 TOR=0
 
