@@ -40,7 +40,7 @@ fi
 # Multiple on single IP.
 MULTI_IP_MODE=1
 # Daemon can use IPv6.
-IPv6=1
+IPv6=0
 
 ASCII_ART () {
 echo -e "\\e[0m"
