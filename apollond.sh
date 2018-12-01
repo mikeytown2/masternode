@@ -34,6 +34,8 @@ DAEMON_CYCLE=1
 IPV6=0
 # Username Prefix.
 DAEMON_PREFIX='apol_mn'
+# Slow Daemon Start.
+SLOW_DAEMON_START=1
 
 # Tip Address
 TIPS='AH8Rr4XHZHNzD6gGDj1vbip5jGVUFfS3k4'
