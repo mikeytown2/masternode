@@ -26,8 +26,6 @@ DEFAULT_PORT=48882
 EXPLORER_URL='http://explorer.craveproject.net/'
 # Amount of Collateral needed.
 COLLATERAL=5000
-# Blocktime in seconds.
-BLOCKTIME=60
 # Cycle Daemon on first start.
 DAEMON_CYCLE=1
 
