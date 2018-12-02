@@ -31,7 +31,7 @@ COLLATERAL=25000
 # Blocktime in seconds.
 BLOCKTIME=90
 # Cycle Daemon on first start.
-DAEMON_CYCLE=1
+DAEMON_CYCLE=0
 # Daemon can use IPv6.
 IPV6=0
 # Username Prefix.
