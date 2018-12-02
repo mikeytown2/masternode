@@ -24,6 +24,8 @@ CONF='apollon.conf'
 DEFAULT_PORT=12218
 # Explorer URL
 EXPLORER_URL='https://explorer.apolloncoin.io/'
+# Rate limit explorer.
+EXPLORER_SLEEP=1
 # Amount of Collateral needed.
 COLLATERAL=25000
 # Blocktime in seconds.
