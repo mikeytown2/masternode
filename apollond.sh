@@ -31,13 +31,13 @@ COLLATERAL=25000
 # Blocktime in seconds.
 BLOCKTIME=90
 # Cycle Daemon on first start.
-DAEMON_CYCLE=0
+DAEMON_CYCLE=1
 # Daemon can use IPv6.
 IPV6=0
 # Username Prefix.
 DAEMON_PREFIX='apol_mn'
-# Slow Daemon Start.
-SLOW_DAEMON_START=0
+# Wait for MNSYNC.
+MNSYNC_WAIT_FOR='"RequestedMasternodeAssets": 999,'
 
 # Tip Address
 TIPS='AH8Rr4XHZHNzD6gGDj1vbip5jGVUFfS3k4'
