@@ -32,7 +32,7 @@ if [ -x "$( command -v hxnormalize )" ]
 then
   echo "Getting collateral from explorer"
   COLLATERAL_ALT=$( wget -4qO- -o- "${EXPLORER_URL}"/masternodes | hxnormalize -x | hxselect -i -c 'table tbody tr:nth-child(4) td:nth-child(2)' | grep -m 1 -o '[0-9]*' )
-  if [[ ! -z "${COLLATERAL_ALT}" ]]
+  if [[ ! -z "${COLLATERAL_ALT}" ]] && [[ "${COLLATERAL_ALT}" -gt "${COLLATERAL}" ]]
   then
     COLLATERAL=${COLLATERAL_ALT}
   fi
