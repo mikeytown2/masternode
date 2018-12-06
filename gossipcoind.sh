@@ -36,6 +36,12 @@ then
   then
     COLLATERAL=${COLLATERAL_ALT}
   fi
+else
+  COLLATERAL_ALT=$( wget -4qO- -o- "${EXPLORER_URL}"/masternodes | grep " ${TICKER}<br" | grep  -m 1 -o '[0-9]*' )
+  if [[ ! -z "${COLLATERAL_ALT}" ]] && [[ "${COLLATERAL_ALT}" -gt "${COLLATERAL}" ]]
+  then
+    COLLATERAL=${COLLATERAL_ALT}
+  fi
 fi
 # Multiple on single IP.
 MULTI_IP_MODE=1
