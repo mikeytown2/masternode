@@ -27,7 +27,7 @@ EXPLORER_URL='https://goss.ccore.online/'
 # Rate limit explorer
 EXPLORER_SLEEP=1
 # Amount of Collateral needed
-COLLATERAL=25000
+COLLATERAL=60000
 if [ -x "$( command -v hxnormalize )" ]
 then
   echo "Getting collateral from explorer"
