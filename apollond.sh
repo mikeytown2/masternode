@@ -7,9 +7,11 @@
 
 : '
 # Run this file
+
 ```
 bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/apollond.sh)" ; source ~/.bashrc
 ```
+
 '
 
 # Github user and project.

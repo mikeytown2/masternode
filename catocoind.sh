@@ -11,6 +11,15 @@
 # screen -d -m bash -c "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/catocoind.sh)" -- -1 0 -1 -1 Y ; source ~/.bashrc
 # bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/catocoind.sh)" ; source ~/.bashrc
 
+: '
+# Run this file
+
+```
+bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/catocoind.sh)" ; source ~/.bashrc
+```
+
+'
+
 # Directory
 DIRECTORY='.catocoin2'
 # Port

@@ -5,8 +5,14 @@
 # All rights reserved.
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
+: '
 # Run this file
-# bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/stakecubed.sh)" ; source ~/.bashrc
+
+```
+bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/stakecubed.sh)" ; source ~/.bashrc
+```
+
+'
 
 # Github user and project.
 GITHUB_REPO='stakecube/stakecube'
@@ -35,7 +41,7 @@ ASCII_ART () {
 echo -e "\\e[0m"
 clear 2> /dev/null
 cat << "STAKECUBE"
-   +-----+ 
+   +-----+
   /  $  /|
  +-----+ |   __  _____   __    _     ____  __    _     ___   ____
  |  $  | +  ( (`  | |   / /\  | |_/ | |_  / /`  | | | | |_) | |_
