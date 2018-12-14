@@ -34,7 +34,7 @@ COLLATERAL=1000
 DAEMON_CYCLE=1
 
 # Tip Address
-TIPS=''
+TIPS='FoKnP9FUmUJXkYyeoj7eMK57qR8VG4P1Rc'
 # Dropbox Addnodes
 DROPBOX_ADDNODES='rsdvzubpx5chayt'
 # If set to 1 then use addnodes from dropbox.
