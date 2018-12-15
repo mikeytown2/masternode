@@ -39,7 +39,7 @@ BLOCKCOUNT_FALLBACK_VALUE=59000
 # Multiple on single IP.
 MULTI_IP_MODE=3
 # Can use IPv6.
-IPV6=0
+IPV6=1
 
 ASCII_ART () {
 echo -e "\\e[0m"
