@@ -24,7 +24,7 @@
 7. Edit masternode.conf on desktop wallet Copy (hightlight in putty) the last bold and underlined lines from the end of the script
 
        mn1_vultr.guest 1.2.3.4:5678 3BZ2gu8vNoZCb7s9LV4tLBJ8cvS8FeNiKmTYAgc85D6WqmBq5oD e9f43hfh3h3jmfgk9hkjklcnvbe84j60cv678lnbfgbd5532dk917cc 0
-                      ^             ^                                                   ^                                                       ^
+                      ^            ^                                                   ^                                                       ^
 
  - It should be all on one line and there should be a total of 4 spaces (marked with ^ above). 
  - If you can't open up the masternode.conf file
