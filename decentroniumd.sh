@@ -33,7 +33,9 @@ DAEMON_PREFIX='decn_mn'
 # RPC username
 RPC_USERNAME='decentronium'
 # Explorer URL
-EXPLORER_URL='https://purexplorer.io/'
+EXPLORER_URL='https://pure.ccore.online/'
+# Rate limit explorer.
+EXPLORER_SLEEP=1
 # Log filename
 DAEMON_SETUP_LOG='/tmp/decn.log'
 # Masternode output file.
