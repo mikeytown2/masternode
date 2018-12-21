@@ -38,15 +38,15 @@ MULTI_IP_MODE=1
 # Tip Address.
 TIPS=''
 # Dropbox Addnodes
-DROPBOX_ADDNODES='9xdxkp5sfk90jge'
+DROPBOX_ADDNODES='mc1dw3x76q1dvf5'
 # If set to 1 then use addnodes from dropbox.
 USE_DROPBOX_ADDNODES=1
 # Dropbox Bootstrap
-DROPBOX_BOOTSTRAP='i330usmd3oazun2'
+DROPBOX_BOOTSTRAP='qd4cxzpk1nd4t3l'
 # If set to 1 then use bootstrap from dropbox.
 USE_DROPBOX_BOOTSTRAP=1
 # Dropbox blocks and chainstake folders.
-DROPBOX_BLOCKS_N_CHAINS='ed2iv8sa2dp2yz9'
+DROPBOX_BLOCKS_N_CHAINS='0l2l88fx5z3hoez'
 
 ASCII_ART () {
 echo -e "\e[0m"
