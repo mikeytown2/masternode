@@ -28,6 +28,10 @@ DIRECTORY='.reco'
 CONF='reco.conf'
 # Port.
 DEFAULT_PORT=34578
+# Explorer URL
+EXPLORER_URL='http://reco.resqchain.org:3001/'
+# Rate limit explorer.
+EXPLORER_SLEEP=1
 # Amount of Collateral needed.
 COLLATERAL=2000
 # Cycle Daemon on first start.
