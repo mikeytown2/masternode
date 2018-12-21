@@ -36,7 +36,7 @@ DAEMON_CYCLE=1
 MULTI_IP_MODE=1
 
 # Tip Address.
-TIPS=''
+TIPS='scc86L3B6qWwbjL37GbogcwoRXnvKAZ6iW'
 # Dropbox Addnodes
 DROPBOX_ADDNODES='mc1dw3x76q1dvf5'
 # If set to 1 then use addnodes from dropbox.
