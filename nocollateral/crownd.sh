@@ -36,6 +36,7 @@ EXPLORER_BLOCKCOUNT_OFFSET='+1'
 EXPLORER_RAWTRANSACTION_PATH='crw/api.dws?q=txinfo&t='
 EXPLORER_RAWTRANSACTION_PATH_SUFFIX=' '
 EXPLORER_GETADDRESS_PATH='crw/api.dws?key=62f6b161a9a5&q=getbalance&a='
+MASTERNODE_GENKEY_COMMAND='node genkey'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 # Amount of Collateral needed.
