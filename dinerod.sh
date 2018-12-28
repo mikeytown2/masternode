@@ -39,6 +39,9 @@ DAEMON_CYCLE=1
 # Multiple on single IP.
 MULTI_IP_MODE=1
 
+SENTINEL_GITHUB='https://github.com/dinerocoin/sentinel.git'
+SENTINEL_CONF_START="dinero_conf"
+
 # Tip Address.
 TIPS='DHmJEK4Pn1UiJHULKmqVk9rw6r2ALUnNim'
 # Dropbox Addnodes
