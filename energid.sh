@@ -119,22 +119,19 @@ SENTINEL_SETUP () {
   # Get Repo.
   echo
   echo "Getting energicryptocurrency sentinel github project."
-  cd ~/ || exit
-  git clone https://github.com/energicryptocurrency/sentinel.git
-  git -C ~/sentinel/ clean -x -f -d
-  git -C ~/sentinel/ reset --hard
-  git -C ~/sentinel/ pull
-  git -C ~/sentinel/ reset --hard
+  sudo mkdir -p "/home/${USRNAME}/sentinel/"
+  git clone https://github.com/energicryptocurrency/sentinel.git "/home/${USRNAME}/sentinel/"
+  git -C "/home/${USRNAME}/sentinel/" clean -x -f -d
+  git -C "/home/${USRNAME}/sentinel/" reset --hard
+  git -C "/home/${USRNAME}/sentinel/" pull
+  git -C "/home/${USRNAME}/sentinel/" reset --hard
+  sudo chown -R "${USRNAME}":"${USRNAME}" "/home/${USRNAME}/"
 
   # Install needed software.
   WAIT_FOR_APT_GET
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
     virtualenv \
     python-virtualenv
-
-  sudo mkdir -p "/home/${USRNAME}/sentinel/"
-  sudo cp -R ~/sentinel/* "/home/${USRNAME}/sentinel/"
-  sudo chown -R "${USRNAME}":"${USRNAME}" "/home/${USRNAME}/"
 
   # Setup virtualenv venv and requirements.
   sudo su - "${USRNAME}" -c 'cd ~/sentinel ; virtualenv venv ; venv/bin/pip install -r requirements.txt'
