@@ -29,7 +29,7 @@ CONF='qbic.conf'
 # Port.
 DEFAULT_PORT=17195
 # Explorer URL.
-EXPLORER_URL=''
+EXPLORER_URL='http://explorer.qbic.io:3001/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 # Amount of Collateral needed.
