@@ -45,7 +45,7 @@ SENTINEL_GITHUB='https://github.com/qbic-platform/sentinel.git'
 SENTINEL_CONF_START='qbic_conf'
 
 # Tip Address.
-TIPS=''
+TIPS='GPdd9wym69bPji1tjv2qaDWHhjCdk3nPB4'
 # Dropbox Addnodes.
 DROPBOX_ADDNODES='nazclfv6dcpq45u'
 # If set to 1 then use addnodes from dropbox.
