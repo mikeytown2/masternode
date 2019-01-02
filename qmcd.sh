@@ -33,7 +33,7 @@ DAEMON_NAME='QMCoin'
 # Coin Ticker
 TICKER='QMC'
 # Amount of Collateral needed
-COLLATERAL=2000
+COLLATERAL=3600
 COLLATERAL_ALT=$( timeout 5s wget -4qO- -T 3 -t 2 -o- "${EXPLORER_URL}api/getinfo" )
 if [[ ! -z "${COLLATERAL_ALT}" ]]
 then
