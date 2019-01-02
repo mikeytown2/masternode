@@ -33,7 +33,7 @@ DAEMON_NAME='QMCoin'
 # Coin Ticker
 TICKER='QMC'
 # Amount of Collateral needed
-COLLATERAL=$(wget -4qO- -o- "${EXPLORER_URL}api/getinfo" | grep 'MN collateral' | cut -d ':' -f2 | sed 's/ //g' |  sed 's/,//g')
+COLLATERAL=$(timeout 5s wget -4qO- -T 3 -t 2-o- "${EXPLORER_URL}api/getinfo" | grep 'MN collateral' | cut -d ':' -f2 | sed 's/ //g' |  sed 's/,//g')
 # Fallback Blockcount
 BLOCKCOUNT_FALLBACK_VALUE=59000
 # Multiple on single IP.
