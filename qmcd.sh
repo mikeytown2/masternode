@@ -33,8 +33,12 @@ DAEMON_NAME='QMCoin'
 # Coin Ticker
 TICKER='QMC'
 # Amount of Collateral needed
-COLLATERAL=$( timeout 5s wget -4qO- -T 3 -t 2 -o- "${EXPLORER_URL}api/getinfo" )
-COLLATERAL=$( echo "${COLLATERAL}" | grep 'MN collateral' | cut -d ':' -f2 | sed 's/ //g' |  sed 's/,//g' )
+COLLATERAL=2000
+COLLATERAL_ALT=$( timeout 5s wget -4qO- -T 3 -t 2 -o- "${EXPLORER_URL}api/getinfo" )
+if [[ ! -z "${COLLATERAL_ALT}" ]]
+then
+  COLLATERAL=$( echo "${COLLATERAL_ALT}" | grep 'MN collateral' | cut -d ':' -f2 | sed 's/ //g' |  sed 's/,//g' )
+fi
 # Fallback Blockcount
 BLOCKCOUNT_FALLBACK_VALUE=59000
 # Multiple on single IP.
