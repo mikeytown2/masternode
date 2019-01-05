@@ -1,7 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC2034
 
-# Copyright (c) 2018
+# Copyright (c) 2019
 # All rights reserved.
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
@@ -43,7 +43,6 @@ DAEMON_CYCLE=1
 # Multiple on single IP.
 MULTI_IP_MODE=1
 
-
 # Tip Address.
 TIPS='AaePmxjfbcqrfYa9DELLTfnTn2wzzFD9Yr'
 # Dropbox Addnodes.
@@ -61,11 +60,12 @@ ASCII_ART () {
 echo -e "\e[0m"
 clear 2> /dev/null
 cat << "ATHENEUM"
-    _   _   _                                     
-   / \ | |_| |__   ___ _ __   ___ _   _ _ __ ___  
-  / _ \| __| '_ \ / _ \ '_ \ / _ \ | | | '_ ` _ \ 
- / ___ \ |_| | | |  __/ | | |  __/ |_| | | | | | |
-/_/   \_\__|_| |_|\___|_| |_|\___|\__,_|_| |_| |_|
+          _   _                                     
+     /\  | | | |                                    
+    /  \ | |_| |__   ___ _ __   ___ _   _ _ __ ___  
+   / /\ \| __| '_ \ / _ \ '_ \ / _ \ \ / | '_ ` _ \ 
+  / ____ \ |_| | | |  __/ | | |  __/ |_| | | | | | |
+ /_/    \_\__|_| |_|\___|_| |_|\___|\__,_|_| |_| |_|
 
 ATHENEUM
 }
@@ -105,4 +105,3 @@ DAEMON_SETUP_THREAD
 # shellcheck source=/root/.bashrc
 . ~/.bashrc
 stty sane 2>/dev/null
-
