@@ -41,6 +41,7 @@ BLOCKTIME=60
 DAEMON_CYCLE=1
 # Multiple on single IP.
 MULTI_IP_MODE=1
+IPV6=1
 
 
 # Dropbox Addnodes
