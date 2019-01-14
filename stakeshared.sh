@@ -52,6 +52,7 @@ DROPBOX_BLOCKS_N_CHAINS='tcm9jn259h83ihg'
 
 # Multiple on single IP.
 MULTI_IP_MODE=1
+IPV6=1
 # Mini Monitor check masternode list.
 MINI_MONITOR_MN_LIST=1
 # Mini Monitor Status to check for.
