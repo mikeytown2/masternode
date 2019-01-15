@@ -42,7 +42,7 @@ BLOCKTIME=60
 DAEMON_CYCLE=1
 # Multiple on single IP.
 MULTI_IP_MODE=3
-
+IPV6=1
 
 # Tip Address.
 TIPS='TCQLVWv3RffJ7GLMvYbL9LbEejW6G4M8oP'
