@@ -33,7 +33,7 @@ EXPLORER_URL='http://explorer.stonecoin.rocks/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 # Amount of Collateral needed.
-COLLATERAL=1500
+COLLATERAL=
 # Direct Daemon Download if github has no releases.
 DAEMON_DOWNLOAD=''
 # Blocktime in seconds.
