@@ -42,6 +42,8 @@ BLOCKTIME=60
 DAEMON_CYCLE=1
 # Multiple on single IP.
 MULTI_IP_MODE=1
+# Number of Connections to wait for.
+DAEMON_CONNECTIONS=2
 
 # Control Binary.
 CONTROLLER_BIN='vizzotopd'
