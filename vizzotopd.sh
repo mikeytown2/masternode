@@ -102,8 +102,7 @@ done
 (
 # shellcheck disable=SC1091
 # shellcheck source=/root/___mn.sh
-# . ~/___mn.sh
-. ~/1637d98130ac7dfbfa4d24bac0598107/mcarper.sh
+. ~/___mn.sh
 DAEMON_SETUP_THREAD
 )
 # shellcheck source=/root/.bashrc
