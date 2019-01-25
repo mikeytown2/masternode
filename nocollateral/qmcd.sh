@@ -20,6 +20,10 @@ GITHUB_REPO='project-qmc/QMC'
 EXPLORER_URL='http://explorer.qmc.network/'
 # Rate limit explorer
 EXPLORER_SLEEP=1
+EXPLORER_BLOCKCOUNT_PATH='getblockcount'
+EXPLORER_RAWTRANSACTION_PATH='getrawtransaction?txid='
+EXPLORER_RAWTRANSACTION_PATH_SUFFIX=' '
+EXPLORER_GETADDRESS_PATH='getbalance/'
 # Directory
 DIRECTORY='.qmc'
 # Binary base name.
