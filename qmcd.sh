@@ -38,7 +38,7 @@ DAEMON_NAME='QMCoin'
 TICKER='QMC'
 # Amount of Collateral needed
 COLLATERAL=3600
-COLLATERAL_ALT=$( timeout 5s wget -4qO- -T 3 -t 2 -o- "${EXPLORER_URL}api/getinfo" )
+COLLATERAL_ALT=$( timeout 5s wget -4qO- -T 3 -t 2 -o- "${EXPLORER_URL}getrawinfo" )
 if [[ ! -z "${COLLATERAL_ALT}" ]]
 then
   COLLATERAL=$( echo "${COLLATERAL_ALT}" | grep 'MN collateral' | cut -d ':' -f2 | sed 's/ //g' |  sed 's/,//g' )
