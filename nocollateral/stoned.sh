@@ -33,16 +33,15 @@ EXPLORER_URL='http://explorer.stonecoin.rocks/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 # Amount of Collateral needed.
-COLLATERAL=
+COLLATERAL=1500
 # Direct Daemon Download if github has no releases.
-DAEMON_DOWNLOAD=''
+DAEMON_DOWNLOAD='https://www.dropbox.com/s/8uuyusgng094sfg/stone.zip?dl=1'
 # Blocktime in seconds.
 BLOCKTIME=60
 # Cycle Daemon on first start.
 DAEMON_CYCLE=1
 # Multiple on single IP.
-MULTI_IP_MODE=3
-
+MULTI_IP_MODE=1
 
 # Tip Address.
 TIPS='SXFprY61swBuDkRtwjGo152dcH9RaiN8eG'
