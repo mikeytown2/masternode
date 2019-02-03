@@ -5,7 +5,7 @@ Replace pivx_mn1 with the masternode username on your vps OR replace with all_mn
 Compare the local getblockcount and the explorers block count.
 
 #### pivx_mn1 chaincheck
-Compare the local getblockchaininfo and the explorers block chain info.
+Compare the local getblockchaininfo and the explorers block chain info (if the explorer supports it).
 
 #### pivx_mn1 masternode status
 Get masternode status on vps.
