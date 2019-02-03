@@ -1,4 +1,4 @@
-Replace pivx_mn1 with the masternode username on your vps OR replace with all_mn_run to run commamd on all nodes on this VPS.
+Replace pivx_mn1 with the masternode username on your vps OR replace with all_mn_run to run that command on all nodes on this VPS.
 
 ## Quick Check Commands
 #### pivx_mn1 blockcheck  
@@ -11,16 +11,22 @@ Compare the local getblockchaininfo and the explorers block chain info.
 Get masternode status on vps.
 
 #### pivx_mn1 mninfo
-Get masternode from masternode list
+Get masternode from masternode list.
 
 #### pivx_mn1 mnping
-Get last masternode ping thats been sent out
+Get last masternode ping thats been sent out.
 
 #### pivx_mn1 ps
-Get process info on the node
+Get process info on the node.
 
 #### pivx_mn1 privkey
-Get the masternode private key
+Get the masternode private key.
+
+#### pivx_mn1 uptime
+Get how long the daemon has been running for in seconds.
+
+#### pivx_mn1 restart
+Restart the daemon.
 
 ## All Commands 
 
@@ -90,7 +96,8 @@ reindexzerocoin
 remove_addnode  
 remove_daemon  
 remove_peers  
-rename restart  
+rename  
+restart  
 start  
 start-nosystemd  
 status  
