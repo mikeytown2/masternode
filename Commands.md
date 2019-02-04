@@ -1,5 +1,15 @@
 Replace pivx_mn1 with the masternode username on your vps OR replace with all_mn_run to run that command on all nodes on this VPS.
 
+## Run Same Command on All Masternodes
+#### all_mn_run **daemon**
+Get the daemon name for all the masternodes running on this VPS.
+
+#### all_mn_run **DAEMON_NAME pivxd update_daemon force**
+Update the masternode binary code for all masternodes that have a daemon called pivxd.
+
+#### all_mn_run **ONE_DAEMON explorer**
+Get the explorer URL for every masternode running on this VPS.
+
 ## Popular Commands
 #### pivx_mn1 **blockcheck**  
 Compare the local getblockcount and the explorers block count.
@@ -37,7 +47,7 @@ Show inital block sync progress.
 #### pivx_mn1 **update_daemon**
 Check github for a new version.
 #### pivx_mn1 **update_daemon force**
-Update daemon to the latest verdion on github.
+Update daemon to the latest version on github.
 
 #### pivx_mn1 **remove_daemon**
 Delete the masternode off of the VPS.
