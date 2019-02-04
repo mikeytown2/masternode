@@ -33,6 +33,15 @@ Download the blocks and chainstake folders even if newly downloaded; fairly clos
 #### pivx_mn1 **sync**
 Show inital block sync progress.
 
+
+#### pivx_mn1 **update_daemon**
+Check github for a new version.
+#### pivx_mn1 **update_daemon force**
+Update daemon to the latest verdion on github.
+
+#### pivx_mn1 **remove_daemon**
+Delete the masternode off of the VPS.
+
 ## All Other Commands 
 #### pivx_mn1 **addnode_console**
 Generate an addnode list of peers that have the same blockcount as the explorer. List is in the format for adding via the debug console.
