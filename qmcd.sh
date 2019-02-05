@@ -21,7 +21,8 @@ EXPLORER_URL='https://api.chainmapper.com/qmc/'
 # Rate limit explorer
 EXPLORER_SLEEP=1
 EXPLORER_BLOCKCOUNT_PATH='getblockcount'
-EXPLORER_RAWTRANSACTION_PATH='getrawtransaction?txid='
+#EXPLORER_RAWTRANSACTION_PATH='getrawtransaction?txid='
+EXPLORER_RAWTRANSACTION_PATH=' '
 EXPLORER_RAWTRANSACTION_PATH_SUFFIX=' '
 EXPLORER_GETADDRESS_PATH='getbalance/'
 # Directory
