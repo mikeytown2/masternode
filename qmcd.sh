@@ -41,7 +41,7 @@ COLLATERAL=3600
 COLLATERAL_ALT=$( timeout 5s wget -4qO- -T 3 -t 2 -o- "${EXPLORER_URL}getrawinfo" )
 if [[ ! -z "${COLLATERAL_ALT}" ]]
 then
-  COLLATERAL=$( echo "${COLLATERAL_ALT}" | grep 'MN collateral' | cut -d ':' -f2 | sed 's/ //g' |  sed 's/,//g' )
+  COLLATERAL=$( echo "${COLLATERAL_ALT}" | grep -io 'MN collateral":[0-9]*' | cut -d ':' -f2 | sed 's/ //g' |  sed 's/,//g' )
 fi
 # Fallback Blockcount
 BLOCKCOUNT_FALLBACK_VALUE=59000
