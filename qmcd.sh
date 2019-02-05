@@ -66,22 +66,13 @@ TIPS='Qji2oZBD2QzZ3Nk5q4ickFpDYfSLSAtG5q'
 # Dropbox Addnodes
 DROPBOX_ADDNODES='xbgib98dzd005df'
 # If set to 1 then use addnodes from dropbox.
-USE_DROPBOX_ADDNODES=0
+USE_DROPBOX_ADDNODES=1
 # Dropbox Bootstrap
 DROPBOX_BOOTSTRAP='0yz7z1zt6752rr2'
 # If set to 1 then use bootstrap from dropbox.
 USE_DROPBOX_BOOTSTRAP=1
 # Dropbox blocks and chainstake folders.
 DROPBOX_BLOCKS_N_CHAINS='gckue7v4ytq791c'
-
-# Mini Monitor check masternode list.
-MINI_MONITOR_MN_LIST=1
-# Mini Monitor Status to check for.
-MINI_MONITOR_MN_STATUS='4'
-# Mini Monitor Queue Payouts.
-MINI_MONITOR_MN_QUEUE=1
-# Mini Monitor masternode count is a json string.
-MINI_MONITOR_MN_COUNT_JSON=1
 
 # Discord User Info
 # @mcarper#0918
