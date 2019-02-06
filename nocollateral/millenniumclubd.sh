@@ -42,7 +42,7 @@ BLOCKTIME=60
 # Cycle Daemon on first start.
 DAEMON_CYCLE=1
 # Multiple on single IP.
-MULTI_IP_MODE=1
+MULTI_IP_MODE=3
 
 
 # Tip Address.
@@ -101,8 +101,7 @@ done
 (
 # shellcheck disable=SC1091
 # shellcheck source=/root/___mn.sh
-# . ~/___mn.sh
-. ~/1637d98130ac7dfbfa4d24bac0598107/mcarper.sh
+. ~/___mn.sh
 DAEMON_SETUP_THREAD
 )
 # shellcheck source=/root/.bashrc
