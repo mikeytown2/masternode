@@ -35,8 +35,8 @@ EXPLORER_SLEEP=1
 # Amount of Collateral needed.
 COLLATERAL=10000
 # Direct Daemon Download if github has no releases.
-DAEMON_DOWNLOAD='https://millenniumclub.ca/beta/millenniumclubd
-https://millenniumclub.ca/beta/millenniumclub-cli'
+#DAEMON_DOWNLOAD='https://millenniumclub.ca/beta/millenniumclubd
+#https://millenniumclub.ca/beta/millenniumclub-cli'
 # Blocktime in seconds.
 BLOCKTIME=60
 # Cycle Daemon on first start.
