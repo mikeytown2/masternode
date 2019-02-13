@@ -29,7 +29,7 @@ CONF='aba.conf'
 # Port.
 DEFAULT_PORT=3355
 # Explorer URL.
-EXPLORER_URL='http://45.77.166.134:3001/'
+EXPLORER_URL='https://www.abacusexplorer.io/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 # Amount of Collateral needed.
