@@ -29,7 +29,7 @@ CONF='lightpaycoin.conf'
 # Port.
 DEFAULT_PORT=39797
 # Explorer URL.
-EXPLORER_URL='http://explorer.lightpaycoin.org:3001/'
+EXPLORER_URL='http://explorer2.lightpaycoin.org/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 # Amount of Collateral needed.
