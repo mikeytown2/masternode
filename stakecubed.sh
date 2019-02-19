@@ -34,6 +34,7 @@ COLLATERAL=1000
 BLOCKTIME=120
 # Explorer URL
 EXPLORER_URL='https://www.coinexplorer.net/api/v1/SCC/'
+EXPLORER_SLEEP=1
 # Cycle Daemon on first start
 DAEMON_CYCLE=1
 
