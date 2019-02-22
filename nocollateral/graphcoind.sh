@@ -31,10 +31,9 @@ DEFAULT_PORT=22629
 # Explorer URL.
 EXPLORER_URL='https://explorer.graphcoin.net/'
 # Amount of Collateral needed.
-COLLATERAL=5000
+COLLATERAL=50000
 # Direct Daemon Download if github has no releases.
-DAEMON_DOWNLOAD='https://github.com/Graphcoin/downloads/raw/master/Linux_x64/graphcoind
-https://github.com/Graphcoin/downloads/raw/master/Linux_x64/graphcoin-cli'
+DAEMON_DOWNLOAD=''
 # Blocktime in seconds.
 BLOCKTIME=60
 # Cycle Daemon on first start.
