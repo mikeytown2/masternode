@@ -35,7 +35,7 @@ EXPLORER_SLEEP=1
 # Amount of Collateral needed.
 COLLATERAL=15000
 # Direct Daemon Download if github has no releases.
-DAEMON_DOWNLOAD='http://seed2.pepecoin.co/wallets/2.9.1.0/linux/pepecoind'
+DAEMON_DOWNLOAD='http://seed4.pepecoin.co/latest.tar.gz'
 # Blocktime in seconds.
 BLOCKTIME=60
 # Cycle Daemon on first start.
