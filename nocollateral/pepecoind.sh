@@ -17,7 +17,7 @@ bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/maste
 # Github user and project.
 GITHUB_REPO='pepeteam/pepecoin'
 # Display Name.
-DAEMON_NAME='PepeCoin /'
+DAEMON_NAME='PepeCoin'
 # Coin Ticker.
 TICKER='PEPE'
 # Binary base name.
@@ -35,7 +35,7 @@ EXPLORER_SLEEP=1
 # Amount of Collateral needed.
 COLLATERAL=15000
 # Direct Daemon Download if github has no releases.
-DAEMON_DOWNLOAD='http://seed4.pepecoin.co/latest.tar.gz'
+DAEMON_DOWNLOAD='http://seed4.pepecoin.co/wallets/3.0.0.0/linux/pepecoind'
 # Blocktime in seconds.
 BLOCKTIME=60
 # Cycle Daemon on first start.
