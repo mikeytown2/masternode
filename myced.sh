@@ -38,7 +38,9 @@ EXPLORER_SLEEP=1
 # Amount of Collateral needed.
 COLLATERAL=100000
 # Cycle Daemon on first start.
-DAEMON_CYCLE=1
+DAEMON_CYCLE=0
+# Slow Daemon Start.
+SLOW_DAEMON_START=1
 
 # Tip Address
 TIPS='MRwqWT27m1WhpRR8XSHWvbcj7uetU8D3gD'
