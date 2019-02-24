@@ -33,7 +33,7 @@ EXPLORER_URL='http://blocks.worxcoin.io/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 # Amount of Collateral needed.
-COLLATERAL=1000
+COLLATERAL=5000
 # Direct Daemon Download if github has no releases.
 DAEMON_DOWNLOAD=''
 # Blocktime in seconds.
