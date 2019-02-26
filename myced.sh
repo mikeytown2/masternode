@@ -41,28 +41,21 @@ COLLATERAL=100000
 DAEMON_CYCLE=0
 # Slow Daemon Start.
 SLOW_DAEMON_START=1
+# Multiple on single IP.
+MULTI_IP_MODE=1
+
 
 # Tip Address
 TIPS='MRwqWT27m1WhpRR8XSHWvbcj7uetU8D3gD'
 # Dropbox Addnodes
 DROPBOX_ADDNODES='xdzoc7ntncapimr'
-# If set to 1 then use addnodes from dropbox.
-USE_DROPBOX_ADDNODES=1
 # Dropbox Bootstrap
 DROPBOX_BOOTSTRAP='e9zzivi3lhb3hxx'
-# If set to 1 then use bootstrap from dropbox.
-USE_DROPBOX_BOOTSTRAP=1
 # Dropbox blocks and chainstake folders.
 DROPBOX_BLOCKS_N_CHAINS='zsgq3ehhu13k1ew'
+# If set to 1 then use blocks n chains from dropbox.
+USE_DROPBOX_BLOCKS_N_CHAINS=0
 
-# Multiple on single IP.
-MULTI_IP_MODE=1
-# Mini Monitor check masternode list.
-MINI_MONITOR_MN_LIST=1
-# Mini Monitor Status to check for.
-MINI_MONITOR_MN_STATUS='4'
-# Mini Monitor masternode count is a json string.
-MINI_MONITOR_MN_COUNT_JSON=1
 
 ASCII_ART () {
 echo -e "\e[0m"
