@@ -53,8 +53,6 @@ DROPBOX_ADDNODES='xdzoc7ntncapimr'
 DROPBOX_BOOTSTRAP='e9zzivi3lhb3hxx'
 # Dropbox blocks and chainstake folders.
 DROPBOX_BLOCKS_N_CHAINS='zsgq3ehhu13k1ew'
-# If set to 1 then use blocks n chains from dropbox.
-USE_DROPBOX_BLOCKS_N_CHAINS=0
 
 
 ASCII_ART () {
