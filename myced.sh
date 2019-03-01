@@ -40,7 +40,7 @@ COLLATERAL=100000
 # Cycle Daemon on first start.
 DAEMON_CYCLE=0
 # Slow Daemon Start.
-SLOW_DAEMON_START=1
+SLOW_DAEMON_START=0
 # Multiple on single IP.
 MULTI_IP_MODE=1
 
