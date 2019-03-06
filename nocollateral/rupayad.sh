@@ -27,7 +27,7 @@ DIRECTORY='.rupayacore'
 # Conf File.
 CONF='rupaya.conf'
 # Port.
-DEFAULT_PORT=9020
+DEFAULT_PORT=9050
 # Explorer URL.
 EXPLORER_URL='https://find.rupx.io/'
 # Rate limit explorer.
