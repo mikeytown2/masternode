@@ -29,7 +29,7 @@ CONF='adultchain.conf'
 # Port.
 DEFAULT_PORT=6969
 # Explorer URL.
-EXPLORER_URL='https://explorer.adultchain.xxx/'
+EXPLORER_URL='https://explorer.adultchain.me/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 # Amount of Collateral needed.
