@@ -35,6 +35,7 @@ EXPLORER_SLEEP=1
 EXPLORER_RAWTRANSACTION_PATH='api/tx/'
 EXPLORER_RAWTRANSACTION_PATH_SUFFIX=' '
 EXPLORER_GETADDRESS_PATH='ext/getbalance'
+EXPLORER_PEERS='api/peer'
 # Amount of Collateral needed.
 COLLATERAL=25000
 # Direct Daemon Download if github has no releases.
