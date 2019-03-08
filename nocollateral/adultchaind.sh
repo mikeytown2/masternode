@@ -32,6 +32,10 @@ DEFAULT_PORT=6969
 EXPLORER_URL='https://explorer.adultchain.xxx/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
+EXPLORER_RAWTRANSACTION_PATH='api/tx/'
+EXPLORER_RAWTRANSACTION_PATH_SUFFIX=' '
+EXPLORER_GETADDRESS_PATH='ext/getbalance'
+EXPLORER_PEERS='api/peer'
 # Amount of Collateral needed.
 COLLATERAL=20000
 # Direct Daemon Download if github has no releases.
