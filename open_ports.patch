@@ -1,0 +1,123 @@
+diff --git a/src/activemasternode.cpp b/src/activemasternode.cpp
+index c909c6a..3e11a71 100644
+--- a/src/activemasternode.cpp
++++ b/src/activemasternode.cpp
+@@ -168,19 +168,19 @@ void CActiveMasternode::ManageStateInitial(CConnman& connman)
+     }
+ 
+     int mainnetDefaultPort = Params(CBaseChainParams::MAIN).GetDefaultPort();
+-    if(Params().NetworkIDString() == CBaseChainParams::MAIN) {
+-        if(service.GetPort() != mainnetDefaultPort) {
+-            nState = ACTIVE_MASTERNODE_NOT_CAPABLE;
+-            strNotCapableReason = strprintf("Invalid port: %u - only %d is supported on mainnet.", service.GetPort(), mainnetDefaultPort);
+-            LogPrintf("CActiveMasternode::ManageStateInitial -- %s: %s\n", GetStateString(), strNotCapableReason);
+-            return;
+-        }
+-    } else if(service.GetPort() == mainnetDefaultPort) {
+-        nState = ACTIVE_MASTERNODE_NOT_CAPABLE;
+-        strNotCapableReason = strprintf("Invalid port: %u - %d is only supported on mainnet.", service.GetPort(), mainnetDefaultPort);
+-        LogPrintf("CActiveMasternode::ManageStateInitial -- %s: %s\n", GetStateString(), strNotCapableReason);
+-        return;
+-    }
++//     if(Params().NetworkIDString() == CBaseChainParams::MAIN) {
++//         if(service.GetPort() != mainnetDefaultPort) {
++//             nState = ACTIVE_MASTERNODE_NOT_CAPABLE;
++//             strNotCapableReason = strprintf("Invalid port: %u - only %d is supported on mainnet.", service.GetPort(), mainnetDefaultPort);
++//             LogPrintf("CActiveMasternode::ManageStateInitial -- %s: %s\n", GetStateString(), strNotCapableReason);
++//             return;
++//         }
++//     } else if(service.GetPort() == mainnetDefaultPort) {
++//         nState = ACTIVE_MASTERNODE_NOT_CAPABLE;
++//         strNotCapableReason = strprintf("Invalid port: %u - %d is only supported on mainnet.", service.GetPort(), mainnetDefaultPort);
++//         LogPrintf("CActiveMasternode::ManageStateInitial -- %s: %s\n", GetStateString(), strNotCapableReason);
++//         return;
++//     }
+ 
+     // Check socket connectivity
+     LogPrintf("CActiveMasternode::ManageStateInitial -- Checking inbound connection to '%s'\n", service.ToString());
+diff --git a/src/chainparams.cpp b/src/chainparams.cpp
+index c34fd20..f690135 100644
+--- a/src/chainparams.cpp
++++ b/src/chainparams.cpp
+@@ -241,7 +241,7 @@ public:
+         fRequireStandard = true;
+         fMineBlocksOnDemand = false;
+         fAllowMultipleAddressesFromGroup = false;
+-        fAllowMultiplePorts = false;
++        fAllowMultiplePorts = true;
+ 
+         nPoolMaxTransactions = 3;
+         nFulfilledRequestExpireTime = 60*60; // fulfilled requests expire in 1 hour
+@@ -382,7 +382,7 @@ public:
+         fRequireStandard = false;
+         fMineBlocksOnDemand = false;
+         fAllowMultipleAddressesFromGroup = false;
+-        fAllowMultiplePorts = false;
++        fAllowMultiplePorts = true;
+ 
+         nPoolMaxTransactions = 3;
+         nFulfilledRequestExpireTime = 5*60; // fulfilled requests expire in 5 minutes
+diff --git a/src/masternode.cpp b/src/masternode.cpp
+index 1d9d565..d82bffb 100644
+--- a/src/masternode.cpp
++++ b/src/masternode.cpp
+@@ -383,11 +383,11 @@ bool CMasternodeBroadcast::Create(const std::string& strService, const std::stri
+     if (!Lookup(strService.c_str(), service, 0, false))
+         return Log(strprintf("Invalid address %s for masternode.", strService));
+     int mainnetDefaultPort = Params(CBaseChainParams::MAIN).GetDefaultPort();
+-    if (Params().NetworkIDString() == CBaseChainParams::MAIN) {
+-        if (service.GetPort() != mainnetDefaultPort)
+-            return Log(strprintf("Invalid port %u for masternode %s, only %d is supported on mainnet.", service.GetPort(), strService, mainnetDefaultPort));
+-    } else if (service.GetPort() == mainnetDefaultPort)
+-        return Log(strprintf("Invalid port %u for masternode %s, %d is the only supported on mainnet.", service.GetPort(), strService, mainnetDefaultPort));
++//     if (Params().NetworkIDString() == CBaseChainParams::MAIN) {
++//         if (service.GetPort() != mainnetDefaultPort)
++//             return Log(strprintf("Invalid port %u for masternode %s, only %d is supported on mainnet.", service.GetPort(), strService, mainnetDefaultPort));
++//     } else if (service.GetPort() == mainnetDefaultPort)
++//         return Log(strprintf("Invalid port %u for masternode %s, %d is the only supported on mainnet.", service.GetPort(), strService, mainnetDefaultPort));
+ 
+     return Create(outpoint, service, keyCollateralAddressNew, pubKeyCollateralAddressNew, keyMasternodeNew, pubKeyMasternodeNew, strErrorRet, mnbRet);
+ }
+diff --git a/src/masternodeconfig.cpp b/src/masternodeconfig.cpp
+index ee1d2ed..f44c7fc 100644
+--- a/src/masternodeconfig.cpp
++++ b/src/masternodeconfig.cpp
+@@ -65,22 +65,22 @@ bool CMasternodeConfig::read(std::string& strErrRet) {
+             return false;
+         }
+         int mainnetDefaultPort = Params(CBaseChainParams::MAIN).GetDefaultPort();
+-        if(Params().NetworkIDString() == CBaseChainParams::MAIN) {
+-            if(port != mainnetDefaultPort) {
+-                strErrRet = _("Invalid port detected in masternode.conf") + "\n" +
+-                        strprintf(_("Port: %d"), port) + "\n" +
+-                        strprintf(_("Line: %d"), linenumber) + "\n\"" + line + "\"" + "\n" +
+-                        strprintf(_("(must be %d for mainnet)"), mainnetDefaultPort);
+-                streamConfig.close();
+-                return false;
+-            }
+-        } else if(port == mainnetDefaultPort) {
+-            strErrRet = _("Invalid port detected in masternode.conf") + "\n" +
+-                    strprintf(_("Line: %d"), linenumber) + "\n\"" + line + "\"" + "\n" +
+-                    strprintf(_("(%d could be used only on mainnet)"), mainnetDefaultPort);
+-            streamConfig.close();
+-            return false;
+-        }
++//         if(Params().NetworkIDString() == CBaseChainParams::MAIN) {
++//             if(port != mainnetDefaultPort) {
++//                 strErrRet = _("Invalid port detected in masternode.conf") + "\n" +
++//                         strprintf(_("Port: %d"), port) + "\n" +
++//                         strprintf(_("Line: %d"), linenumber) + "\n\"" + line + "\"" + "\n" +
++//                         strprintf(_("(must be %d for mainnet)"), mainnetDefaultPort);
++//                 streamConfig.close();
++//                 return false;
++//             }
++//         } else if(port == mainnetDefaultPort) {
++//             strErrRet = _("Invalid port detected in masternode.conf") + "\n" +
++//                     strprintf(_("Line: %d"), linenumber) + "\n\"" + line + "\"" + "\n" +
++//                     strprintf(_("(%d could be used only on mainnet)"), mainnetDefaultPort);
++//             streamConfig.close();
++//             return false;
++//         }
+ 
+ 
+         add(alias, ip, privKey, txHash, outputIndex);
