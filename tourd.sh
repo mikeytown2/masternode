@@ -29,7 +29,7 @@ CONF='tour.conf'
 # Port.
 DEFAULT_PORT=5457
 # Explorer URL.
-EXPLORER_URL='https://explorer.tourcoin.info/'
+EXPLORER_URL='https://explorer.touriva.info/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 EXPLORER_BLOCKCOUNT_PATH='api_fetch.php?method=getblockcount'
