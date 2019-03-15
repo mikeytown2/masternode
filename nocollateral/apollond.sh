@@ -59,7 +59,7 @@ USE_DROPBOX_BOOTSTRAP=1
 DROPBOX_BLOCKS_N_CHAINS='n3oeymuneagala7'
 
 # Multiple on single IP.
-MULTI_IP_MODE=1
+MULTI_IP_MODE=0
 # Mini Monitor check masternode list.
 MINI_MONITOR_MN_LIST=1
 # Mini Monitor Status to check for.
