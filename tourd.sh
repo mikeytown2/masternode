@@ -32,10 +32,10 @@ DEFAULT_PORT=5457
 EXPLORER_URL='https://explorer.touriva.info/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
-EXPLORER_BLOCKCOUNT_PATH='api_fetch.php?method=getblockcount'
-EXPLORER_RAWTRANSACTION_PATH='/api_fetch.php?method=gettransaction&txid='
-EXPLORER_RAWTRANSACTION_PATH_SUFFIX=' '
-EXPLORER_GETADDRESS_PATH='api_fetch.php?method=getbalance&address='
+#EXPLORER_BLOCKCOUNT_PATH='api_fetch.php?method=getblockcount'
+#EXPLORER_RAWTRANSACTION_PATH='/api_fetch.php?method=gettransaction&txid='
+#EXPLORER_RAWTRANSACTION_PATH_SUFFIX=' '
+#EXPLORER_GETADDRESS_PATH='api_fetch.php?method=getbalance&address='
 # Amount of Collateral needed.
 COLLATERAL=500
 # Direct Daemon Download if github has no releases.
