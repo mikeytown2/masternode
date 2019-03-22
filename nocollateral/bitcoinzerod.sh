@@ -43,7 +43,7 @@ DAEMON_CYCLE=1
 # Multiple on single IP.
 MULTI_IP_MODE=3
 MASTERNODE_CALLER='bznode'
-MASTERNODE_PREFIX='bz'
+MASTERNODE_PREFIX='bzn'
 
 
 # Tip Address.
