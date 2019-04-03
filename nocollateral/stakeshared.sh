@@ -29,7 +29,7 @@ CONF='stakeshare.conf'
 # Port.
 DEFAULT_PORT=5515
 # Amount of Collateral needed.
-COLLATERAL=2000
+COLLATERAL=8000
 # Explorer URL
 EXPLORER_URL='http://explorer.stakeshare.io/'
 # Cycle Daemon
