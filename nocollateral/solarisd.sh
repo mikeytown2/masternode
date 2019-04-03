@@ -80,7 +80,7 @@ do
   rm -f ~/___mn.sh
   echo "Downloading Masternode Setup Script."
   wget -4qo- gist.githack.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/6c7d9b7c8cad8cf0831686bd50a917cac4172133/mcarper.sh -O ~/___mn.sh
-  COUNTER=1
+  COUNTER=$(( COUNTER + 1 ))
   if [[ "${COUNTER}" -gt 3 ]]
   then
     echo
