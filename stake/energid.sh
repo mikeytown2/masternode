@@ -1,3 +1,11 @@
+#!/bin/bash
+
+: '
+# Run this file
+```
+bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/stake/energid.sh)" ; source ~/.bashrc
+```
+'
 
 TEMP_FILENAME1=$( mktemp )
 
