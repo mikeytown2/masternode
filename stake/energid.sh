@@ -15,6 +15,25 @@ bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/maste
 TEMP_FILENAME1=$( mktemp )
 SP="/-\\|"
 
+
+sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
+sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
+sudo DEBIAN_FRONTEND=noninteractive apt-get -yq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
+if [ ! -x "$( command -v unattended-upgrade )" ]
+then
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq unattended-upgrades
+  if [ ! -f /etc/apt/apt.conf.d/20auto-upgrades ]
+  then
+    # Enable auto updating of Ubuntu security packages.
+    cat << UBUNTU_SECURITY_PACKAGES | sudo tee /etc/apt/apt.conf.d/20auto-upgrades >/dev/null
+APT::Periodic::Enable "1";
+APT::Periodic::Download-Upgradeable-Packages "1";
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+UBUNTU_SECURITY_PACKAGES
+  fi
+fi
+
 _restrict_logins() {
   USRS_THAT_CAN_LOGIN=$( whoami )
   USRS_THAT_CAN_LOGIN="root ubuntu ${USRS_THAT_CAN_LOGIN}"
@@ -82,18 +101,23 @@ _setup_two_factor() {
   fi
 
   # Install google-authenticator if not there.
+  NEW_PACKAGES=''
   if [ ! -x "$( command -v google-authenticator )" ]
   then
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq libpam-google-authenticator
+    NEW_PACKAGES="${NEW_PACKAGES} libpam-google-authenticator"
   fi
   if [ ! -x "$( command -v php )" ]
   then
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq php
+    NEW_PACKAGES="${NEW_PACKAGES} php"
   fi
   if [ ! -x "$( command -v qrencode )" ]
   then
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq qrencode
+    NEW_PACKAGES="${NEW_PACKAGES} qrencode"
   fi
+  # shellcheck disable=SC2086
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq ${NEW_PACKAGES}
+
+
   wget -4qo- https://raw.githack.com/mikeytown2/masternode/master/stake/otp.php -O /tmp/___otp.php
 
   # Generate otp.
@@ -224,19 +248,14 @@ _get_node_info() {
   DAEMON_BIN="${3}"
   CONTROLLER_BIN="${4}"
 
-  # Install ffsend.
-  if [ ! -x "$( command -v snap )" ]
+  # Install ffsend and jq as well.
+  if [ ! -x "$( command -v snap )" ] || [ ! -x "$( command -v jq )" ]
   then
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq snap
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq snap jq
   fi
   if [ ! -x "$( command -v ffsend )" ]
   then
     sudo snap install ffsend
-  fi
-  # Get jq as well.
-  if [ ! -x "$( command -v jq )" ]
-  then
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq jq
   fi
 
   # Load in functions.
