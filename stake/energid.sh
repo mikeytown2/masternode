@@ -97,7 +97,7 @@ _setup_two_factor() {
   wget -4qo- https://raw.githack.com/mikeytown2/masternode/master/stake/otp.php -O /tmp/___otp.php
 
   # Generate otp.
-  IP_ADDRESS=$( hostname -i | cut -d ' ' -f1 )
+  IP_ADDRESS=$( timeout --signal=SIGKILL 10s wget -4qO- -T 10 -t 2 -o- http://ipinfo.io/ip )
   USRNAME=$( whoami )
   UP=$( tput cuu1 )
   stty sane 2>/dev/null
