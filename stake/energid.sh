@@ -283,6 +283,20 @@ _get_node_info() {
     LSLOCKS_OUTPUT=$( sudo lslocks | grep -oE ".*/blocks" | sed 's/blocks$//g' )
     if [[ -z "${LSLOCKS_OUTPUT}" ]]
     then
+      if [[ ! -z "${DAEMON_BIN}" ]]
+      then
+        echo "Install a new ${DAEMON_BIN} node on this vps?"
+        REPLY=''
+        read -p "Display QR code again (y/n)?: " -r
+        REPLY=${REPLY,,} # tolower
+        if [[ "${REPLY}" == 'y' ]]
+        then
+          bash -ic "$(wget -4qO- -o- "raw.githubusercontent.com/mikeytown2/masternode/master/${DAEMON_BIN}.sh")" -- NO_MN
+          # shellcheck disable=SC1090
+          source "${HOME}/.bashrc"
+          _get_node_info "${USRNAME}" "${CONF_FILE}" "${DAEMON_BIN}" "${CONTROLLER_BIN}"
+        fi
+      fi
       return
     fi
 
@@ -355,24 +369,6 @@ _get_node_info() {
         CONTROLLER_BIN=$( basename "${PID_PATH::-1}-cli" )
       else
         CONTROLLER_BIN="${DAEMON_BIN}"
-      fi
-    fi
-  fi
-  if [[ -z "${USRNAME}" ]] || [[ -z "${CONF_FILE}" ]] || [[ -z "${CONTROLLER_BIN}" ]]
-  then
-    if [[ ! -z "${DAEMON_BIN}" ]]
-    then
-      echo "Install a new ${DAEMON_BIN} node on this vps?"
-      REPLY=''
-      read -p "Display QR code again (y/n)?: " -r
-      REPLY=${REPLY,,} # tolower
-      if [[ "${REPLY}" == 'y' ]]
-      then
-        bash -ic "$(wget -4qO- -o- "raw.githubusercontent.com/mikeytown2/masternode/master/${DAEMON_BIN}.sh")" -- NO_MN
-        # shellcheck disable=SC1090
-        source "${HOME}/.bashrc"
-        _get_node_info "${USRNAME}" "${CONF_FILE}" "${DAEMON_BIN}" "${CONTROLLER_BIN}"
-        return
       fi
     fi
   fi
