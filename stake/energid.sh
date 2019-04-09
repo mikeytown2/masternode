@@ -200,7 +200,6 @@ _setup_two_factor() {
     sudo sed -ie 's/ChallengeResponseAuthentication no/ChallengeResponseAuthentication yes/g' /etc/ssh/sshd_config
     sudo systemctl restart sshd.service
     echo
-    echo "Login again."
     echo "If using Bitvise select keyboard-interactive with no submethods selected."
     echo
   else
@@ -499,37 +498,50 @@ _copy_wallet() {
     fi
   done
 
-  TEMP_DIR_NAME1=$( mktemp -d -p "${HOME}" )
-  ffsend download -y --verbose "${REPLY}" -o "${TEMP_DIR_NAME1}/"
-  fullfile=$( find "${TEMP_DIR_NAME1}/" -type f )
-  if [[ $( echo "${fullfile}" | grep -c 'wallet.dat' ) -gt 0 ]]
-  then
-    echo "Moving wallet.dat file"
-    _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' disable
-    mv "${CONF_DIR}/wallet.dat" "${CONF_DIR}/wallet.dat.bak"
-    mv "${fullfile}" "${CONF_DIR}/wallet.dat"
-    _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' enable
-    _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
+  while :
+  do
+    TEMP_DIR_NAME1=$( mktemp -d -p "${HOME}" )
+    ffsend download -y --verbose "${REPLY}" -o "${TEMP_DIR_NAME1}/"
+    fullfile=$( find "${TEMP_DIR_NAME1}/" -type f )
+    if [[ $( echo "${fullfile}" | grep -c 'wallet.dat' ) -gt 0 ]]
+    then
+      echo "Moving wallet.dat file"
+      _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' disable
+      mv "${CONF_DIR}/wallet.dat" "${CONF_DIR}/wallet.dat.bak"
+      mv "${fullfile}" "${CONF_DIR}/wallet.dat"
+      _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' enable
+      _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
 
-    # See if wallet.dat can be opened.
-    if [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' daemon_log tail 500 | grep -c "can't open database wallet.dat" ) -gt 0 ]]
-    then
-      rm "${CONF_DIR}/wallet.dat"
-      echo "Wallet was corrupted; try again."
-    fi
-  else
-    if [[ $( grep -ic 'wallet dump' "${fullfile}" ) -gt 0 ]]
-    then
-      echo "Importing wallet dump file (Please Wait)"
-      _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' importwallet "${fullfile}"
+      # See if wallet.dat can be opened.
+      if [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' daemon_log tail 500 | grep -c "can't open database wallet.dat" ) -gt 0 ]]
+      then
+        rm "${CONF_DIR}/wallet.dat"
+        mv "${CONF_DIR}/wallet.dat.bak" "${CONF_DIR}/wallet.dat"
+        echo "Wallet db version is different; try again using a dumpwallet file."
+      else
+        break
+      fi
     else
-      echo "Unknown File."
+      if [[ $( grep -ic 'wallet dump' "${fullfile}" ) -gt 0 ]]
+      then
+        echo "Importing wallet dump file (Please Wait)"
+        _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' importwallet "${fullfile}"
+        break
+      else
+        echo "Unknown File."
+        REPLY=''
+        read -p "wallet.dat hasn't changed; try again (y/n)?: " -r
+        if [[ "${REPLY}" != 'y' ]]
+        then
+          break
+        fi
+      fi
     fi
-  fi
+  done
+
   DATADIR=$( dirname "${CONF_FILE}" )
   DATADIR_FILENAME=$( echo "${DATADIR}" | tr '/' '_' )
-  rm "${HOME}/.pwd/${DATADIR_FILENAME}"
-
+  rm -f "${HOME}/.pwd/${DATADIR_FILENAME}"
   rm -rf "${TEMP_DIR_NAME1:?}"
 }
 
