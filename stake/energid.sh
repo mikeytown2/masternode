@@ -644,7 +644,7 @@ _setup_wallet_auto_pw () {
   i=0
   while [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' mnsync status | grep -cF "${MNSYNC_WAIT_FOR}" ) -eq 0 ]]
   do
-    PERCENT_DONE=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' daemon_log tail 2000 | tac | grep -m 1 -o 'nSyncProgress.*' | awk -v SF=100 '{printf($2*SF )}' )
+    PERCENT_DONE=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' daemon_log tail 2000 | grep -m 1 -o 'nSyncProgress.*\|Progress.*' | tr '=' ' ' | awk -v SF=100 '{printf($2*SF )}' )
     echo -e "\\r${SP:i++%${#SP}:1} Percent Done: %${PERCENT_DONE}      \\c"
     sleep 0.3
   done
