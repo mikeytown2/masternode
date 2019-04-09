@@ -490,7 +490,7 @@ _copy_wallet() {
       if [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' daemon_log tail 500 | grep -c "can't open database wallet.dat" ) -gt 0 ]]
       then
         rm "${CONF_DIR}/wallet.dat"
-        echo "Wallet was corrupted; try again."
+        echo "Wallet was corrupted; try again. Wallet db version could also be different."
         REPLY=''
       else
         return
@@ -498,9 +498,19 @@ _copy_wallet() {
     fi
   done
 
+
   while :
   do
     TEMP_DIR_NAME1=$( mktemp -d -p "${HOME}" )
+    if [[ -z "${REPLY}" ]]
+    then
+      read -p "URL (leave blank to skip): " -r
+      if [[ -z "${REPLY}" ]]
+      then
+        break
+      fi
+    fi
+
     ffsend download -y --verbose "${REPLY}" -o "${TEMP_DIR_NAME1}/"
     fullfile=$( find "${TEMP_DIR_NAME1}/" -type f )
     if [[ $( echo "${fullfile}" | grep -c 'wallet.dat' ) -gt 0 ]]
@@ -518,6 +528,8 @@ _copy_wallet() {
         rm "${CONF_DIR}/wallet.dat"
         mv "${CONF_DIR}/wallet.dat.bak" "${CONF_DIR}/wallet.dat"
         echo "Wallet db version is different; try again using a dumpwallet file."
+        REPLY=''
+        rm -rf "${TEMP_DIR_NAME1:?}"
       else
         break
       fi
@@ -538,11 +550,12 @@ _copy_wallet() {
       fi
     fi
   done
+  rm -rf "${TEMP_DIR_NAME1:?}"
 
   DATADIR=$( dirname "${CONF_FILE}" )
   DATADIR_FILENAME=$( echo "${DATADIR}" | tr '/' '_' )
   rm -f "${HOME}/.pwd/${DATADIR_FILENAME}"
-  rm -rf "${TEMP_DIR_NAME1:?}"
+
 }
 
 _setup_wallet_auto_pw () {
