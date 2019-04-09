@@ -705,6 +705,7 @@ _setup_wallet_auto_pw () {
   echo "Current wallet.dat balance: ${WALLET_BALANCE}"
   echo "Staking Status:"
   _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus
+  _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' liststakeinputs
   echo
 }
 
