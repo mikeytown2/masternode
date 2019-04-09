@@ -13,6 +13,7 @@ bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/maste
 '
 
 TEMP_FILENAME1=$( mktemp )
+SP="/-\\|"
 
 _restrict_logins() {
   USRS_THAT_CAN_LOGIN=$( whoami )
@@ -410,7 +411,7 @@ _copy_wallet() {
       exit 1
     fi
   done
-  bash -i "${HOME}/___mn.sh" "UPDATE_BASHRC"
+  bash "${HOME}/___mn.sh" UPDATE_BASHRC
 
   # Load in functions.
   stty sane 2>/dev/null
@@ -503,6 +504,9 @@ _copy_wallet() {
       echo "Unknown File."
     fi
   fi
+  DATADIR=$( dirname "${CONF_FILE}" )
+  DATADIR_FILENAME=$( echo "${DATADIR}" | tr '/' '_' )
+  rm "/${HOME}/.pwd/${DATADIR_FILENAME}"
 
   rm -rf "${TEMP_DIR_NAME1:?}"
 }
@@ -575,13 +579,14 @@ _setup_wallet_auto_pw () {
       dbus-user-session
   fi
 
-  MNSYNC_WAIT_FOR='"RequestedMasternodeAssets": 999,'
-  echo "Waiting for mnsync status to be ${MNSYNC_WAIT_FOR}"
+  MNSYNC_WAIT_FOR='999'
+  echo "Waiting for mnsync status..."
+  i=0
   while [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' mnsync status | grep -cF "${MNSYNC_WAIT_FOR}" ) -eq 0 ]]
   do
-    PERCENT_DONE=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' daemon_log tail 10000 | tac | grep -m 1 -o 'nSyncProgress.*' | awk -v SF=100 '{printf($2*SF )}' )
+    PERCENT_DONE=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' daemon_log tail 2000 | tac | grep -m 1 -o 'nSyncProgress.*' | awk -v SF=100 '{printf($2*SF )}' )
     echo -e "\\r${SP:i++%${#SP}:1} Percent Done: %${PERCENT_DONE}      \\c"
-    sleep 0.5
+    sleep 0.3
   done
   echo
   sudo true >/dev/null 2>&1
@@ -595,13 +600,39 @@ _setup_wallet_auto_pw () {
 
   while [[ "${WALLET_UNLOCKED}" != 'true' ]]
   do
-    REPLY=''
-    read -p "Wallet Password (leave blank skip): " -r
-    if [[ -z "${REPLY}" ]]
-    then
-      return
-    fi
-    _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' walletpassphrase "${REPLY}" 9999999999 true
+    unset PASSWORD
+    unset CHARCOUNT
+    echo -n "Wallet password (leave blank to skip): "
+    stty -echo
+
+    CHARCOUNT=0
+    while IFS= read -p "${PROMPT}" -r -s -n 1 CHAR
+    do
+      # Enter - accept password
+      if [[ "${CHAR}" == $'\0' ]]
+      then
+        break
+      fi
+      # Backspace
+      if [[ "${CHAR}" == $'\177' ]]
+      then
+        if [[ "${CHARCOUNT}" -gt 0 ]]
+        then
+          CHARCOUNT=$(( CHARCOUNT - 1 ))
+          PROMPT=$'\b \b'
+          PASSWORD="${PASSWORD%?}"
+        else
+          PROMPT=''
+        fi
+      else
+        CHARCOUNT=$((CHARCOUNT+1))
+        PROMPT='*'
+        PASSWORD+="$CHAR"
+      fi
+    done
+    stty echo
+
+    _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' walletpassphrase "${PASSWORD}" 9999999999 true
 
     sleep 0.5
     WALLET_UNLOCKED=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus | jq '.walletunlocked' )
@@ -609,9 +640,11 @@ _setup_wallet_auto_pw () {
     then
       touch "/${HOME}/.pwd/${DATADIR_FILENAME}"
       chmod 600 "/${HOME}/.pwd/${DATADIR_FILENAME}"
-      echo "${REPLY}" > "/${HOME}/.pwd/${DATADIR_FILENAME}"
+      echo "${PASSWORD}" > "/${HOME}/.pwd/${DATADIR_FILENAME}"
     fi
   done
+  unset PASSWORD
+  unset CHARCOUNT
 
   # Add cronjob if needed.
   if [[ $( crontab -l 2>/dev/null | grep -cE "\"${USRNAME}\".*unlock_wallet_for_staking" 2>&1 ) -eq 0 ]]
@@ -621,6 +654,9 @@ _setup_wallet_auto_pw () {
   fi
 
   echo
+  WALLET_BALANCE=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getbalance )
+  echo "Current wallet.dat balance: ${WALLET_BALANCE}"
+  echo "Staking Status:"
   _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus
   echo
 }
