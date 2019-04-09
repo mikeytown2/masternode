@@ -544,6 +544,9 @@ _copy_wallet() {
         mv "${fullfile}" "${CONF_DIR}/${BASENAME}.txt"
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' importwallet "${CONF_DIR}/${BASENAME}.txt"
         rm -f "${CONF_DIR}/${BASENAME}.txt"
+        echo "Restarting wallet to update wallet.dat balance; will take some time."
+        _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' start-recover
+        _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
         break
       else
         echo "Unknown File."
