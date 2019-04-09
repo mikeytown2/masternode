@@ -527,6 +527,7 @@ _copy_wallet() {
       then
         rm "${CONF_DIR}/wallet.dat"
         mv "${CONF_DIR}/wallet.dat.bak" "${CONF_DIR}/wallet.dat"
+        _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' enable
         echo "Wallet db version is different; try again using a dumpwallet file."
         REPLY=''
         rm -rf "${TEMP_DIR_NAME1:?}"
