@@ -15,23 +15,26 @@ bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/maste
 TEMP_FILENAME1=$( mktemp )
 SP="/-\\|"
 
-echo "Updating linux first."
-sleep 1
-sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
-sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
-sudo DEBIAN_FRONTEND=noninteractive apt-get -yq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
-if [ ! -x "$( command -v unattended-upgrade )" ]
+if [ ! -x "$( command -v aria2c )" ] || [ ! -x "$( command -v unattended-upgrade )" ] || [ ! -x "$( command -v ntpdate )" ] || [ ! -x "$( command -v google-authenticator )" ] || [ ! -x "$( command -v php )" ] || [ ! -x "$( command -v jq )" ]  || [ ! -x "$( command -v qrencode )" ]
 then
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq unattended-upgrades
-  if [ ! -f /etc/apt/apt.conf.d/20auto-upgrades ]
+  echo "Updating linux first."
+  sleep 1
+  sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get -yq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
+  if [ ! -x "$( command -v unattended-upgrade )" ]
   then
-    # Enable auto updating of Ubuntu security packages.
-    cat << UBUNTU_SECURITY_PACKAGES | sudo tee /etc/apt/apt.conf.d/20auto-upgrades >/dev/null
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq unattended-upgrades
+    if [ ! -f /etc/apt/apt.conf.d/20auto-upgrades ]
+    then
+      # Enable auto updating of Ubuntu security packages.
+      cat << UBUNTU_SECURITY_PACKAGES | sudo tee /etc/apt/apt.conf.d/20auto-upgrades >/dev/null
 APT::Periodic::Enable "1";
 APT::Periodic::Download-Upgradeable-Packages "1";
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";
 UBUNTU_SECURITY_PACKAGES
+    fi
   fi
 fi
 
