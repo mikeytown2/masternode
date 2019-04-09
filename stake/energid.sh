@@ -516,7 +516,6 @@ _copy_wallet() {
 
     ffsend download -y --verbose "${REPLY}" -o "${TEMP_DIR_NAME1}/"
     fullfile=$( find "${TEMP_DIR_NAME1}/" -type f )
-    echo "${fullfile}"
     if [[ $( echo "${fullfile}" | grep -c 'wallet.dat' ) -gt 0 ]]
     then
       echo "Moving wallet.dat file"
