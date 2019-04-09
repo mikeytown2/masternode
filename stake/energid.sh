@@ -19,11 +19,20 @@ if [ ! -x "$( command -v aria2c )" ] || [ ! -x "$( command -v unattended-upgrade
 then
   echo "Updating linux first."
   sleep 1
+  echo "Running apt-get update."
+  sleep 1
   sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
+  echo "Running apt-get upgrade."
+  sleep 1
   sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
+  echo "Running apt-get dist-upgrade."
+  sleep 1
   sudo DEBIAN_FRONTEND=noninteractive apt-get -yq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
+
   if [ ! -x "$( command -v unattended-upgrade )" ]
   then
+    echo "Running apt-get install unattended-upgrades."
+    sleep 1
     sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq unattended-upgrades
     if [ ! -f /etc/apt/apt.conf.d/20auto-upgrades ]
     then
@@ -112,7 +121,7 @@ _setup_two_factor() {
   fi
   if [ ! -x "$( command -v php )" ]
   then
-    NEW_PACKAGES="${NEW_PACKAGES} php"
+    NEW_PACKAGES="${NEW_PACKAGES} php-cli"
   fi
   if [ ! -x "$( command -v qrencode )" ]
   then
