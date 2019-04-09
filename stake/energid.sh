@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Copyright (c) 2019
+# All rights reserved.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
+# shellcheck disable=SC2016
 : '
 # Run this file
 ```
@@ -27,6 +32,11 @@ _restrict_logins() {
     echo "User login can not be restricted."
     return
   fi
+  if [[ -z "${MISSING_FROM_LISTS}" ]]
+  then
+    # Do nothing if no users are missing.
+    return
+  fi
   echo
   echo "${BOTH_LISTS}"
   REPLY=''
@@ -52,13 +62,13 @@ _setup_two_factor() {
   if [[ ! -s "${HOME}/.google_authenticator" ]]
     then
     REPLY=''
-    read -p "Require 2 factor authentication code for password SSH login (y/n)?: " -r
+    read -p "Require 2 factor authentication (scan QR code) for password SSH login (y/n)?: " -r
     REPLY=${REPLY,,} # tolower
     if [[ "${REPLY}" == 'n' ]]
     then
       return
     fi
-    
+
   else
     REPLY=''
     read -p "Review 2 factor authentication code for password SSH login (y/n)?: " -r
@@ -67,7 +77,7 @@ _setup_two_factor() {
       return
     fi
   fi
-  
+
   # Install google-authenticator if not there.
   if [ ! -x "$( command -v google-authenticator )" ]
   then
@@ -220,6 +230,11 @@ _get_node_info() {
   then
     sudo snap install ffsend
   fi
+  # Get jq as well.
+  if [ ! -x "$( command -v jq )" ]
+  then
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq jq
+  fi
 
   # Load in functions.
   stty sane 2>/dev/null
@@ -227,7 +242,7 @@ _get_node_info() {
   then
     PS1="\\"
   fi
-  cd ~ || return 1 2>/dev/null
+  cd "${HOME}" || return 1 2>/dev/null
   # shellcheck disable=SC1090
   source "${HOME}/.bashrc"
   if [ "${PS1}" == "\\" ]
@@ -235,16 +250,12 @@ _get_node_info() {
     PS1=''
   fi
   stty sane 2>/dev/null
-  
+
   AUTH_LIST=$( wget -4qO- -o- https://api.github.com/repos/mikeytown2/masternode/contents/ | jq -r '.[].name' | grep 'd.sh' )
 
   # Get info via username alias.
   if [[ ! -z "${USRNAME}" ]] && [[ "$( type "${USRNAME}" 2>/dev/null | grep -c '_masternode_dameon_2' )" -eq 1 ]]
   then
-    if [[ -z "${CONF_FILE}" ]]
-    then
-      CONF_FILE=$( "${USRNAME}" conf loc )
-    fi
     if [[ -z "${DAEMON_BIN}" ]]
     then
       DAEMON_BIN=$( "${USRNAME}" daemon )
@@ -256,6 +267,10 @@ _get_node_info() {
     if [[ -z "${CONTROLLER_BIN}" ]]
     then
       CONTROLLER_BIN=$( "${USRNAME}" daemon )
+    fi
+    if [[ -z "${CONF_FILE}" ]]
+    then
+      CONF_FILE=$( "${USRNAME}" conf loc )
     fi
   fi
 
@@ -363,7 +378,7 @@ _get_node_info() {
   then
     return
   fi
-  
+
   echo "${USRNAME} ${CONF_FILE} ${DAEMON_BIN} ${CONTROLLER_BIN}" > "${TEMP_FILENAME1}"
   return
 }
@@ -377,6 +392,44 @@ _copy_wallet() {
   fi
   CONF_DIR=$( dirname "${CONF_FILE}" )
 
+  # Update mn script.
+  cd "${HOME}" || exit
+  COUNTER=0
+  rm -f "${HOME}/___mn.sh"
+  while [[ ! -f "${HOME}/___mn.sh" ]] || [[ $( grep -Fxc "# End of masternode setup script." "${HOME}/___mn.sh" ) -eq 0 ]]
+  do
+    rm -f "${HOME}/___mn.sh"
+    echo "Downloading Setup Script."
+    wget -4qo- gist.githack.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O "${HOME}/___mn.sh"
+    COUNTER=$(( COUNTER + 1 ))
+    if [[ "${COUNTER}" -gt 3 ]]
+    then
+      echo
+      echo "Download of setup script failed."
+      echo
+      exit 1
+    fi
+  done
+  bash -i "${HOME}/___mn.sh" "UPDATE_BASHRC"
+
+  # Load in functions.
+  stty sane 2>/dev/null
+  if [ -z "${PS1}" ]
+  then
+    PS1="\\"
+  fi
+  cd "${HOME}" || return 1 2>/dev/null
+  # shellcheck disable=SC1090
+  source "${HOME}/.bashrc"
+  if [ "${PS1}" == "\\" ]
+  then
+    PS1=''
+  fi
+  stty sane 2>/dev/null
+
+  rm "${HOME}/___mn.sh"
+
+
   echo
   echo "Target: ${CONF_DIR}"
   echo "Please encrypted your wallet.dat file before uploading it to"
@@ -389,12 +442,37 @@ _copy_wallet() {
     read -p "URL (leave blank do it manually (sftp/scp)): " -r
     if [[ -z "${REPLY}" ]]
     then
-      _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' stop
-      echo "Please Copy the wallet.dat file to ${CONF_DIR}/wallet.dat on your own"
-      read -p "Press Enter Once Done: " -r
-      _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' start
+      MD5_WALLET_BEFORE=$( md5sum "${CONF_DIR}/wallet.dat" )
+      MD5_WALLET_AFTER="${MD5_WALLET_BEFORE}"
+      WALLET_BALANCE=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getbalance )
+      echo "Current wallet.dat balance: ${WALLET_BALANCE}"
+      _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' disable
+      while [[ "${MD5_WALLET_BEFORE}" == "${MD5_WALLET_AFTER}" ]]
+      do
+        echo "Please Copy the wallet.dat file to ${CONF_DIR}/wallet.dat on your own"
+        read -p "Press Enter Once Done: " -r
+        MD5_WALLET_AFTER=$( md5sum "${CONF_DIR}/wallet.dat" )
+        if [[ "${MD5_WALLET_BEFORE}" == "${MD5_WALLET_AFTER}" ]]
+        then
+          REPLY=''
+          read -p "wallet.dat hasn't changed; try again (y/n)?: " -r
+          if [[ "${REPLY}" != 'y' ]]
+          then
+            break
+          fi
+        fi
+      done
+      _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' enable
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
-      return
+
+      # See if wallet.dat can be opened.
+      if [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' daemon_log tail 500 | grep -c "can't open database wallet.dat" ) -gt 0 ]]
+      then
+        rm "${CONF_DIR}/wallet.dat"
+        echo "Wallet was corrupted; try again."
+      else
+        return
+      fi
     fi
   done
 
@@ -404,11 +482,18 @@ _copy_wallet() {
   if [[ $( echo "${fullfile}" | grep -c 'wallet.dat' ) -gt 0 ]]
   then
     echo "Moving wallet.dat file"
-    _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' stop
+    _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' disable
     mv "${CONF_DIR}/wallet.dat" "${CONF_DIR}/wallet.dat.bak"
     mv "${fullfile}" "${CONF_DIR}/wallet.dat"
-    _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' start
+    _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' enable
     _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
+
+    # See if wallet.dat can be opened.
+    if [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' daemon_log tail 500 | grep -c "can't open database wallet.dat" ) -gt 0 ]]
+    then
+      rm "${CONF_DIR}/wallet.dat"
+      echo "Wallet was corrupted; try again."
+    fi
   else
     if [[ $( grep -ic 'wallet dump' "${fullfile}" ) -gt 0 ]]
     then
@@ -442,7 +527,7 @@ _setup_wallet_auto_pw () {
   then
     PS1="\\"
   fi
-  cd ~ || return 1 2>/dev/null
+  cd "${HOME}" || return 1 2>/dev/null
   # shellcheck disable=SC1090
   source "${HOME}/.bashrc"
   if [ "${PS1}" == "\\" ]
@@ -450,6 +535,56 @@ _setup_wallet_auto_pw () {
     PS1=''
   fi
   stty sane 2>/dev/null
+
+  # Install missing programs if needed.
+  if [ ! -x "$( command -v aria2c )" ]
+  then
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq \
+      curl \
+      pwgen \
+      ufw \
+      lsof \
+      util-linux \
+      gzip \
+      unzip \
+      unrar \
+      xz-utils \
+      procps \
+      jq \
+      htop \
+      git \
+      gpw \
+      bc \
+      pv \
+      sysstat \
+      glances \
+      psmisc \
+      at \
+      python3-pip \
+      python-pip \
+      subnetcalc \
+      net-tools \
+      sipcalc \
+      python-yaml \
+      html-xml-utils \
+      apparmor \
+      ack-grep \
+      pcregrep \
+      snapd \
+      aria2 \
+      dbus-user-session
+  fi
+
+  MNSYNC_WAIT_FOR='"RequestedMasternodeAssets": 999,'
+  echo "Waiting for mnsync status to be ${MNSYNC_WAIT_FOR}"
+  while [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' mnsync status | grep -cF "${MNSYNC_WAIT_FOR}" ) -eq 0 ]]
+  do
+    PERCENT_DONE=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' daemon_log tail 10000 | tac | grep -m 1 -o 'nSyncProgress.*' | awk -v SF=100 '{printf($2*SF )}' )
+    echo -e "\\r${SP:i++%${#SP}:1} Percent Done: %${PERCENT_DONE}      \\c"
+    sleep 0.5
+  done
+  echo
+  sudo true >/dev/null 2>&1
 
   # Try to unlock the wallet.
   _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' unlock_wallet_for_staking
@@ -484,9 +619,9 @@ _setup_wallet_auto_pw () {
     MINUTES=$(( RANDOM % 60 ))
     ( crontab -l 2>/dev/null ; echo "${MINUTES} * * * * bash -ic 'source /var/multi-masternode-data/.bashrc; _masternode_dameon_2 \"${USRNAME}\" \"${CONTROLLER_BIN}\" \"\" \"${DAEMON_BIN}\" \"${CONF_FILE}\" \"\" \"-1\" \"-1\" unlock_wallet_for_staking 2>&1' 2>/dev/null" ) | crontab -
   fi
-  
+
   echo
-  _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus 
+  _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus
   echo
 }
 
