@@ -305,9 +305,8 @@ _get_node_info() {
     then
       if [[ ! -z "${DAEMON_BIN}" ]]
       then
-        echo "Install a new ${DAEMON_BIN} node on this vps?"
         REPLY=''
-        read -p "Display QR code again (y/n)?: " -r
+        read -p "Install a new ${DAEMON_BIN} node on this vps (y/n)?: " -r
         REPLY=${REPLY,,} # tolower
         if [[ "${REPLY}" == 'y' ]]
         then
@@ -429,6 +428,8 @@ _copy_wallet() {
       exit 1
     fi
   done
+  echo "${DAEMON_BIN}"
+  sed -i "1iDAEMON_BIN='${DAEMON_BIN}'" "${HOME}/___mn.sh"
   bash "${HOME}/___mn.sh" UPDATE_BASHRC
 
   # Load in functions.
@@ -489,6 +490,7 @@ _copy_wallet() {
       then
         rm "${CONF_DIR}/wallet.dat"
         echo "Wallet was corrupted; try again."
+        REPLY=''
       else
         return
       fi
@@ -524,7 +526,7 @@ _copy_wallet() {
   fi
   DATADIR=$( dirname "${CONF_FILE}" )
   DATADIR_FILENAME=$( echo "${DATADIR}" | tr '/' '_' )
-  rm "/${HOME}/.pwd/${DATADIR_FILENAME}"
+  rm "${HOME}/.pwd/${DATADIR_FILENAME}"
 
   rm -rf "${TEMP_DIR_NAME1:?}"
 }
