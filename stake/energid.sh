@@ -513,6 +513,7 @@ _copy_wallet() {
 
     ffsend download -y --verbose "${REPLY}" -o "${TEMP_DIR_NAME1}/"
     fullfile=$( find "${TEMP_DIR_NAME1}/" -type f )
+    echo "${fullfile}"
     if [[ $( echo "${fullfile}" | grep -c 'wallet.dat' ) -gt 0 ]]
     then
       echo "Moving wallet.dat file"
@@ -539,7 +540,10 @@ _copy_wallet() {
       if [[ $( grep -ic 'wallet dump' "${fullfile}" ) -gt 0 ]]
       then
         echo "Importing wallet dump file (Please Wait)"
-        _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' importwallet "${fullfile}"
+        BASENAME=$( basename "${fullfile}" )
+        mv "${fullfile}" "${CONF_DIR}/${BASENAME}.txt"
+        _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' importwallet "${CONF_DIR}/${BASENAME}.txt"
+        rm -f "${CONF_DIR}/${BASENAME}.txt"
         break
       else
         echo "Unknown File."
