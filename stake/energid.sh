@@ -115,9 +115,11 @@ _setup_two_factor() {
   then
     NEW_PACKAGES="${NEW_PACKAGES} qrencode"
   fi
-  # shellcheck disable=SC2086
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq ${NEW_PACKAGES}
-
+  if [[ ! -z "${NEW_PACKAGES}" ]]
+  then
+    # shellcheck disable=SC2086
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq ${NEW_PACKAGES}
+  fi
 
   wget -4qo- https://raw.githack.com/mikeytown2/masternode/master/stake/otp.php -O /tmp/___otp.php
 
