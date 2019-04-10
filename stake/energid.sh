@@ -635,7 +635,7 @@ _setup_wallet_auto_pw () {
   fi
   DATADIR=$( dirname "${CONF_FILE}" )
   DATADIR_FILENAME=$( echo "${DATADIR}" | tr '/' '_' )
-  mkdir -p "/${HOME}/.pwd/"
+  mkdir -p "${HOME}/.pwd/"
 
   # Load in functions.
   stty sane 2>/dev/null
@@ -750,9 +750,9 @@ _setup_wallet_auto_pw () {
     WALLET_UNLOCKED=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus | jq '.walletunlocked' )
     if [[ "${WALLET_UNLOCKED}" == 'true' ]]
     then
-      touch "/${HOME}/.pwd/${DATADIR_FILENAME}"
-      chmod 600 "/${HOME}/.pwd/${DATADIR_FILENAME}"
-      echo "${PASSWORD}" > "/${HOME}/.pwd/${DATADIR_FILENAME}"
+      touch "${HOME}/.pwd/${DATADIR_FILENAME}"
+      chmod 600 "${HOME}/.pwd/${DATADIR_FILENAME}"
+      echo "${PASSWORD}" > "${HOME}/.pwd/${DATADIR_FILENAME}"
     fi
   done
   unset PASSWORD
