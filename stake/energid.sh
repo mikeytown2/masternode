@@ -12,11 +12,13 @@ bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/maste
 ```
 '
 
+echo
 echo "This file will setup or transform an already running node into a hot staking"
 echo "wallet that'll run 24/7. You'll need to transfer your wallet.dat or dumpwallet"
 echo "output in order to do so."
 REPLY=''
 read -p "Proceed with the script (y/n)?: " -r
+echo
 REPLY=${REPLY,,} # tolower
 if [[ "${REPLY}" == 'n' ]]
 then
@@ -589,8 +591,7 @@ _copy_wallet() {
       then
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' enable
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
-        WALLET_UNLOCKED=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus | jq '.walletunlocked' )
-        if [[ "${WALLET_UNLOCKED}" != 'true' ]]
+        if [[ -f "${HOME}/.pwd/${DATADIR_FILENAME}" ]]
         then
           WALLET_PASSWORD=$( head -n 1 "${HOME}/.pwd/${DATADIR_FILENAME}" )
           _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' walletpassphrase "${WALLET_PASSWORD}" 999 false
