@@ -378,6 +378,8 @@ _get_node_info() {
     RUNNING_NODES=$( echo "${RUNNING_NODES}" | sort | cat -n | column -t )
     if [[ "$( echo "${RUNNING_NODES}" | wc -l )" -gt 1 ]]
     then
+      echo
+      echo "Leave blank to exit."
       echo "Select the number of the node you wish to copy your wallet to:"
       echo "${RUNNING_NODES}"
       REPLY=''
