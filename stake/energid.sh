@@ -767,10 +767,11 @@ _setup_wallet_auto_pw () {
 
   echo
   WALLET_BALANCE=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getbalance )
+  STAKING_BALANCE=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' liststakeinputs | jq '.[].amount' | awk '{s+=$1} END {print s}' )
   echo "Current wallet.dat balance: ${WALLET_BALANCE}"
+  echo "Value of coins that can stake: ${STAKING_BALANCE}"
   echo "Staking Status:"
   _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus
-  _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' liststakeinputs
   echo
 }
 
