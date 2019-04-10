@@ -584,6 +584,12 @@ _copy_wallet() {
     else
       if [[ $( grep -ic 'wallet dump' "${fullfile}" ) -gt 0 ]] || [[ $( grep -ic 'label=' "${fullfile}" ) -gt 0 ]]
       then
+        WALLET_UNLOCKED=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus | jq '.walletunlocked' )
+        if [[ "${WALLET_UNLOCKED}" != 'true' ]]
+        then
+          WALLET_PASSWORD=$(<"${HOME}/.pwd/${DATADIR_FILENAME}")
+          _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' walletpassphrase "${WALLET_PASSWORD}" 999 false
+        fi
         echo "Importing wallet dump file (Please Wait)"
         BASENAME=$( basename "${fullfile}" )
         # Put labeled addreses at the top.
