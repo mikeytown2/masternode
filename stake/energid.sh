@@ -12,6 +12,17 @@ bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/maste
 ```
 '
 
+echo "This file will setup or transform an already running node into a hot staking"
+echo "wallet that'll run 24/7. You'll need to transfer your wallet.dat or dumpwallet"
+echo "output in order to do so."
+REPLY=''
+read -p "Proceed with the script (y/n)?: " -r
+REPLY=${REPLY,,} # tolower
+if [[ "${REPLY}" == 'n' ]]
+then
+  return 1 2>/dev/null || exit 1
+fi
+
 TEMP_FILENAME1=$( mktemp )
 SP="/-\\|"
 
@@ -214,9 +225,19 @@ _setup_two_factor() {
     echo
     echo "If using Bitvise select keyboard-interactive with no submethods selected."
     echo
+
+    # Allow for 20 bad root login attempts before killing the ip.
+    sudo sed -ie 's/DENY_THRESHOLD_ROOT \= 1/DENY_THRESHOLD_ROOT = 5/g' /etc/denyhosts.conf
+    sudo sed -ie 's/DENY_THRESHOLD_RESTRICTED \= 1/DENY_THRESHOLD_RESTRICTED = 5/g' /etc/denyhosts.conf
+    sudo sed -ie 's/DENY_THRESHOLD_ROOT \= 1/DENY_THRESHOLD_ROOT = 20/g' /etc/denyhosts.conf
+    sudo sed -ie 's/DENY_THRESHOLD_RESTRICTED \= 1/DENY_THRESHOLD_RESTRICTED = 20/g' /etc/denyhosts.conf
+    sudo systemctl restart denyhosts
   else
     rm -f "${HOME}/.google_authenticator"
   fi
+
+  sleep 5
+  clear
 }
 
 _add_rsa_key() {
@@ -514,10 +535,15 @@ _copy_wallet() {
 
   rm "${HOME}/___mn.sh"
 
-
+  echo
+  echo
+  echo "This script uses https://send.firefox.com/ to transfer files from your"
+  echo "desktop computer onto the vps. You can read more about the service here"
+  echo "https://en.wikipedia.org/wiki/Firefox_Send"
   echo
   echo "Target: ${CONF_DIR}"
-  echo "Please encrypted your wallet.dat file before uploading it to"
+  echo "Please encrypted your wallet.dat file."
+  echo "Then uploading it to"
   echo "https://send.firefox.com/"
   echo "Paste in the url to your wallet.dat file."
   echo
