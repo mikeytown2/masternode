@@ -468,58 +468,6 @@ _copy_wallet() {
   sed -i "1iDAEMON_BIN='${DAEMON_BIN}'" "${HOME}/___mn.sh"
   bash "${HOME}/___mn.sh" UPDATE_BASHRC
 
-  # Add in 16.04 repo.
-  COUNTER=0
-  if ! grep -Fxq "deb http://archive.ubuntu.com/ubuntu/ xenial-updates main restricted" /etc/apt/sources.list
-  then
-    echo "deb http://archive.ubuntu.com/ubuntu/ xenial-updates main restricted" | sudo tee -a /etc/apt/sources.list >/dev/null
-    COUNTER=1
-  fi
-  if ! grep -Fxq "deb http://archive.ubuntu.com/ubuntu/ xenial universe" /etc/apt/sources.list
-  then
-    echo "deb http://archive.ubuntu.com/ubuntu/ xenial universe" | sudo tee -a /etc/apt/sources.list >/dev/null
-    COUNTER=1
-  fi
-
-  if [[ $( grep -r '/etc/apt' -e 'bitcoin' | wc -l ) -eq 0 ]]
-  then
-    WAIT_FOR_APT_GET
-    echo | sudo add-apt-repository ppa:bitcoin/bitcoin
-    COUNTER=1
-  fi
-
-  # Update apt-get info with the new repo.
-  if [[ "${COUNTER}" -gt 0 ]]
-  then
-    sudo dpkg --configure -a
-    sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
-    sudo DEBIAN_FRONTEND=noninteractive apt-get -f install -yq
-  fi
-
-  # Make sure shared libs are installed.
-  sudo dpkg --configure -a
-  sudo DEBIAN_FRONTEND=noninteractive apt-get -f install -yq
-  sudo apt install --reinstall libsodium18=1.0.8-5
-  # Install libboost.
-  # Install libevent.
-  # Install libminiupnpc.
-  # Install older db code from bitcoin repo.
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq \
-    libboost-system1.58.0 \
-    libboost-filesystem1.58.0 \
-    libboost-program-options1.58.0 \
-    libboost-thread1.58.0 \
-    libboost-chrono1.58.0 \
-    libevent-2.0-5 \
-    libevent-core-2.0-5 \
-    libevent-extra-2.0-5 \
-    libevent-openssl-2.0-5 \
-    libevent-pthreads-2.0-5 \
-    libminiupnpc10 \
-    libzmq5 \
-    libdb4.8-dev \
-    libdb4.8++-dev
-
   # Load in functions.
   stty sane 2>/dev/null
   if [ -z "${PS1}" ]
@@ -564,6 +512,8 @@ _copy_wallet() {
       do
         echo "Please Copy the wallet.dat file to ${CONF_DIR}/wallet.dat on your own"
         read -p "Press Enter Once Done: " -r
+        chown "${USRNAME}":"${USRNAME}" "${CONF_DIR}/wallet.dat"
+        chmod 600 "${CONF_DIR}/wallet.dat"
         MD5_WALLET_AFTER=$( md5sum "${CONF_DIR}/wallet.dat" )
         if [[ "${MD5_WALLET_BEFORE}" == "${MD5_WALLET_AFTER}" ]]
         then
@@ -575,6 +525,8 @@ _copy_wallet() {
           fi
         fi
       done
+      chown "${USRNAME}":"${USRNAME}" "${CONF_DIR}/wallet.dat"
+      chmod 600 "${CONF_DIR}/wallet.dat"
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' enable
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
 
@@ -611,6 +563,8 @@ _copy_wallet() {
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' disable
       mv "${CONF_DIR}/wallet.dat" "${CONF_DIR}/wallet.dat.bak"
       mv "${fullfile}" "${CONF_DIR}/wallet.dat"
+      chown "${USRNAME}":"${USRNAME}" "${CONF_DIR}/wallet.dat"
+      chmod 600 "${CONF_DIR}/wallet.dat"
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' enable
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
 
@@ -628,11 +582,14 @@ _copy_wallet() {
         break
       fi
     else
-      if [[ $( grep -ic 'wallet dump' "${fullfile}" ) -gt 0 ]]
+      if [[ $( grep -ic 'wallet dump' "${fullfile}" ) -gt 0 ]] || [[ $( grep -ic 'label=' "${fullfile}" ) -gt 0 ]]
       then
         echo "Importing wallet dump file (Please Wait)"
         BASENAME=$( basename "${fullfile}" )
-        mv "${fullfile}" "${CONF_DIR}/${BASENAME}.txt"
+        # Put labeled addreses at the top.
+        grep -i 'label=' "${fullfile}" > "${CONF_DIR}/${BASENAME}.txt"
+        grep -vi 'label=' "${fullfile}" >> "${CONF_DIR}/${BASENAME}.txt"
+        rm -f "${fullfile}"
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' importwallet "${CONF_DIR}/${BASENAME}.txt"
         rm -f "${CONF_DIR}/${BASENAME}.txt"
         echo "Restarting wallet to update wallet.dat balance; will take some time."
