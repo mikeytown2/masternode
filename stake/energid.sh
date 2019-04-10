@@ -542,6 +542,9 @@ _copy_wallet() {
     fi
   done
 
+  DATADIR=$( dirname "${CONF_FILE}" )
+  DATADIR_FILENAME=$( echo "${DATADIR}" | tr '/' '_' )
+
 
   while :
   do
@@ -619,8 +622,6 @@ _copy_wallet() {
   done
   rm -rf "${TEMP_DIR_NAME1:?}"
 
-  DATADIR=$( dirname "${CONF_FILE}" )
-  DATADIR_FILENAME=$( echo "${DATADIR}" | tr '/' '_' )
   rm -f "${HOME}/.pwd/${DATADIR_FILENAME}"
 
 }
