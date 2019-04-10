@@ -445,6 +445,58 @@ _copy_wallet() {
   sed -i "1iDAEMON_BIN='${DAEMON_BIN}'" "${HOME}/___mn.sh"
   bash "${HOME}/___mn.sh" UPDATE_BASHRC
 
+  # Add in 16.04 repo.
+  COUNTER=0
+  if ! grep -Fxq "deb http://archive.ubuntu.com/ubuntu/ xenial-updates main restricted" /etc/apt/sources.list
+  then
+    echo "deb http://archive.ubuntu.com/ubuntu/ xenial-updates main restricted" | sudo tee -a /etc/apt/sources.list >/dev/null
+    COUNTER=1
+  fi
+  if ! grep -Fxq "deb http://archive.ubuntu.com/ubuntu/ xenial universe" /etc/apt/sources.list
+  then
+    echo "deb http://archive.ubuntu.com/ubuntu/ xenial universe" | sudo tee -a /etc/apt/sources.list >/dev/null
+    COUNTER=1
+  fi
+
+  if [[ $( grep -r '/etc/apt' -e 'bitcoin' | wc -l ) -eq 0 ]]
+  then
+    WAIT_FOR_APT_GET
+    echo | sudo add-apt-repository ppa:bitcoin/bitcoin
+    COUNTER=1
+  fi
+
+  # Update apt-get info with the new repo.
+  if [[ "${COUNTER}" -gt 0 ]]
+  then
+    sudo dpkg --configure -a
+    sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
+    sudo DEBIAN_FRONTEND=noninteractive apt-get -f install -yq
+  fi
+
+  # Make sure shared libs are installed.
+  sudo dpkg --configure -a
+  sudo DEBIAN_FRONTEND=noninteractive apt-get -f install -yq
+  sudo apt install --reinstall libsodium18=1.0.8-5
+  # Install libboost.
+  # Install libevent.
+  # Install libminiupnpc.
+  # Install older db code from bitcoin repo.
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq \
+    libboost-system1.58.0 \
+    libboost-filesystem1.58.0 \
+    libboost-program-options1.58.0 \
+    libboost-thread1.58.0 \
+    libboost-chrono1.58.0 \
+    libevent-2.0-5 \
+    libevent-core-2.0-5 \
+    libevent-extra-2.0-5 \
+    libevent-openssl-2.0-5 \
+    libevent-pthreads-2.0-5 \
+    libminiupnpc10 \
+    libzmq5 \
+    libdb4.8-dev \
+    libdb4.8++-dev
+
   # Load in functions.
   stty sane 2>/dev/null
   if [ -z "${PS1}" ]
