@@ -587,7 +587,7 @@ _copy_wallet() {
         WALLET_UNLOCKED=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus | jq '.walletunlocked' )
         if [[ "${WALLET_UNLOCKED}" != 'true' ]]
         then
-          WALLET_PASSWORD=$(<"${HOME}/.pwd/${DATADIR_FILENAME}")
+          WALLET_PASSWORD=$( head -n 1 "${HOME}/.pwd/${DATADIR_FILENAME}" )
           _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' walletpassphrase "${WALLET_PASSWORD}" 999 false
         fi
         echo "Importing wallet dump file (Please Wait)"
