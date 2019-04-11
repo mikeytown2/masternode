@@ -108,6 +108,7 @@ _restrict_logins() {
 
 _setup_two_factor() {
   if [[  -s "${HOME}/.google_authenticator" ]]
+  then
     REPLY=''
     read -p "Review 2 factor authentication code for password SSH login (y/n)?: " -r
     if [[ "${REPLY}" == 'n' ]] || [[ -z "${REPLY}" ]]
