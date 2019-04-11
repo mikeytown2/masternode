@@ -496,9 +496,11 @@ _copy_wallet() {
   echo "https://en.wikipedia.org/wiki/Firefox_Send"
   echo
   echo "Target: ${CONF_DIR}"
-  echo "Please encrypted your wallet.dat file."
-  echo "Then uploading it to"
+  echo "Please encrypted your wallet.dat file if it is not encrypted."
+  echo "Shutdown your desktop wallet"
+  echo "Then uploading wallet.dat to"
   echo "https://send.firefox.com/"
+  echo "Start your desktop wallet back up."
   echo "Paste in the url to your wallet.dat file."
   echo
   REPLY=''
