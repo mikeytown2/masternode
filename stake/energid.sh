@@ -107,17 +107,7 @@ _restrict_logins() {
 }
 
 _setup_two_factor() {
-  if [[ ! -s "${HOME}/.google_authenticator" ]]
-    then
-    REPLY=''
-    read -p "Require 2 factor authentication (scan QR code) for password SSH login (y/n)?: " -r
-    REPLY=${REPLY,,} # tolower
-    if [[ "${REPLY}" == 'n' ]]
-    then
-      return
-    fi
-
-  else
+  if [[  -s "${HOME}/.google_authenticator" ]]
     REPLY=''
     read -p "Review 2 factor authentication code for password SSH login (y/n)?: " -r
     if [[ "${REPLY}" == 'n' ]] || [[ -z "${REPLY}" ]]
@@ -176,13 +166,10 @@ _setup_two_factor() {
     echo -e "${UP}\\c"
     echo -e "${UP}\\c"
     echo -e "${UP}\\c"
-    echo "                                   "
-    echo "                                   "
-    echo "                                   "
-    echo -e "${UP}\\c"
-    echo -e "${UP}\\c"
-    echo -e "${UP}\\c"
-    echo "Please scan in the QR code."
+    echo "Please scan in the QR code with the Google Authenticator app."
+    echo "When logging into this VPS via password, a 6 digit code would also be required."
+    echo "If you loose this code you can still use your wallet on your desktop."
+
     # Add 9 recovery digits.
     {
     head -200 /dev/urandom | cksum | tr -d ' ' | cut -c1-8 ;
@@ -208,12 +195,12 @@ _setup_two_factor() {
       rm -f "${HOME}/.google_authenticator"
       return
     fi
-    if [[ "${OUTPUT}" -eq 1 ]]
-    then
-      echo "Your emergency scratch codes are:"
-      tail -n 10 "${HOME}/.google_authenticator" | awk '{print "  " $1 }'
-    fi
   done
+  if [[ "${OUTPUT}" -eq 1 ]]
+  then
+    echo "Your emergency scratch codes are:"
+    tail -n 10 "${HOME}/.google_authenticator" | awk '{print "  " $1 }'
+  fi
   read -r -p $'Use this 2 factor code \e[7m(y/n)\e[0m? ' -e 2>&1
   REPLY=${REPLY,,} # tolower
   if [[ "${REPLY}" == 'y' ]]
