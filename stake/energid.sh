@@ -772,6 +772,7 @@ _setup_wallet_auto_pw () {
     ( crontab -l 2>/dev/null ; echo "${MINUTES} * * * * bash -ic 'source /var/multi-masternode-data/.bashrc; _masternode_dameon_2 \"${USRNAME}\" \"${CONTROLLER_BIN}\" \"\" \"${DAEMON_BIN}\" \"${CONF_FILE}\" \"\" \"-1\" \"-1\" unlock_wallet_for_staking 2>&1' 2>/dev/null" ) | crontab -
   fi
 
+  echo
   echo "waiting 30s for staking status to change after unlocking."
   sleep 30
 
