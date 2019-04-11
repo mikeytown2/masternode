@@ -111,6 +111,7 @@ _setup_two_factor() {
   then
     REPLY=''
     read -p "Review 2 factor authentication code for password SSH login (y/n)?: " -r
+    REPLY=${REPLY,,} # tolower
     if [[ "${REPLY}" == 'n' ]] || [[ -z "${REPLY}" ]]
     then
       return
@@ -472,8 +473,20 @@ _copy_wallet() {
     PS1=''
   fi
   stty sane 2>/dev/null
-
   rm "${HOME}/___mn.sh"
+
+  WALLET_BALANCE=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getbalance )
+  echo "Current wallet.dat balance: ${WALLET_BALANCE}"
+  if [[ "${WALLET_BALANCE}" != 0 ]]
+  then
+    REPLY=''
+    read -p "Do you want to replace this wallet.dat file (y/n)?: " -r
+    REPLY=${REPLY,,} # tolower
+    if [[ -z "${REPLY}" ]] || [[ "${REPLY}" == 'n' ]]
+    then
+      return
+    fi
+  fi
 
   echo
   echo
@@ -495,8 +508,6 @@ _copy_wallet() {
     then
       MD5_WALLET_BEFORE=$( md5sum "${CONF_DIR}/wallet.dat" )
       MD5_WALLET_AFTER="${MD5_WALLET_BEFORE}"
-      WALLET_BALANCE=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getbalance )
-      echo "Current wallet.dat balance: ${WALLET_BALANCE}"
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' disable
       while [[ "${MD5_WALLET_BEFORE}" == "${MD5_WALLET_AFTER}" ]]
       do
@@ -509,6 +520,7 @@ _copy_wallet() {
         then
           REPLY=''
           read -p "wallet.dat hasn't changed; try again (y/n)?: " -r
+          REPLY=${REPLY,,} # tolower
           if [[ "${REPLY}" != 'y' ]]
           then
             break
@@ -602,6 +614,7 @@ _copy_wallet() {
         echo "Unknown File."
         REPLY=''
         read -p "wallet.dat hasn't changed; try again (y/n)?: " -r
+        REPLY=${REPLY,,} # tolower
         if [[ "${REPLY}" != 'y' ]]
         then
           break
