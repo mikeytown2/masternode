@@ -33,20 +33,20 @@ then
   echo "Updating linux first."
   sleep 1
   echo "Running apt-get update."
-  sleep 1
+  sleep 2
   sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
   echo "Running apt-get upgrade."
-  sleep 1
+  sleep 2
   sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -yq
   echo "Running apt-get dist-upgrade."
-  sleep 1
+  sleep 2
   sudo DEBIAN_FRONTEND=noninteractive apt-get -yq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
 
   if [ ! -x "$( command -v unattended-upgrade )" ]
   then
-    echo "Running apt-get install unattended-upgrades."
+    echo "Running apt-get install unattended-upgrades php ufw."
     sleep 1
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq unattended-upgrades php-cli
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq unattended-upgrades php ufw
     if [ ! -f /etc/apt/apt.conf.d/20auto-upgrades ]
     then
       # Enable auto updating of Ubuntu security packages.
