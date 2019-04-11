@@ -46,7 +46,7 @@ then
   then
     echo "Running apt-get install unattended-upgrades."
     sleep 1
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq unattended-upgrades
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq unattended-upgrades php-cli
     if [ ! -f /etc/apt/apt.conf.d/20auto-upgrades ]
     then
       # Enable auto updating of Ubuntu security packages.
@@ -198,7 +198,7 @@ _setup_two_factor() {
   done
   if [[ "${OUTPUT}" -eq 1 ]]
   then
-    echo "Your emergency scratch codes are:"
+    echo "Your emergency scratch codes are (write these down in a safe place):"
     tail -n 10 "${HOME}/.google_authenticator" | awk '{print "  " $1 }'
   fi
   read -r -p $'Use this 2 factor code \e[7m(y/n)\e[0m? ' -e 2>&1
