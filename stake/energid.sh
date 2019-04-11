@@ -478,7 +478,7 @@ _copy_wallet() {
   echo
   echo
   WALLET_BALANCE=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getbalance )
-  echo "Current wallet.dat balance: ${WALLET_BALANCE}"
+  echo "Current wallet.dat balance on this VPS: ${WALLET_BALANCE}"
   if [[ "${WALLET_BALANCE}" != 0 ]]
   then
     REPLY=''
