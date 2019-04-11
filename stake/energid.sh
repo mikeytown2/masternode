@@ -804,6 +804,7 @@ _setup_wallet_auto_pw () {
   echo "Staking Status:"
   _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus
   echo
+  echo "Node info: ${USRNAME} ${CONF_FILE}"
   echo "Be sure to add this to your desktop wallet's conf file and restart it:"
   echo "staking=0"
   echo
