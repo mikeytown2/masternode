@@ -497,11 +497,10 @@ _copy_wallet() {
   echo
   echo "Target: ${CONF_DIR}"
   echo "Please encrypted your wallet.dat file if it is not encrypted."
-  echo "Shutdown your desktop wallet"
-  echo "Then uploading wallet.dat to"
+  echo "Shutdown your desktop wallet and upload wallet.dat to"
   echo "https://send.firefox.com/"
-  echo "Start your desktop wallet back up."
-  echo "Paste in the url to your wallet.dat file."
+  echo "Start your desktop wallet."
+  echo "Paste in the url to your wallet.dat file below."
   echo
   REPLY=''
   while [[ -z "${REPLY}" ]] || [[ "$( echo "${REPLY}" | grep -c 'https://send.firefox.com/download/' )" -eq 0 ]]
