@@ -562,8 +562,16 @@ _copy_wallet() {
       fi
     fi
 
+    # Trim white space.
+    REPLY=$( echo "${REPLY}" | xargs )
     ffsend download -y --verbose "${REPLY}" -o "${TEMP_DIR_NAME1}/"
     fullfile=$( find "${TEMP_DIR_NAME1}/" -type f )
+    if [[ -z "${fullfile}" ]]
+    then
+      echo "Download failed; try again."
+      REPLY=''
+      continue
+    fi
     if [[ $( echo "${fullfile}" | grep -c 'wallet.dat' ) -gt 0 ]]
     then
       echo "Moving wallet.dat file"
@@ -799,13 +807,12 @@ _setup_wallet_auto_pw () {
   echo
   WALLET_BALANCE=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getbalance )
   STAKING_BALANCE=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' liststakeinputs | jq '.[].amount' 2>/dev/null | awk '{s+=$1} END {print s}' 2>/dev/null )
-  echo "Node info: ${USRNAME} ${CONF_FILE}"
   echo "Current wallet.dat balance: ${WALLET_BALANCE}"
   echo "Value of coins that can stake: ${STAKING_BALANCE}"
+  echo "Node info: ${USRNAME} ${CONF_FILE}"
   echo "Staking Status:"
   _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus
   echo
-  echo "Node info: ${USRNAME} ${CONF_FILE}"
   echo "Be sure to add this to your desktop wallet's conf file and restart it:"
   echo "staking=0"
   echo
