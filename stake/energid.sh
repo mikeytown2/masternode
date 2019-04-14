@@ -508,16 +508,17 @@ _copy_wallet() {
     read -p "URL (leave blank do it manually (sftp/scp)): " -r
     if [[ -z "${REPLY}" ]]
     then
-      MD5_WALLET_BEFORE=$( md5sum "${CONF_DIR}/wallet.dat" )
+      MD5_WALLET_BEFORE=$( sudo md5sum "${CONF_DIR}/wallet.dat" )
       MD5_WALLET_AFTER="${MD5_WALLET_BEFORE}"
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' disable
+      _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' conf edit staking 1
       while [[ "${MD5_WALLET_BEFORE}" == "${MD5_WALLET_AFTER}" ]]
       do
         echo "Please Copy the wallet.dat file to ${CONF_DIR}/wallet.dat on your own"
         read -p "Press Enter Once Done: " -r
-        chown "${USRNAME}":"${USRNAME}" "${CONF_DIR}/wallet.dat"
-        chmod 600 "${CONF_DIR}/wallet.dat"
-        MD5_WALLET_AFTER=$( md5sum "${CONF_DIR}/wallet.dat" )
+        sudo chown "${USRNAME}":"${USRNAME}" "${CONF_DIR}/wallet.dat"
+        sudo chmod 600 "${CONF_DIR}/wallet.dat"
+        MD5_WALLET_AFTER=$( sudo md5sum "${CONF_DIR}/wallet.dat" )
         if [[ "${MD5_WALLET_BEFORE}" == "${MD5_WALLET_AFTER}" ]]
         then
           REPLY=''
@@ -529,15 +530,15 @@ _copy_wallet() {
           fi
         fi
       done
-      chown "${USRNAME}":"${USRNAME}" "${CONF_DIR}/wallet.dat"
-      chmod 600 "${CONF_DIR}/wallet.dat"
+      sudo chown "${USRNAME}":"${USRNAME}" "${CONF_DIR}/wallet.dat"
+      sudo chmod 600 "${CONF_DIR}/wallet.dat"
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' enable
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
 
       # See if wallet.dat can be opened.
       if [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' daemon_log tail 500 | grep -c "can't open database wallet.dat" ) -gt 0 ]]
       then
-        rm "${CONF_DIR}/wallet.dat"
+        sudo rm "${CONF_DIR}/wallet.dat"
         echo "Wallet was corrupted; try again. Wallet db version could also be different."
         REPLY=''
       else
@@ -576,18 +577,19 @@ _copy_wallet() {
     then
       echo "Moving wallet.dat file"
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' disable
-      mv "${CONF_DIR}/wallet.dat" "${CONF_DIR}/wallet.dat.bak"
-      mv "${fullfile}" "${CONF_DIR}/wallet.dat"
-      chown "${USRNAME}":"${USRNAME}" "${CONF_DIR}/wallet.dat"
-      chmod 600 "${CONF_DIR}/wallet.dat"
+      _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' conf edit staking 1
+      sudo mv "${CONF_DIR}/wallet.dat" "${CONF_DIR}/wallet.dat.bak"
+      sudo mv "${fullfile}" "${CONF_DIR}/wallet.dat"
+      sudo chown "${USRNAME}":"${USRNAME}" "${CONF_DIR}/wallet.dat"
+      sudo chmod 600 "${CONF_DIR}/wallet.dat"
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' enable
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
 
       # See if wallet.dat can be opened.
       if [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' daemon_log tail 500 | grep -c "can't open database wallet.dat" ) -gt 0 ]]
       then
-        rm "${CONF_DIR}/wallet.dat"
-        mv "${CONF_DIR}/wallet.dat.bak" "${CONF_DIR}/wallet.dat"
+        sudo rm "${CONF_DIR}/wallet.dat"
+        sudo mv "${CONF_DIR}/wallet.dat.bak" "${CONF_DIR}/wallet.dat"
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' enable
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
         echo "Wallet db version is different; try again using a dumpwallet file."
@@ -609,13 +611,16 @@ _copy_wallet() {
         echo "Importing wallet dump file (Please Wait)"
         BASENAME=$( basename "${fullfile}" )
         # Put labeled addreses at the top.
-        grep -i 'label=' "${fullfile}" > "${CONF_DIR}/${BASENAME}.txt"
-        grep -vi 'label=' "${fullfile}" >> "${CONF_DIR}/${BASENAME}.txt"
-        rm -f "${fullfile}"
+        grep -i 'label=' "${fullfile}" | sudo tee "${CONF_DIR}/${BASENAME}.txt" >/dev/null
+        grep -vi 'label=' "${fullfile}" | sudo tee -a "${CONF_DIR}/${BASENAME}.txt" >/dev/null
+        sudo rm -f "${fullfile}"
+        sudo chown "${USRNAME}":"${USRNAME}" "${CONF_DIR}/${BASENAME}.txt"
+        sudo chmod 600 "${CONF_DIR}/${BASENAME}.txt"
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' importwallet "${CONF_DIR}/${BASENAME}.txt"
-        rm -f "${CONF_DIR}/${BASENAME}.txt"
+        sudo rm -f "${CONF_DIR}/${BASENAME}.txt"
         echo "Restarting wallet to update wallet.dat balance; will take some time."
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' disable
+        _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' conf edit staking 1
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' start-recover
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' enable
