@@ -3,7 +3,7 @@
 # Run this file
 # bash -i <(curl -sL https://gist.githubusercontent.com/mikeytown2/0200ad1cc1a800f3907cc39253ee16c7/raw/pure-qt-v2-mac.sh)
 
-DATA_DIR='${DATA_DIR}'
+DATA_DIR='EnergiCore'
 QT_BIN_NAME='Energi-Qt'
 SNAPSHOT_HASH='gsaqiry3h1ho3nh'
 
