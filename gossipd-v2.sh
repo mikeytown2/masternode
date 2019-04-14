@@ -48,6 +48,7 @@ MULTI_IP_MODE=1
 TIPS='GKsx4Gf1ZJe6Zz42Bvn39H5WAb6uVPf71C'
 # Dropbox Addnodes.
 DROPBOX_ADDNODES='kd4sbp9pmxh7254'
+USE_DROPBOX_ADDNODES=0
 # Dropbox Bootstrap.
 DROPBOX_BOOTSTRAP='yb52x6zd5vv487y'
 # Dropbox blocks and chainstake folders.
