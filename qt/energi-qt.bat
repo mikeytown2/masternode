@@ -91,7 +91,7 @@ certutil.exe -urlcache -split -f "https://www.dropbox.com/s/ylxee784q71e7h5/wget
 
 @echo.
 @echo Please wait for the snapshot to download.
-"%ValueValue%\wget.exe" --no-check-certificate "https://www.dropbox.com/s/%BLK_HASH%/blocks_n_chains.tar.gz?dl=1"  -O "%ValueValue%\blocks_n_chains.tar.gz"
+"%ValueValue%\wget.exe" --no-check-certificate "https://www.dropbox.com/s/%BLK_HASH%/blocks_n_chains.tar.gz?dl=1" -O "%ValueValue%\blocks_n_chains.tar.gz"
 
 
 @echo Remove old files.
