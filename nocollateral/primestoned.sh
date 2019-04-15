@@ -23,7 +23,7 @@ TICKER='PSC'
 # Binary base name.
 BIN_BASE='primestone'
 # Directory.
-DIRECTORY='.primestonecore'
+DIRECTORY='.primestone'
 # Conf File.
 CONF='primestone.conf'
 # Port.
@@ -38,17 +38,17 @@ DAEMON_CYCLE=1
 MULTI_IP_MODE=3
 
 # Tip Address
-TIPS='Xj8CcwnY5f4RWsjiZefHRAhpcZJ5cDpY5v'
+TIPS=''
 # Dropbox Addnodes
-DROPBOX_ADDNODES='42vlxn4a55dx1rs'
+DROPBOX_ADDNODES=''
 # If set to 1 then use addnodes from dropbox.
 USE_DROPBOX_ADDNODES=1
 # Dropbox Bootstrap
-DROPBOX_BOOTSTRAP='rflmyplm6apsqzt'
+DROPBOX_BOOTSTRAP=''
 # If set to 1 then use bootstrap from dropbox.
 USE_DROPBOX_BOOTSTRAP=1
 # Dropbox blocks and chainstake folders.
-DROPBOX_BLOCKS_N_CHAINS='t1713s0c0ahwhvp'
+DROPBOX_BLOCKS_N_CHAINS=''
 
 ASCII_ART () {
 echo -e "\e[0m"
