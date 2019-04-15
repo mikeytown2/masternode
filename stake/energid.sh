@@ -734,7 +734,7 @@ _setup_wallet_auto_pw () {
   do
     unset PASSWORD
     unset CHARCOUNT
-    echo -n "Wallet password (leave blank to skip): "
+    echo -n "Uploaded wallet.dat password: "
     stty -echo
 
     CHARCOUNT=0
@@ -816,7 +816,7 @@ _setup_wallet_auto_pw () {
   echo "Value of coins that can stake: ${STAKING_BALANCE}"
   echo "Node info: ${USRNAME} ${CONF_FILE}"
   echo "Staking Status:"
-  _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus
+  _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus | grep -C 20 --color -E '^|.*false'
   echo
   echo "Be sure to add this to your desktop wallet's conf file and restart it:"
   echo "staking=0"
