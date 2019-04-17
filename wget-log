@@ -1,0 +1,11 @@
+--2019-04-16 01:44:08--  https://github.com/mogwaicoin?utf8=%E2%9C%93
+Resolving github.com (github.com)... 192.30.253.112, 192.30.253.113
+Connecting to github.com (github.com)|192.30.253.112|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: unspecified [text/html]
+Saving to: ‘mogwaicoin?utf8=✓’
+
+mogwaicoin?utf8=✓            [<=>                                ]       0  --.-KB/s               mogwaicoin?utf8=✓            [ <=>                               ]  90.48K   377KB/s               mogwaicoin?utf8=✓            [  <=>                              ] 105.75K   346KB/s    in 0.3s    
+
+2019-04-16 01:44:09 (346 KB/s) - ‘mogwaicoin?utf8=✓’ saved [108291]
+

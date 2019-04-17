@@ -1,7 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC2034
 
-# Copyright (c) 2018
+# Copyright (c) 2019
 # All rights reserved.
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
@@ -9,31 +9,33 @@
 # Run this file
 
 ```
-bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/mogwaid.sh)" ; source ~/.bashrc
+bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/gossipd-update.sh)" ; source ~/.bashrc
 ```
 
 '
 
 # Github user and project.
-GITHUB_REPO='mogwaicoin/mogwai'
+GITHUB_REPO='GOSSIPCOIN/gossip'
 # Display Name.
-DAEMON_NAME='Mogwai Core'
+DAEMON_NAME='GOSSIP Core'
 # Coin Ticker.
-TICKER='MOGW'
+TICKER='GOSS'
 # Binary base name.
-BIN_BASE='mogwai'
+BIN_BASE='gossip'
 # Directory.
-DIRECTORY='.mogwaicore'
+DIRECTORY='.gossip'
 # Conf File.
-CONF='mogwai.conf'
+CONF='gossip.conf'
 # Port.
-DEFAULT_PORT=17777
+DEFAULT_PORT=23677
 # Explorer URL.
-EXPLORER_URL='http://explorer.mogwaicoin.org/'
+EXPLORER_URL='https://explorer.gossipcoin.org/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 # Amount of Collateral needed.
-COLLATERAL=1000
+COLLATERAL=9999
+# Direct Daemon Download if github has no releases.
+DAEMON_DOWNLOAD='https://bitbucket.org/GOSSIPCOIN/gossip/downloads/gossip-2.1.0-x86_64-linux.tar.xz'
 # Blocktime in seconds.
 BLOCKTIME=60
 # Cycle Daemon on first start.
@@ -41,37 +43,28 @@ DAEMON_CYCLE=1
 # Multiple on single IP.
 MULTI_IP_MODE=1
 
-# Sentinel Info.
-SENTINEL_GITHUB='mogwaicoin/mogwai-sentinel'
-SENTINEL_CONF_START='mogwai_conf'
-
 
 # Tip Address.
-TIPS='MMSp6UvMo3PANhNgQEsFnbG9t1uLQ92dS1'
+TIPS='GKsx4Gf1ZJe6Zz42Bvn39H5WAb6uVPf71C'
 # Dropbox Addnodes.
-DROPBOX_ADDNODES='hhkf35ipkj1pdsn'
-# If set to 1 then use addnodes from dropbox.
-USE_DROPBOX_ADDNODES=1
+DROPBOX_ADDNODES='kd4sbp9pmxh7254'
+USE_DROPBOX_ADDNODES=0
 # Dropbox Bootstrap.
-DROPBOX_BOOTSTRAP='pgujhq1rlw3vzfr'
-# If set to 1 then use bootstrap from dropbox.
-USE_DROPBOX_BOOTSTRAP=1
+DROPBOX_BOOTSTRAP='yb52x6zd5vv487y'
 # Dropbox blocks and chainstake folders.
-DROPBOX_BLOCKS_N_CHAINS='rwtauj17q9opon7'
+DROPBOX_BLOCKS_N_CHAINS='0cnh2j519yf6v8a'
 
 ASCII_ART () {
 echo -e "\e[0m"
 clear 2> /dev/null
-cat << "MOGWAICOIN"
+cat << "GOSSIP"
+  ____  ___  ____ ____ ___ ____     ____
+ / ___|/ _ \/ ___/ ___|_ _|  _ \   / ___|___  _ __ ___
+| |  _| | | \___ \___ \| || |_) | | |   / _ \| '__/ _ \
+| |_| | |_| |___) |__) | ||  __/  | |__| (_) | | |  __/
+ \____|\___/|____/____/___|_|      \____\___/|_|  \___|
 
- __  __                           _    ____
-|  \/  | ___   __ ___      ____ _(_)  / ___|___  _ __ ___
-| |\/| |/ _ \ / _` \ \ /\ / / _` | | | |   / _ \| '__/ _ \
-| |  | | (_) | (_| |\ V  V / (_| | | | |__| (_) | | |  __/
-|_|  |_|\___/ \__, | \_/\_/ \__,_|_|  \____\___/|_|  \___|
-              |___/
-
-MOGWAICOIN
+GOSSIP
 }
 
 # Discord User Info
@@ -104,7 +97,8 @@ done
 # shellcheck disable=SC1091
 # shellcheck source=/root/___mn.sh
 . ~/___mn.sh
-DAEMON_SETUP_THREAD
+rm -rf /var/multi-masternode-data/GOSSIPCOIN_gossip/
+UPDATE_DAEMON_ADD_CRON "${BIN_BASE}" "${GITHUB_REPO}" "${CONF_FILE}" "${DAEMON_DOWNLOAD}" "${DIRECTORY}" "${DROPBOX_ADDNODES}" "${DROPBOX_BOOTSTRAP}" "${DROPBOX_BLOCKS_N_CHAINS}"
 )
 # shellcheck source=/root/.bashrc
 . ~/.bashrc
