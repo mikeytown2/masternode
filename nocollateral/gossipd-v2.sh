@@ -42,6 +42,8 @@ BLOCKTIME=60
 DAEMON_CYCLE=1
 # Multiple on single IP.
 MULTI_IP_MODE=1
+# Extra configuation for the conf file.
+EXTRA_CONFIG='maxconnections=125'
 
 
 # Tip Address.
