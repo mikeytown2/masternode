@@ -33,11 +33,11 @@ EXPLORER_URL='http://explorer.securecloudnet.org:3001/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 # Amount of Collateral needed.
-COLLATERAL=1200
+COLLATERAL=10000
 # Direct Daemon Download if github has no releases.
 DAEMON_DOWNLOAD=''
 # Blocktime in seconds.
-BLOCKTIME=60
+BLOCKTIME=90
 # Cycle Daemon on first start.
 DAEMON_CYCLE=1
 # Multiple on single IP.
