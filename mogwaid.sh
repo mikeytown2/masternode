@@ -39,12 +39,11 @@ BLOCKTIME=60
 # Cycle Daemon on first start.
 DAEMON_CYCLE=1
 # Multiple on single IP.
-MULTI_IP_MODE=1
+MULTI_IP_MODE=3
 
 # Sentinel Info.
 SENTINEL_GITHUB='mogwaicoin/mogwai-sentinel'
 SENTINEL_CONF_START='mogwai_conf'
-
 
 # Tip Address.
 TIPS='MMSp6UvMo3PANhNgQEsFnbG9t1uLQ92dS1'
