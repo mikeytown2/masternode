@@ -39,7 +39,7 @@ BLOCKTIME=60
 # Cycle Daemon on first start.
 DAEMON_CYCLE=1
 # Multiple on single IP.
-MULTI_IP_MODE=1
+MULTI_IP_MODE=3
 
 
 # Tip Address.
