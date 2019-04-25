@@ -29,7 +29,7 @@ CONF='logiscoin.conf'
 # Port.
 DEFAULT_PORT=48484
 # Explorer URL.
-EXPLORER_URL='http://explorer.logiscoin.cc/'
+EXPLORER_URL='http://explorer2.logiscoin.cc/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 # Amount of Collateral needed.
