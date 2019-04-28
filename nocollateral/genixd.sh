@@ -43,6 +43,10 @@ DAEMON_CYCLE=1
 # Multiple on single IP.
 MULTI_IP_MODE=3
 
+# Sentinel Info.
+SENTINEL_GITHUB='dashpay/sentinel'
+SENTINEL_CONF_START='dash_conf'
+
 
 # Tip Address.
 TIPS='GgHYefuMvDzFXiYGgAbpPDF3KZWnk2km3V'
