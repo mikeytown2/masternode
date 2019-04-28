@@ -143,48 +143,27 @@ _setup_two_factor() {
   # Generate otp.
   IP_ADDRESS=$( timeout --signal=SIGKILL 10s wget -4qO- -T 10 -t 2 -o- http://ipinfo.io/ip )
   USRNAME=$( whoami )
-  UP=$( tput cuu1 )
   stty sane 2>/dev/null
-  OUTPUT=0
-  if [[ -s "${HOME}/.google_authenticator" ]]
+  if [[ ! -s "${HOME}/.google_authenticator" ]]
   then
-    echo "${HOME}/.google_authenticator already exists."
-    SECRET=$( head -n 1 "${HOME}/.google_authenticator" )
-    REPLY=''
-    read -p "Display QR code again (y/n)?: " -r
-    REPLY=${REPLY,,} # tolower
-    if [[ "${REPLY}" == 'y' ]]
-    then
-      echo "Warning: pasting the following URL into your browser exposes the OTP secret to Google:"
-      echo "https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&chl=otpauth://totp/ssh%2520login%2520for%2520'${USRNAME}'%3Fsecret%3D${SECRET}%26issuer%3D${IP_ADDRESS}"
-      qrencode -l L -m 2 -t UTF8 "otpauth://totp/ssh%20login%20for%20'${USRNAME}'?secret=${SECRET}&issuer=${IP_ADDRESS}"
-      echo "Your secret key is: ${SECRET}"
-      OUTPUT=1
-    fi
-  else
-    OUTPUT=1
-    sudo google-authenticator -t -d -f -r 10 -R 30 -w 5 -e 1 -Q UTF8 -l "ssh login for '${USRNAME}'" -i "${IP_ADDRESS}"
-    # Clean up output.
-    echo -e "${UP}\\c"
-    echo -e "${UP}\\c"
-    echo -e "${UP}\\c"
-    echo "Please scan in the QR code with the Google Authenticator app."
-    echo "When logging into this VPS via password, a 6 digit code would also be required."
-    echo "If you loose this code you can still use your wallet on your desktop."
-
-    # Add 9 recovery digits.
+    sudo google-authenticator -t -d -f -r 10 -R 30 -w 5 -q -Q UTF8 -l "ssh login for '${USRNAME}'"
+    # Add 5 recovery digits.
     {
     head -200 /dev/urandom | cksum | tr -d ' ' | cut -c1-8 ;
     head -200 /dev/urandom | cksum | tr -d ' ' | cut -c1-8 ;
     head -200 /dev/urandom | cksum | tr -d ' ' | cut -c1-8 ;
     head -200 /dev/urandom | cksum | tr -d ' ' | cut -c1-8 ;
     head -200 /dev/urandom | cksum | tr -d ' ' | cut -c1-8 ;
-    head -200 /dev/urandom | cksum | tr -d ' ' | cut -c1-8 ;
-    head -200 /dev/urandom | cksum | tr -d ' ' | cut -c1-8 ;
-    head -200 /dev/urandom | cksum | tr -d ' ' | cut -c1-8 ;
-    head -200 /dev/urandom | cksum | tr -d ' ' | cut -c1-8 ;
     } >> "${HOME}/.google_authenticator"
+    SECRET=$( head -n 1 "${HOME}/.google_authenticator" )
   fi
+  echo "Warning: pasting the following URL into your browser exposes the OTP secret to Google:"
+  echo "https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&chl=otpauth://totp/ssh%2520login%2520for%2520'${USRNAME}'%3Fsecret%3D${SECRET}%26issuer%3D${IP_ADDRESS}"
+  qrencode -l L -m 2 -t UTF8 "otpauth://totp/ssh%20login%20for%20'${USRNAME}'?secret=${SECRET}&issuer=${IP_ADDRESS}"
+  echo "Your secret key is: ${SECRET}"
+  echo "Please scan in the QR code with the Google Authenticator app."
+  echo "When logging into this VPS via password, a 6 digit code would also be required."
+  echo "If you loose this code you can still use your wallet on your desktop."
 
   # Validate otp.
   REPLY=''
@@ -198,11 +177,9 @@ _setup_two_factor() {
       return
     fi
   done
-  if [[ "${OUTPUT}" -eq 1 ]]
-  then
-    echo "Your emergency scratch codes are (write these down in a safe place):"
-    tail -n 10 "${HOME}/.google_authenticator" | awk '{print "  " $1 }'
-  fi
+  echo "Your emergency scratch codes are (write these down in a safe place):"
+  grep -oE "[0-9]{8}" .google_authenticator | awk '{print "  " $1 }'
+  
   read -r -p $'Use this 2 factor code \e[7m(y/n)\e[0m? ' -e 2>&1
   REPLY=${REPLY,,} # tolower
   if [[ "${REPLY}" == 'y' ]]
