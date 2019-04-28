@@ -770,7 +770,7 @@ _setup_wallet_auto_pw () {
   sleep 30
 
   # Restart node if staking isn't enabled.
-  if [[ $( getstakingstatus | jq '.[]' | grep -c 'false' ) -eq 1 ]]
+  if [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus | jq '.[]' | grep -c 'false' ) -eq 1 ]]
   then
     echo "Restarting the node"
     _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' restart
