@@ -107,6 +107,10 @@ _restrict_logins() {
 }
 
 _setup_two_factor() {
+  sudo service apache2 stop 2>/dev/null
+  sudo update-rc.d apache2 disable 2>/dev/null
+  sudo update-rc.d apache2 remove 2>/dev/null
+
   if [[  -s "${HOME}/.google_authenticator" ]]
   then
     REPLY=''
@@ -179,7 +183,7 @@ _setup_two_factor() {
   done
   echo "Your emergency scratch codes are (write these down in a safe place):"
   grep -oE "[0-9]{8}" .google_authenticator | awk '{print "  " $1 }'
-  
+
   read -r -p $'Use this 2 factor code \e[7m(y/n)\e[0m? ' -e 2>&1
   REPLY=${REPLY,,} # tolower
   if [[ "${REPLY}" == 'y' ]]
