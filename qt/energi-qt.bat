@@ -1,14 +1,16 @@
 @echo OFF
 
+cd %userprofile%
 setlocal ENABLEEXTENSIONS
 set "DATA_DIR=EnergiCore"
+set "REG_DIR=Energi"
 set "EXE_NAME=energi-qt.exe"
 set "DATA_CONF=energi.conf"
 set "BLK_HASH=gsaqiry3h1ho3nh"
 set "DEFAULT_EXE_LOCATION=%ProgramFiles%\EnergiCore\energi-qt.exe"
 
-set "KEY_NAME=HKEY_CURRENT_USER\Software\%DATA_DIR%\%DATA_DIR%-QT"
-set "KEY_NAME_64=HKEY_CURRENT_USER\SOFTWARE\Wow6432Node\%DATA_DIR%\%DATA_DIR%-QT"
+set "KEY_NAME=HKEY_CURRENT_USER\Software\%REG_DIR%\%REG_DIR%-QT"
+set "KEY_NAME_64=HKEY_CURRENT_USER\SOFTWARE\Wow6432Node\%REG_DIR%\%REG_DIR%-QT"
 set "VALUE_NAME=strDataDir"
 set "ValueValue=%userprofile%\AppData\Roaming\%DATA_DIR%"
 
