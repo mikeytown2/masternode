@@ -5,6 +5,7 @@ set "DATA_DIR=EnergiCore"
 set "EXE_NAME=energi-qt.exe"
 set "DATA_CONF=energi.conf"
 set "BLK_HASH=gsaqiry3h1ho3nh"
+set "DEFAULT_EXE_LOCATION=%ProgramFiles%\EnergiCore\energi-qt.exe"
 
 set "KEY_NAME=HKEY_CURRENT_USER\Software\%DATA_DIR%\%DATA_DIR%-QT"
 set "KEY_NAME_64=HKEY_CURRENT_USER\SOFTWARE\Wow6432Node\%DATA_DIR%\%DATA_DIR%-QT"
@@ -153,5 +154,11 @@ del "%ValueValue%\libssl32.dll"
 cd "%mycwd%"
 
 @echo Starting %DATA_DIR% 
-start "" "%wallet%"
+if [%wallet%] == [] ( 
+  @echo "%DEFAULT_EXE_LOCATION%"
+  start "" "%DEFAULT_EXE_LOCATION%"
+) else (
+  @echo "%wallet%"
+  start "" "%wallet%"
+)
 pause
