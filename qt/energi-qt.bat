@@ -6,11 +6,35 @@ set "EXE_NAME=energi-qt.exe"
 set "DATA_CONF=energi.conf"
 set "BLK_HASH=gsaqiry3h1ho3nh"
 
-
 set "KEY_NAME=HKEY_CURRENT_USER\Software\%DATA_DIR%\%DATA_DIR%-QT"
 set "KEY_NAME_64=HKEY_CURRENT_USER\SOFTWARE\Wow6432Node\%DATA_DIR%\%DATA_DIR%-QT"
 set "VALUE_NAME=strDataDir"
 set "ValueValue=%userprofile%\AppData\Roaming\%DATA_DIR%"
+
+:: BatchGotAdmin
+:-------------------------------------
+REM  --> Check for permissions
+>nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
+
+REM --> If error flag set, we do not have admin.
+if '%errorlevel%' NEQ '0' (
+    echo Requesting administrative privileges...
+    goto UACPrompt
+) else ( goto gotAdmin )
+
+:UACPrompt
+    echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs"
+    set params = %*:"=""
+    echo UAC.ShellExecute "cmd.exe", "/c %~s0 %params%", "", "runas", 1 >> "%temp%\getadmin.vbs"
+
+    "%temp%\getadmin.vbs"
+    del "%temp%\getadmin.vbs"
+    exit /B
+
+:gotAdmin
+    pushd "%CD%"
+    CD /D "%~dp0"
+:--------------------------------------
 
 if Not exist "%ValueValue%\" (
   @echo Checking registry for %DATA_DIR%.
