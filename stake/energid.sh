@@ -715,6 +715,7 @@ _setup_wallet_auto_pw () {
 
   while [[ "${WALLET_UNLOCKED}" != 'true' ]]
   do
+    rm -f "${HOME}/.pwd/${DATADIR_FILENAME}" 2>/dev/null
     unset PASSWORD
     unset CHARCOUNT
     echo -n "Uploaded wallet.dat password: "
