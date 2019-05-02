@@ -589,8 +589,7 @@ _copy_wallet() {
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
         if [[ -f "${HOME}/.pwd/${DATADIR_FILENAME}" ]]
         then
-          WALLET_PASSWORD=$( head -n 1 "${HOME}/.pwd/${DATADIR_FILENAME}" )
-          _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' walletpassphrase "${WALLET_PASSWORD}" 999 false
+          _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' unlock_wallet_for_staking
         fi
         echo "Importing wallet dump file (Please Wait)"
         BASENAME=$( basename "${fullfile}" )
@@ -748,16 +747,15 @@ _setup_wallet_auto_pw () {
     done
     stty echo
 
-    _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' walletpassphrase "${PASSWORD}" 9999999999 true
+    touch "${HOME}/.pwd/${DATADIR_FILENAME}"
+    chmod 600 "${HOME}/.pwd/${DATADIR_FILENAME}"
+    echo "${PASSWORD}" > "${HOME}/.pwd/${DATADIR_FILENAME}"
+
+    _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' unlock_wallet_for_staking
 
     sleep 0.5
     WALLET_UNLOCKED=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus | jq '.walletunlocked' )
-    if [[ "${WALLET_UNLOCKED}" == 'true' ]]
-    then
-      touch "${HOME}/.pwd/${DATADIR_FILENAME}"
-      chmod 600 "${HOME}/.pwd/${DATADIR_FILENAME}"
-      echo "${PASSWORD}" > "${HOME}/.pwd/${DATADIR_FILENAME}"
-    fi
+
   done
   unset PASSWORD
   unset CHARCOUNT
