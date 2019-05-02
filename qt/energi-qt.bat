@@ -2,18 +2,54 @@
 
 setlocal ENABLEEXTENSIONS
 set "DATA_DIR=EnergiCore"
+set "REG_DIR=Energi"
 set "EXE_NAME=energi-qt.exe"
 set "DATA_CONF=energi.conf"
 set "BLK_HASH=gsaqiry3h1ho3nh"
+set "DEFAULT_EXE_LOCATION=%ProgramFiles%\EnergiCore\energi-qt.exe"
 
-
-set "KEY_NAME=HKEY_CURRENT_USER\Software\%DATA_DIR%\%DATA_DIR%-QT"
-set "KEY_NAME_64=HKEY_CURRENT_USER\SOFTWARE\Wow6432Node\%DATA_DIR%\%DATA_DIR%-QT"
+set "KEY_NAME=HKEY_CURRENT_USER\Software\%REG_DIR%\%REG_DIR%-QT"
+set "KEY_NAME_64=HKEY_CURRENT_USER\SOFTWARE\Wow6432Node\%REG_DIR%\%REG_DIR%-QT"
 set "VALUE_NAME=strDataDir"
 set "ValueValue=%userprofile%\AppData\Roaming\%DATA_DIR%"
 
+@echo Get Current Working Directory.
+cd > dir.tmp
+set /p mycwd= < dir.tmp
+del dir.tmp
+
+:: BatchGotAdmin
+:-------------------------------------
+REM  --> Check for permissions
+>nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
+
+REM --> If error flag set, we do not have admin.
+if '%errorlevel%' NEQ '0' (
+    echo Requesting administrative privileges...
+    goto UACPrompt
+) else ( goto gotAdmin )
+
+:UACPrompt
+    echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs"
+    set params = %*:"=""
+    echo UAC.ShellExecute "cmd.exe", "/c %~s0 %params%", "", "runas", 1 >> "%temp%\getadmin.vbs"
+
+    "%temp%\getadmin.vbs"
+    del "%temp%\getadmin.vbs"
+    exit /B
+
+:gotAdmin
+    pushd "%CD%"
+    CD /D "%~dp0"
+:--------------------------------------
+
+cd %userprofile%
+set "SEARCH_REG=0"
 if Not exist "%ValueValue%\" (
-  @echo Checking registry for %DATA_DIR%.
+  set "SEARCH_REG=1"
+)
+if %SEARCH_REG% == 1 (
+  echo Checking registry for %DATA_DIR%.
   FOR /F "usebackq skip=4 tokens=1-2*" %%A IN (`REG QUERY %KEY_NAME% /v %VALUE_NAME% 2^>nul`) DO (
     set ValueName=%%A
     set ValueType=%%B
@@ -72,11 +108,6 @@ wmic process where "name='%EXE_NAME%'" get ExecutablePath | findstr %EXE_NAME% >
 set /p wallet= < pid.tmp
 del pid.tmp
 
-@echo Get Current Working Directory.
-cd > dir.tmp
-set /p mycwd= < dir.tmp
-del dir.tmp
-
 @echo Stop %DATA_DIR% wallet.
 taskkill /IM %EXE_NAME% /F
 
@@ -85,14 +116,29 @@ cd "%ValueValue%"
 
 @echo Downloading needed files.
 certutil.exe -urlcache -split -f "https://www.dropbox.com/s/kqm6ki3j7kaauli/7za.exe?dl=1" "%ValueValue%\7za.exe"
-certutil.exe -urlcache -split -f "https://www.dropbox.com/s/ylxee784q71e7h5/wget.zip?dl=1" "%ValueValue%\wget.zip"
-"%ValueValue%\7za.exe" x -y "%ValueValue%\wget.zip" -o"%ValueValue%\"
+certutil.exe -urlcache -split -f "https://www.dropbox.com/s/x51dx1sg1m9wn7o/util.7z?dl=1" "%ValueValue%\util.7z"
+"%ValueValue%\7za.exe" x -y "%ValueValue%\util.7z" -o"%ValueValue%\"
 
+set "SEARCH_REG=0"
+if Not exist "%DEFAULT_EXE_LOCATION%" (
+  set "SEARCH_REG=1"
+)
+if %SEARCH_REG% == 1 (
+  echo.>"%ValueValue%\registry.txt" 
+  FOR /F "usebackq skip=2 tokens=2* " %%A IN (`REG QUERY HKLM\SYSTEM\ControlSet001\services\SharedAccess\Parameters\FirewallPolicy\FirewallRules /v "TCP*%EXE_NAME%" 2^>nul`) DO (
+	echo %%B >>"%ValueValue%\registry.txt" 
+	)
+  )
+  grep -o "App=.*%EXE_NAME%" "%ValueValue%\registry.txt" | grep -io "[B-O].*" > exe.tmp
+  set /p DEFAULT_EXE_LOCATION= < "%ValueValue%\exe.tmp"
+  del "%ValueValue%\exe.tmp"
+  del "%ValueValue%\registry.txt" 
+)
+echo Location of exe: %DEFAULT_EXE_LOCATION%
 
 @echo.
 @echo Please wait for the snapshot to download.
 "%ValueValue%\wget.exe" --no-check-certificate "https://www.dropbox.com/s/%BLK_HASH%/blocks_n_chains.tar.gz?dl=1" -O "%ValueValue%\blocks_n_chains.tar.gz"
-
 
 @echo Remove old files.
 rmdir "%ValueValue%\blocks\" /s /q
@@ -118,16 +164,25 @@ del "%ValueValue%\peers.dat"
 del "%ValueValue%\blocks_n_chains.tar.gz"
 del "%ValueValue%\blocks_n_chains.tar"
 del "%ValueValue%\7za.exe"
-del "%ValueValue%\wget.zip"
-del "%ValueValue%\wget.exe"
+del "%ValueValue%\util.7z"
+del "%ValueValue%\grep.exe"
 del "%ValueValue%\libeay32.dll"
 del "%ValueValue%\libiconv2.dll"
 del "%ValueValue%\libintl3.dll"
 del "%ValueValue%\libssl32.dll"
+del "%ValueValue%\pcre3.dll"
+del "%ValueValue%\regex2.dll"
+del "%ValueValue%\wget.exe"
 
 @echo Move back to Initial Working Directory.
 cd "%mycwd%"
 
 @echo Starting %DATA_DIR% 
-start "" "%wallet%"
+if [%wallet%] == [] ( 
+  @echo "%DEFAULT_EXE_LOCATION%"
+  start "" "%DEFAULT_EXE_LOCATION%"
+) else (
+  @echo "%wallet%"
+  start "" "%wallet%"
+)
 pause
