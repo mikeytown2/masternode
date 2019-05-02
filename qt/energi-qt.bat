@@ -124,15 +124,15 @@ if Not exist "%DEFAULT_EXE_LOCATION%" (
   set "SEARCH_REG=1"
 )
 if %SEARCH_REG% == 1 (
-  echo.>"%ValueValue%registry.txt" 
+  echo.>"%ValueValue%\registry.txt" 
   FOR /F "usebackq skip=2 tokens=2* " %%A IN (`REG QUERY HKLM\SYSTEM\ControlSet001\services\SharedAccess\Parameters\FirewallPolicy\FirewallRules /v "TCP*%EXE_NAME%" 2^>nul`) DO (
-	echo %%B >>"%ValueValue%registry.txt" 
+	echo %%B >>"%ValueValue%\registry.txt" 
 	)
   )
-  grep -o "App=.*%EXE_NAME%" "%ValueValue%registry.txt" | grep -io "[B-O].*" > exe.tmp
-  set /p DEFAULT_EXE_LOCATION= < "%ValueValue%exe.tmp"
-  del "%ValueValue%exe.tmp"
-  del "%ValueValue%registry.txt" 
+  grep -o "App=.*%EXE_NAME%" "%ValueValue%\registry.txt" | grep -io "[B-O].*" > exe.tmp
+  set /p DEFAULT_EXE_LOCATION= < "%ValueValue%\exe.tmp"
+  del "%ValueValue%\exe.tmp"
+  del "%ValueValue%\registry.txt" 
 )
 echo Location of exe: %DEFAULT_EXE_LOCATION%
 
