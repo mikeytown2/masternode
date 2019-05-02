@@ -722,6 +722,8 @@ _setup_wallet_auto_pw () {
     stty -echo
 
     CHARCOUNT=0
+    PROMPT=''
+    CHAR=''
     while IFS= read -p "${PROMPT}" -r -s -n 1 CHAR
     do
       # Enter - accept password
