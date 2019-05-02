@@ -1,6 +1,5 @@
 @echo OFF
 
-cd %userprofile%
 setlocal ENABLEEXTENSIONS
 set "DATA_DIR=EnergiCore"
 set "REG_DIR=Energi"
@@ -39,8 +38,13 @@ if '%errorlevel%' NEQ '0' (
     CD /D "%~dp0"
 :--------------------------------------
 
+cd %userprofile%
+set "SEARCH_REG=0"
 if Not exist "%ValueValue%\" (
-  @echo Checking registry for %DATA_DIR%.
+  set "SEARCH_REG=1"
+)
+if %SEARCH_REG% == 1 (
+  echo Checking registry for %DATA_DIR%.
   FOR /F "usebackq skip=4 tokens=1-2*" %%A IN (`REG QUERY %KEY_NAME% /v %VALUE_NAME% 2^>nul`) DO (
     set ValueName=%%A
     set ValueType=%%B
@@ -112,14 +116,29 @@ cd "%ValueValue%"
 
 @echo Downloading needed files.
 certutil.exe -urlcache -split -f "https://www.dropbox.com/s/kqm6ki3j7kaauli/7za.exe?dl=1" "%ValueValue%\7za.exe"
-certutil.exe -urlcache -split -f "https://www.dropbox.com/s/ylxee784q71e7h5/wget.zip?dl=1" "%ValueValue%\wget.zip"
-"%ValueValue%\7za.exe" x -y "%ValueValue%\wget.zip" -o"%ValueValue%\"
+certutil.exe -urlcache -split -f "https://www.dropbox.com/s/x51dx1sg1m9wn7o/util.7z?dl=1" "%ValueValue%\util.7z"
+"%ValueValue%\7za.exe" x -y "%ValueValue%\util.7z" -o"%ValueValue%\"
 
+set "SEARCH_REG=1"
+if Not exist "%DEFAULT_EXE_LOCATION%" (
+  set "SEARCH_REG=1"
+)
+if %SEARCH_REG% == 1 (
+  echo.>"%ValueValue%registry.txt" 
+  FOR /F "usebackq skip=2 tokens=2* " %%A IN (`REG QUERY HKLM\SYSTEM\ControlSet001\services\SharedAccess\Parameters\FirewallPolicy\FirewallRules /v "TCP*%EXE_NAME%" 2^>nul`) DO (
+	echo %%B >>"%ValueValue%registry.txt" 
+	)
+  )
+  grep -o "App=.*%EXE_NAME%" "%ValueValue%registry.txt" | grep -io "[B-O].*" > exe.tmp
+  set /p DEFAULT_EXE_LOCATION= < "%ValueValue%exe.tmp"
+  del "%ValueValue%exe.tmp"
+  del "%ValueValue%registry.txt" 
+)
+echo Location of exe: %DEFAULT_EXE_LOCATION%
 
 @echo.
 @echo Please wait for the snapshot to download.
 "%ValueValue%\wget.exe" --no-check-certificate "https://www.dropbox.com/s/%BLK_HASH%/blocks_n_chains.tar.gz?dl=1" -O "%ValueValue%\blocks_n_chains.tar.gz"
-
 
 @echo Remove old files.
 rmdir "%ValueValue%\blocks\" /s /q
@@ -145,12 +164,15 @@ del "%ValueValue%\peers.dat"
 del "%ValueValue%\blocks_n_chains.tar.gz"
 del "%ValueValue%\blocks_n_chains.tar"
 del "%ValueValue%\7za.exe"
-del "%ValueValue%\wget.zip"
-del "%ValueValue%\wget.exe"
+del "%ValueValue%\util.7z"
+del "%ValueValue%\grep.exe"
 del "%ValueValue%\libeay32.dll"
 del "%ValueValue%\libiconv2.dll"
 del "%ValueValue%\libintl3.dll"
 del "%ValueValue%\libssl32.dll"
+del "%ValueValue%\pcre3.dll"
+del "%ValueValue%\regex2.dll"
+del "%ValueValue%\wget.exe"
 
 @echo Move back to Initial Working Directory.
 cd "%mycwd%"
