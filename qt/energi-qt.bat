@@ -13,6 +13,11 @@ set "KEY_NAME_64=HKEY_CURRENT_USER\SOFTWARE\Wow6432Node\%REG_DIR%\%REG_DIR%-QT"
 set "VALUE_NAME=strDataDir"
 set "ValueValue=%userprofile%\AppData\Roaming\%DATA_DIR%"
 
+@echo Get Current Working Directory.
+cd > dir.tmp
+set /p mycwd= < dir.tmp
+del dir.tmp
+
 :: BatchGotAdmin
 :-------------------------------------
 REM  --> Check for permissions
@@ -102,11 +107,6 @@ REM )
 wmic process where "name='%EXE_NAME%'" get ExecutablePath | findstr %EXE_NAME% > pid.tmp
 set /p wallet= < pid.tmp
 del pid.tmp
-
-@echo Get Current Working Directory.
-cd > dir.tmp
-set /p mycwd= < dir.tmp
-del dir.tmp
 
 @echo Stop %DATA_DIR% wallet.
 taskkill /IM %EXE_NAME% /F
