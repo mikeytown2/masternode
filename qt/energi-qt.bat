@@ -119,7 +119,7 @@ certutil.exe -urlcache -split -f "https://www.dropbox.com/s/kqm6ki3j7kaauli/7za.
 certutil.exe -urlcache -split -f "https://www.dropbox.com/s/x51dx1sg1m9wn7o/util.7z?dl=1" "%ValueValue%\util.7z"
 "%ValueValue%\7za.exe" x -y "%ValueValue%\util.7z" -o"%ValueValue%\"
 
-set "SEARCH_REG=1"
+set "SEARCH_REG=0"
 if Not exist "%DEFAULT_EXE_LOCATION%" (
   set "SEARCH_REG=1"
 )
