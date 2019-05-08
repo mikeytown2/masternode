@@ -104,12 +104,27 @@ REM if %errorlevel% neq 0 (
 REM )
 
 @echo Get %DATA_DIR% process Part 2.
-wmic process where "name='%EXE_NAME%'" get ExecutablePath | findstr %EXE_NAME% > pid.tmp
-set /p wallet= < pid.tmp
-del pid.tmp
+wmic process where "name='%EXE_NAME%'" get ExecutablePath | findstr %EXE_NAME% > "%ValueValue%\pid.tmp"
+set /p wallet= < "%ValueValue%\pid.tmp"
+del "%ValueValue%\pid.tmp"
 
-@echo Stop %DATA_DIR% wallet.
-taskkill /IM %EXE_NAME% /F
+if ["%wallet%"] NEQ [""] (
+  echo.>"%ValueValue%\pid.txt" 
+  del "%ValueValue%\pid.txt" 
+  for /F "skip=1" %%A in (
+    'wmic process where "name='%EXE_NAME%'" get ProcessID'
+  ) do (
+    echo %%A >> "%ValueValue%\pid.txt"
+  )
+)
+
+set /p walletpid= <"%ValueValue%\pid.txt"
+if exist "%ValueValue%\pid.txt" (
+  del "%ValueValue%\pid.txt" 
+  @echo Stop %DATA_DIR% wallet.
+  @echo "taskkill /PID %walletpid% /F"
+  taskkill /PID %walletpid% /F
+)
 
 @echo Going to the %DATA_DIR% folder.
 cd "%ValueValue%"
@@ -178,11 +193,11 @@ del "%ValueValue%\wget.exe"
 cd "%mycwd%"
 
 @echo Starting %DATA_DIR% 
-if [%wallet%] == [] ( 
-  @echo "%DEFAULT_EXE_LOCATION%"
-  start "" "%DEFAULT_EXE_LOCATION%"
+if ["%wallet%"] == [""] ( 
+  start "" "%DEFAULT_EXE_LOCATION%" 
+  echo Running %DEFAULT_EXE_LOCATION%
 ) else (
-  @echo "%wallet%"
   start "" "%wallet%"
+  echo Running %wallet%
 )
 pause
