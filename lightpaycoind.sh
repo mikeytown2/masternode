@@ -43,7 +43,8 @@ DAEMON_CYCLE=1
 # Multiple on single IP.
 MULTI_IP_MODE=1
 IPV6=1
-
+# Use addnode and not connect.
+USE_CONNECT=0
 
 # Tip Address.
 TIPS='LrRkDTmZNsns9UZjTx5q37eBatJwwFCXRp'
