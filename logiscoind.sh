@@ -42,6 +42,8 @@ BLOCKTIME=60
 DAEMON_CYCLE=1
 # Multiple on single IP.
 MULTI_IP_MODE=1
+# Use addnode and not connect.
+USE_CONNECT=0
 
 
 # Tip Address.
