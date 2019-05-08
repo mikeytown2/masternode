@@ -109,8 +109,6 @@ set /p wallet= < "%ValueValue%\pid.tmp"
 del "%ValueValue%\pid.tmp"
 
 if ["%wallet%"] NEQ [""] (
-  echo.>"%ValueValue%\pid.txt" 
-  del "%ValueValue%\pid.txt" 
   for /F "skip=1" %%A in (
     'wmic process where "name='%EXE_NAME%'" get ProcessID'
   ) do (
