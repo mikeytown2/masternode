@@ -1,7 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC2034
 
-# Copyright (c) 2018
+# Copyright (c) 2019
 # All rights reserved.
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
@@ -15,7 +15,7 @@ bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/maste
 '
 
 # Github user and project.
-GITHUB_REPO='pawsfund/PAWS-Core'
+GITHUB_REPO='pawsfund/paws-core'
 # Display Name.
 DAEMON_NAME='PAWS Core'
 # Coin Ticker.
@@ -32,8 +32,6 @@ DEFAULT_PORT=34120
 EXPLORER_URL='http://chain.paws.fund/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
-EXPLORER_RAWTRANSACTION_PATH='api/tx/'
-EXPLORER_RAWTRANSACTION_PATH_SUFFIX=' '
 # Amount of Collateral needed.
 COLLATERAL=1000
 # Direct Daemon Download if github has no releases.
@@ -47,15 +45,11 @@ MULTI_IP_MODE=1
 
 
 # Tip Address.
-TIPS='PQJrSP2UG5c3y3s4EQZZMHgjrabPkUEBEx'
+TIPS='PU2f8BXWP3ZsqFLMQGQNaPqPU2Z3h6zS1M'
 # Dropbox Addnodes.
 DROPBOX_ADDNODES='7chyge8x6426548'
-# If set to 1 then use addnodes from dropbox.
-USE_DROPBOX_ADDNODES=1
 # Dropbox Bootstrap.
 DROPBOX_BOOTSTRAP='x2ezbttx9l72r0t'
-# If set to 1 then use bootstrap from dropbox.
-USE_DROPBOX_BOOTSTRAP=1
 # Dropbox blocks and chainstake folders.
 DROPBOX_BLOCKS_N_CHAINS='1o0nep91ngmpf4j'
 
@@ -63,8 +57,8 @@ ASCII_ART () {
 echo -e "\e[0m"
 clear 2> /dev/null
 cat << "PAWS"
- ____   ___        ______     ____
-|  _ \ / \ \      / / ___|   / ___|___  _ __ ___
+ ____   ___        ______     ____               
+|  _ \ / \ \      / / ___|   / ___|___  _ __ ___ 
 | |_) / _ \ \ /\ / /\___ \  | |   / _ \| '__/ _ \
 |  __/ ___ \ V  V /  ___) | | |__| (_) | | |  __/
 |_| /_/   \_\_/\_/  |____/   \____\___/|_|  \___|
@@ -82,8 +76,8 @@ while [[ ! -f ~/___mn.sh ]] || [[ $( grep -Fxc "# End of masternode setup script
 do
   rm -f ~/___mn.sh
   echo "Downloading Masternode Setup Script."
-  wget -4qo- gist.githack.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O ~/___mn.sh
-  COUNTER=$(( COUNTER + 1 ))
+  wget -4qo- gist.githubusercontent.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O ~/___mn.sh
+  COUNTER=1
   if [[ "${COUNTER}" -gt 3 ]]
   then
     echo
