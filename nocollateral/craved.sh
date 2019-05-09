@@ -32,30 +32,17 @@ DEFAULT_PORT=48882
 EXPLORER_URL='http://explorer.craveproject.net/'
 # Amount of Collateral needed.
 COLLATERAL=5000
-# Cycle Daemon on first start.
-DAEMON_CYCLE=1
-
-# Tip Address
-TIPS='VQpV3agw3LwhNJeZpuQFidWGwao2PKLPLz'
-# Dropbox Addnodes
-DROPBOX_ADDNODES='4dcu0mwtl4c10vq'
-# If set to 1 then use addnodes from dropbox.
-USE_DROPBOX_ADDNODES=1
-# Dropbox Bootstrap
-DROPBOX_BOOTSTRAP='two26u19dz1wm8i'
-# If set to 1 then use bootstrap from dropbox.
-USE_DROPBOX_BOOTSTRAP=1
-# Dropbox blocks and chainstake folders.
-DROPBOX_BLOCKS_N_CHAINS='ix72th3bwmrsotk'
-
 # Multiple on single IP.
 MULTI_IP_MODE=1
-# Mini Monitor check masternode list.
-MINI_MONITOR_MN_LIST=1
-# Mini Monitor Status to check for.
-MINI_MONITOR_MN_STATUS='4'
-# Mini Monitor masternode count is a json string.
-MINI_MONITOR_MN_COUNT_JSON=1
+
+# Tip Address
+TIPS='VU3k5kEM1KCgFN9bB2CeTbXEDMxtCnQsCp'
+# Dropbox Addnodes
+DROPBOX_ADDNODES='5sb6ldfihlky2e7'
+# Dropbox Bootstrap
+DROPBOX_BOOTSTRAP='th3h5s16acnq67w'
+# Dropbox blocks and chainstake folders.
+DROPBOX_BLOCKS_N_CHAINS='bpi8b92cetqy8lr'
 
 ASCII_ART () {
 echo -e "\e[0m"
