@@ -46,7 +46,7 @@ fi
 # Fallback Blockcount
 BLOCKCOUNT_FALLBACK_VALUE=59000
 # Multiple on single IP.
-MULTI_IP_MODE=3
+MULTI_IP_MODE=1
 # Can use IPv6.
 IPV6=1
 
