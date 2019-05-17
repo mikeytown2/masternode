@@ -29,7 +29,7 @@ CONF='atheneum.conf'
 # Port.
 DEFAULT_PORT=22000
 # Explorer URL.
-EXPLORER_URL='http://explorer.atheneumchain.io/'
+EXPLORER_URL='https://www.coinexplorer.net/api/v1/AEM/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 # Amount of Collateral needed.
