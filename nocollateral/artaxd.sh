@@ -44,7 +44,7 @@ BLOCKTIME=60
 DAEMON_CYCLE=1
 # Multiple on single IP.
 MULTI_IP_MODE=1
-MASTERNODE_CALLER='merchantnode'
+MASTERNODE_CALLER='merchantnode '
 MASTERNODE_PREFIX='mn'
 
 
