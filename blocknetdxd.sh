@@ -34,7 +34,7 @@ EXPLORER_URL='https://block.ccore.online/'
 COLLATERAL=5000
 # Cycle Daemon on first start.
 DAEMON_CYCLE=1
-MASTERNODE_CALLER='servicenode'
+MASTERNODE_CALLER='servicenode '
 MASTERNODE_PREFIX='sn'
 
 # Tip Address
