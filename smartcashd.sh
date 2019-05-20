@@ -22,7 +22,7 @@ EXPLORER_URL='https://smart.ccore.online/'
 EXPLORER_SLEEP=1
 # Fallback Blockcount
 BLOCKCOUNT_FALLBACK_VALUE=726000
-MASTERNODE_CALLER='smartnode'
+MASTERNODE_CALLER='smartnode '
 MASTERNODE_PREFIX='sn'
 DAEMON_PREFIX='smrt_sn'
 
