@@ -32,30 +32,19 @@ DEFAULT_PORT=19871
 EXPLORER_URL='http://explorer.quotcoin.com/'
 # Amount of Collateral needed.
 COLLATERAL=5000
-# Cycle Daemon on first start.
-DAEMON_CYCLE=1
+# Multiple on single IP.
+MULTI_IP_MODE=1
+
 
 # Tip Address
 TIPS='QTUfZ9pwka1nBigvVFnnwc59XG1YmoupPJ'
 # Dropbox Addnodes
-DROPBOX_ADDNODES='91ed0jtyosqgekl'
-# If set to 1 then use addnodes from dropbox.
-USE_DROPBOX_ADDNODES=1
+DROPBOX_ADDNODES='i5r3x3xb2la4gv4'
 # Dropbox Bootstrap
-DROPBOX_BOOTSTRAP='kp1b62y5pe2f0xj'
-# If set to 1 then use bootstrap from dropbox.
-USE_DROPBOX_BOOTSTRAP=1
+DROPBOX_BOOTSTRAP='f3zdo679zotqxoh'
 # Dropbox blocks and chainstake folders.
-DROPBOX_BLOCKS_N_CHAINS='1bqw4zkret3mzex'
+DROPBOX_BLOCKS_N_CHAINS='fcujtw76kvd42hc'
 
-# Multiple on single IP.
-MULTI_IP_MODE=1
-# Mini Monitor check masternode list.
-MINI_MONITOR_MN_LIST=1
-# Mini Monitor Status to check for.
-MINI_MONITOR_MN_STATUS='4'
-# Mini Monitor masternode count is a json string.
-MINI_MONITOR_MN_COUNT_JSON=1
 
 ASCII_ART () {
 echo -e "\e[0m"
