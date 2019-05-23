@@ -33,7 +33,7 @@ EXPLORER_URL='http://explorer.craveproject.net/'
 # Amount of Collateral needed.
 COLLATERAL=5000
 # Multiple on single IP.
-MULTI_IP_MODE=1
+MULTI_IP_MODE=0
 
 # Tip Address
 TIPS='VU3k5kEM1KCgFN9bB2CeTbXEDMxtCnQsCp'
