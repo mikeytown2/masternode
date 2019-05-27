@@ -750,6 +750,7 @@ _setup_wallet_auto_pw () {
     done
     stty echo
 
+    echo
     touch "${HOME}/.pwd/${DATADIR_FILENAME}"
     chmod 600 "${HOME}/.pwd/${DATADIR_FILENAME}"
     echo "${PASSWORD}" > "${HOME}/.pwd/${DATADIR_FILENAME}"
