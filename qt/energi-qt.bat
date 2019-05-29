@@ -118,8 +118,9 @@ if ["%wallet%"] NEQ [""] (
 
 set /p walletpid= <"%ValueValue%\pid.txt"
 if exist "%ValueValue%\pid.txt" (
-  del "%ValueValue%\pid.txt" 
+  del "%ValueValue%\pid.txt"
   @echo Stop %DATA_DIR% wallet.
+  TIMEOUT /T 3
   @echo "taskkill /PID %walletpid% /F"
   taskkill /PID %walletpid% /F
 )
@@ -128,6 +129,7 @@ if exist "%ValueValue%\pid.txt" (
 cd "%ValueValue%"
 
 @echo Downloading needed files.
+TIMEOUT /T 3
 certutil.exe -urlcache -split -f "https://www.dropbox.com/s/kqm6ki3j7kaauli/7za.exe?dl=1" "%ValueValue%\7za.exe"
 certutil.exe -urlcache -split -f "https://www.dropbox.com/s/x51dx1sg1m9wn7o/util.7z?dl=1" "%ValueValue%\util.7z"
 "%ValueValue%\7za.exe" x -y "%ValueValue%\util.7z" -o"%ValueValue%\"
@@ -137,15 +139,15 @@ if Not exist "%DEFAULT_EXE_LOCATION%" (
   set "SEARCH_REG=1"
 )
 if %SEARCH_REG% == 1 (
-  echo.>"%ValueValue%\registry.txt" 
+  echo.>"%ValueValue%\registry.txt"
   FOR /F "usebackq skip=2 tokens=2* " %%A IN (`REG QUERY HKLM\SYSTEM\ControlSet001\services\SharedAccess\Parameters\FirewallPolicy\FirewallRules /v "TCP*%EXE_NAME%" 2^>nul`) DO (
-	echo %%B >>"%ValueValue%\registry.txt" 
+	echo %%B >>"%ValueValue%\registry.txt"
 	)
   )
   grep -o "App=.*%EXE_NAME%" "%ValueValue%\registry.txt" | grep -io "[B-O].*" > exe.tmp
   set /p DEFAULT_EXE_LOCATION= < "%ValueValue%\exe.tmp"
   del "%ValueValue%\exe.tmp"
-  del "%ValueValue%\registry.txt" 
+  del "%ValueValue%\registry.txt"
 )
 echo Location of exe: %DEFAULT_EXE_LOCATION%
 
@@ -154,6 +156,7 @@ echo Location of exe: %DEFAULT_EXE_LOCATION%
 "%ValueValue%\wget.exe" --no-check-certificate "https://www.dropbox.com/s/%BLK_HASH%/blocks_n_chains.tar.gz?dl=1" -O "%ValueValue%\blocks_n_chains.tar.gz"
 
 @echo Remove old files.
+TIMEOUT /T 3
 rmdir "%ValueValue%\blocks\" /s /q
 rmdir "%ValueValue%\chainstate\" /s /q
 rmdir "%ValueValue%\database\" /s /q
@@ -174,6 +177,7 @@ del "%ValueValue%\peers.dat"
 "%ValueValue%\7za.exe" x -y "%ValueValue%\blocks_n_chains.tar" -o"%ValueValue%\"
 
 @echo Cleanup extra files.
+TIMEOUT /T 3
 del "%ValueValue%\blocks_n_chains.tar.gz"
 del "%ValueValue%\blocks_n_chains.tar"
 del "%ValueValue%\7za.exe"
@@ -190,9 +194,9 @@ del "%ValueValue%\wget.exe"
 @echo Move back to Initial Working Directory.
 cd "%mycwd%"
 
-@echo Starting %DATA_DIR% 
-if ["%wallet%"] == [""] ( 
-  start "" "%DEFAULT_EXE_LOCATION%" 
+@echo Starting %DATA_DIR%
+if ["%wallet%"] == [""] (
+  start "" "%DEFAULT_EXE_LOCATION%"
   echo Running %DEFAULT_EXE_LOCATION%
 ) else (
   start "" "%wallet%"

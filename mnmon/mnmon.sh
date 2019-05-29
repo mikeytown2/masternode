@@ -103,6 +103,20 @@ PAYLOAD
   sleep 0.3
 }
 
+TELEGRAM_SEND () {
+  TOKEN=''
+  GET_UPDATES=$( curl "https://api.telegram.org/bot${TOKEN}/getUpdates" 2>/dev/null )
+  IS_OK=$( echo "${GET_UPDATES}" | jq '.ok' )
+  echo "${IS_OK}"
+  if [[ "${IS_OK}" == 'true' ]]
+    CHAT_ID=$( echo "${GET_UPDATES}" | jq '.result[0].message.chat.id' )
+
+  MESSAGE="Hello World"
+  URL="https://api.telegram.org/bot$TOKEN/sendMessage"
+  curl -s -X POST "${URL}" -d "chat_id=${CHAT_ID}" -d "text=${MESSAGE}"
+}
+TELEGRAM_SEND
+
 WEBHOOK_SEND_ERROR () {
   URL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Error';" )
   DESCRIPTION="${1}"
@@ -229,14 +243,25 @@ WEBHOOK_URL_PROMPT () {
 
 if [[ "${arg1}" != 'cron' ]]
 then
-    read -p "Redo webhook URLs (y/n)? " -r
-    echo
-    REPLY=${REPLY,,} # tolower
-    if [[ "${REPLY}" == y ]]
-    then
-      return 1 2>/dev/null
-    fi
+  echo
+  PREFIX='Setup'
+  WEBHOOKURL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Error';" )
+  if [[ ! -z "${WEBHOOKURL}" ]]
+  then
+    PREFIX='Redo'
+  fi
+  read -p "Redo webhook URLs (y/n)? " -r
+  echo
+  REPLY=${REPLY,,} # tolower
+  if [[ "${REPLY}" == y ]]
+  then
+    return 1 2>/dev/null
+  fi
 
+  GET_DISCORD_WEBHOOKS
+fi
+
+GET_DISCORD_WEBHOOKS () {
   WEBHOOKURL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Error';" )
   if [[ -z "${WEBHOOKURL}" ]] || [[ "${REPLY}" == y ]]
   then
@@ -271,7 +296,7 @@ then
     WEBHOOK_URL_PROMPT "Success" "${WEBHOOKURL}"
     WEBHOOK_SEND_SUCCESS "Test"
   fi
-fi
+}
 
 GET_LATEST_LOGINS () {
   while read -r DATE_1 DATE_2 DATE_3 LINE
@@ -286,9 +311,9 @@ GET_LATEST_LOGINS () {
     INFO=$( grep -B 20 -F "${DATE_1} ${DATE_2} ${DATE_3} ${LINE}" /var/log/auth.log | grep -v 'CRON\|preauth\|Invalid user\|user unknown\|Failed[[:space:]]password\|authentication[[:space:]]failure\|refused[[:space:]]connect\|ignoring[[:space:]]max\|not[[:space:]]receive[[:space:]]identification\|[[:space:]]sudo\|[[:space:]]su\|Bad[[:space:]]protocol' | grep 'port' | grep -oE '\]\: .*' | cut -c 4- )
 
     ERRORS=$( WEBHOOK_SEND_INFO "${INFO}" ":unlock: User logged in" )
-    echo "${ERRORS}"
     if [[ -z "${ERRORS}" ]]
     then
+      echo "${ERRORS}"
       SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','ssh_login','${INFO}');"
     fi
   done <<< "$( grep ' systemd-logind'  /var/log/auth.log | grep 'New' )"
@@ -322,9 +347,9 @@ CHECK_DISK () {
   then
     UNIX_TIME=$( date -u +%s )
     ERRORS=$( WEBHOOK_SEND_WARNING ":floppy_disk: ${MESSAGE} :floppy_disk:" )
-    echo "${ERRORS}"
     if [[ -z "${ERRORS}" ]]
     then
+      echo "${ERRORS}"
       SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','disk_space','${MESSAGE}');"
     fi
   fi
@@ -347,18 +372,18 @@ CHECK_CPU_LOAD () {
   if [[ $( echo "${LOAD_PER_CPU} > 4" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
   then
     ERRORS=$( WEBHOOK_SEND_ERROR ":desktop: :fire:  CPU LOAD is over 4: ${LOAD_PER_CPU} :fire: :desktop: " )
-    echo "${ERRORS}"
     if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
     then
+      echo "${ERRORS}"
       SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','CPU LOAD is over 2');"
     fi
   fi
   if ([[ $( echo "${LOAD_PER_CPU} > 2" | bc ) -gt 0 ]] && [[ $( echo "${LOAD_PER_CPU} <= 4" | bc ) -gt 0 ]]) || [[ "${arg1}" == 'test' ]]
   then
     ERRORS=$( WEBHOOK_SEND_WARNING ":desktop: CPU LOAD is over 2: ${LOAD_PER_CPU} :desktop: " )
-    echo "${ERRORS}"
     if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
     then
+      echo "${ERRORS}"
       SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','CPU LOAD is over 2');"
     fi
   fi
@@ -379,18 +404,18 @@ CHECK_SWAP () {
   if [[ $( echo "${SWAP_FREE_MB} < 512" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
   then
     ERRORS=$( WEBHOOK_SEND_ERROR ":desktop: :fire: Swap is under 512 MB: ${SWAP_FREE_MB} :fire: :desktop: " )
-    echo "${ERRORS}"
     if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
     then
+      echo "${ERRORS}"
       SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','Swap is under 512 MB');"
     fi
   fi
   if ([[ $( echo "${SWAP_FREE_MB} >= 512" | bc ) -gt 0 ]] && [[ $( echo "${SWAP_FREE_MB} < 1024" | bc ) -gt 0 ]]) || [[ "${arg1}" == 'test' ]]
   then
     ERRORS=$( WEBHOOK_SEND_WARNING ":desktop: Swap is under 1024 MB: ${SWAP_FREE_MB} :desktop: " )
-    echo "${ERRORS}"
     if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
     then
+      echo "${ERRORS}"
       SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','Swap is under 1024 MB');"
     fi
   fi
@@ -413,18 +438,18 @@ CHECK_RAM () {
   if [[ $( echo "${MEM_AVAILABLE_MB} < 256" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
   then
     ERRORS=$( WEBHOOK_SEND_ERROR ":desktop: :fire: Free RAM is under 256 MB: ${MEM_AVAILABLE_MB} :fire: :desktop: " )
-    echo "${ERRORS}"
     if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
     then
+      echo "${ERRORS}"
       SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','Free RAM is under 256 MB');"
     fi
   fi
   if ([[ $( echo "${MEM_AVAILABLE_MB} >= 256" | bc ) -gt 0 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 512" | bc ) -gt 0 ]]) || [[ "${arg1}" == 'test' ]]
   then
     ERRORS=$( WEBHOOK_SEND_WARNING ":desktop: Free RAM is under 512 MB: ${MEM_AVAILABLE_MB} :desktop: " )
-    echo "${ERRORS}"
     if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
     then
+      echo "${ERRORS}"
       SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','Free RAM is under 512 MB');"
     fi
   fi
