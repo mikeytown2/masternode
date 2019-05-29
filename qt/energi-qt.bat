@@ -130,8 +130,10 @@ cd "%ValueValue%"
 
 @echo Downloading needed files.
 TIMEOUT /T 3
-certutil.exe -urlcache -split -f "https://www.dropbox.com/s/kqm6ki3j7kaauli/7za.exe?dl=1" "%ValueValue%\7za.exe"
-certutil.exe -urlcache -split -f "https://www.dropbox.com/s/x51dx1sg1m9wn7o/util.7z?dl=1" "%ValueValue%\util.7z"
+del "%ValueValue%\7za.exe"
+del "%ValueValue%\util.7z"
+bitsadmin /TRANSFER DL7zip /download /PRIORITY HIGH "https://www.dropbox.com/s/kqm6ki3j7kaauli/7za.exe?dl=1" "%ValueValue%\7za.exe"
+bitsadmin /TRANSFER DLutil /download /PRIORITY HIGH "https://www.dropbox.com/s/x51dx1sg1m9wn7o/util.7z?dl=1" "%ValueValue%\util.7z"
 "%ValueValue%\7za.exe" x -y "%ValueValue%\util.7z" -o"%ValueValue%\"
 
 set "SEARCH_REG=0"
