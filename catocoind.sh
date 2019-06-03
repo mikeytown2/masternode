@@ -40,6 +40,15 @@ EXPLORER_URL='http://explorer.catocoin.info/'
 COLLATERAL='25000
 50000
 100000'
+COLLATERAL_ALT=$( timeout 5s wget -4qO- -T 3 -t 2 -o- "${EXPLORER_URL}api/getinfo" )
+if [[ ! -z "${COLLATERAL_ALT}" ]]
+then
+  COLLATERAL_ALT=$( echo "${COLLATERAL_ALT}" | grep -io 'Tier [0-9] collateral":\s*[0-9]*' | cut -d ':' -f2 | sed 's/ //g' |  sed 's/,//g' | grep -v 9999999 )
+  if [[ ! -z "${COLLATERAL_ALT}" ]]
+  then
+    COLLATERAL="${COLLATERAL_ALT}"
+  fi
+fi
 # Coin Ticker
 TICKER='CATO'
 # Multiple on single IP.
