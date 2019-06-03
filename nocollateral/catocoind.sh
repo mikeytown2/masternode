@@ -31,73 +31,39 @@ DAEMON_NAME='CatoCoin'
 # Github user and project.
 GITHUB_REPO='CatoCoin/CatoCoin'
 # Direct Daemon Download if github has no releases.
-DAEMON_DOWNLOAD='https://github.com/CatoCoin/releases/raw/master/cato-linux.tar.gz'
+DAEMON_DOWNLOAD='https://github.com/CatoCoin/releases/raw/master/catocoin-linux-binaries.tar.gz'
 # Binary base name.
 BIN_BASE='catocoin'
-# Username Prefix
-DAEMON_PREFIX='cato_mn'
-# RPC username
-RPC_USERNAME='catocoin'
-# Explorer URL
-EXPLORER_URL='http://explorer.catocoin.info/'
-# Log filename
-DAEMON_SETUP_LOG='/tmp/cato.log'
-# Masternode output file.
-DAEMON_SETUP_INFO="${HOME}/cato.mn.txt"
-# Project Folder
-PROJECT_DIR='CatoCoin'
-# Amount of Collateral needed
-COLLATERAL=$(wget -4qO- -o- "${EXPLORER_URL}/api/getinfo" | grep 'MN collateral' | cut -d ':' -f2 | sed 's/ //g' |  sed 's/,//g')
 # Coin Ticker
 TICKER='CATO'
+# Explorer URL
+EXPLORER_URL='http://explorer.catocoin.info/'
+# Amount of Collateral needed
+COLLATERAL='25000
+50000
+100000'
+COLLATERAL_ALT=$( timeout 5s wget -4qO- -T 3 -t 2 -o- "${EXPLORER_URL}api/getinfo" )
+if [[ ! -z "${COLLATERAL_ALT}" ]]
+then
+  COLLATERAL_ALT=$( echo "${COLLATERAL_ALT}" | grep -io 'Tier [0-9] collateral":\s*[0-9]*' | cut -d ':' -f2 | sed 's/ //g' |  sed 's/,//g' | grep -v 9999999 )
+  if [[ ! -z "${COLLATERAL_ALT}" ]]
+  then
+    COLLATERAL="${COLLATERAL_ALT}"
+  fi
+fi
+
+# Multiple on single IP.
+MULTI_IP_MODE=1
+
 # Tip Address
 TIPS='CbExC5RLwSghSNEq8pwDtiTS32Ngr8qquw'
 # Dropbox Addnodes
 DROPBOX_ADDNODES='8ejwde780f45q6u'
-# If set to 1 then use addnodes from dropbox.
-USE_DROPBOX_ADDNODES=1
 # Dropbox Bootstrap
 DROPBOX_BOOTSTRAP='0qk6sxfx02eyi76'
-# If set to 1 then use bootstrap from dropbox.
-USE_DROPBOX_BOOTSTRAP=1
 # Dropbox blocks and chainstake folders.
 DROPBOX_BLOCKS_N_CHAINS='8gd968uig7skwb4'
-# Cycle Daemon
-DAEMON_CYCLE=0
-# Fallback Blockcount
-BLOCKCOUNT_FALLBACK_VALUE=130000
-# Slow Daemon Start.
-SLOW_DAEMON_START=0
-# Bad Explorer SSL.
-BAD_SSL_HACK=''
-# Extra configuation for the conf file.
-EXTRA_CONFIG=''
-# Auto Recovery.
-RESTART_IN_SYNC=1
-# Multiple on single IP.
-MULTI_IP_MODE=1
-# Number of Connections to wait for.
-DAEMON_CONNECTIONS=4
-# Wait for MNSYNC
-#MNSYNC_WAIT_FOR='"RequestedMasternodeAssets": 999,'
-MNSYNC_WAIT_FOR=''
-# Run Mini Monitor.
-MINI_MONITOR_RUN=1
-# Mini Monitor check masternode list.
-MINI_MONITOR_MN_LIST=1
-# Mini Monitor Status to check for.
-MINI_MONITOR_MN_STATUS='4'
-# Mini Monitor Queue Payouts.
-MINI_MONITOR_MN_QUEUE=1
-# Mini Monitor masternode count is a json string.
-MINI_MONITOR_MN_COUNT_JSON=1
 
-# Log to a file.
-rm -f "${DAEMON_SETUP_LOG}"
-touch "${DAEMON_SETUP_LOG}"
-chmod 600 "${DAEMON_SETUP_LOG}"
-exec >  >(tee -ia "${DAEMON_SETUP_LOG}")
-exec 2> >(tee -ia "${DAEMON_SETUP_LOG}" >&2)
 
 ASCII_ART () {
 echo -e "\\e[0m"
@@ -110,10 +76,6 @@ cat << "CATOCOIN"
 
 
 CATOCOIN
-}
-
-SENTINEL_SETUP () {
-  echo
 }
 
 # Discord User Info

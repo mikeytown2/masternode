@@ -34,6 +34,8 @@ GITHUB_REPO='CatoCoin/CatoCoin'
 DAEMON_DOWNLOAD='https://github.com/CatoCoin/releases/raw/master/catocoin-linux-binaries.tar.gz'
 # Binary base name.
 BIN_BASE='catocoin'
+# Coin Ticker
+TICKER='CATO'
 # Explorer URL
 EXPLORER_URL='http://explorer.catocoin.info/'
 # Amount of Collateral needed
@@ -49,8 +51,7 @@ then
     COLLATERAL="${COLLATERAL_ALT}"
   fi
 fi
-# Coin Ticker
-TICKER='CATO'
+
 # Multiple on single IP.
 MULTI_IP_MODE=1
 
