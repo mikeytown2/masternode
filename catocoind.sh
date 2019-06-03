@@ -31,7 +31,7 @@ DAEMON_NAME='CatoCoin'
 # Github user and project.
 GITHUB_REPO='CatoCoin/CatoCoin'
 # Direct Daemon Download if github has no releases.
-DAEMON_DOWNLOAD='https://github.com/CatoCoin/releases/raw/master/cato-linux.tar.gz'
+DAEMON_DOWNLOAD='https://github.com/CatoCoin/releases/raw/master/catocoin-linux-binaries.tar.gz'
 # Binary base name.
 BIN_BASE='catocoin'
 # Explorer URL
