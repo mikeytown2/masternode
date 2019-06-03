@@ -43,8 +43,8 @@ DAEMON_CYCLE=0
 SLOW_DAEMON_START=0
 # Multiple on single IP.
 MULTI_IP_MODE=1
-# Daemon segfaults when adding masternodeprivkey to conf.
-MN_KEY_SEGV=1
+# Direct Daemon Download if github has no releases.
+DAEMON_DOWNLOAD=''
 
 
 # Tip Address
