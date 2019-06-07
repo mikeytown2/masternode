@@ -478,13 +478,17 @@ _copy_wallet() {
   echo "This script uses https://send.firefox.com/ to transfer files from your"
   echo "desktop computer onto the vps. You can read more about the service here"
   echo "https://en.wikipedia.org/wiki/Firefox_Send"
+  sleep 5
   echo
   echo "Target: ${CONF_DIR}"
   echo "Please encrypted your wallet.dat file if it is not encrypted."
+  sleep 2
   echo "Shutdown your desktop wallet and upload wallet.dat to"
   echo "https://send.firefox.com/"
+  sleep 2
   echo "Start your desktop wallet."
   echo "Paste in the url to your wallet.dat file below."
+  sleep 2
   echo
   REPLY=''
   while [[ -z "${REPLY}" ]] || [[ "$( echo "${REPLY}" | grep -c 'https://send.firefox.com/download/' )" -eq 0 ]]
