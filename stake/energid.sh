@@ -309,7 +309,7 @@ _get_node_info() {
   # Get info the hard way.
   if [[ -z "${CONF_FILE}" ]] || [[ -z "${DAEMON_BIN}" ]] || [[ -z "${CONTROLLER_BIN}" ]]
   then
-    LSLOCKS_OUTPUT=$( sudo lslocks | grep -oE ".*/blocks" | sed 's/blocks$//g' )
+    LSLOCKS_OUTPUT=$( sudo lslocks -o COMMAND,PID,PATH | grep -oE ".*/blocks" | sed 's/blocks$//g' )
     if [[ -z "${LSLOCKS_OUTPUT}" ]]
     then
       if [[ ! -z "${DAEMON_BIN}" ]]
@@ -328,7 +328,7 @@ _get_node_info() {
       return
     fi
 
-    RUNNING_NODES=$( echo "${LSLOCKS_OUTPUT}" | awk '{print $1 " " $9 }' )
+    RUNNING_NODES=$( echo "${LSLOCKS_OUTPUT}" | awk '{print $1 " " $3 }' )
     # Filter if daemon bin given.
     if [[ ! -z "${DAEMON_BIN}" ]]
     then
