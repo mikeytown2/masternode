@@ -15,7 +15,7 @@ bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/maste
 '
 
 # Github user and project.
-GITHUB_REPO='Hser2bio/Reex'
+GITHUB_REPO='reecore-coin/Reex'
 # Display Name.
 DAEMON_NAME='ReeCore'
 # Coin Ticker.

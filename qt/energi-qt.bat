@@ -18,31 +18,6 @@ cd > dir.tmp
 set /p mycwd= < dir.tmp
 del dir.tmp
 
-:: BatchGotAdmin
-:-------------------------------------
-REM  --> Check for permissions
->nul 2>&1 "%SYSTEMROOT%\system32\cacls.exe" "%SYSTEMROOT%\system32\config\system"
-
-REM --> If error flag set, we do not have admin.
-if '%errorlevel%' NEQ '0' (
-    echo Requesting administrative privileges...
-    goto UACPrompt
-) else ( goto gotAdmin )
-
-:UACPrompt
-    echo Set UAC = CreateObject^("Shell.Application"^) > "%temp%\getadmin.vbs"
-    set params = %*:"=""
-    echo UAC.ShellExecute "cmd.exe", "/c %~s0 %params%", "", "runas", 1 >> "%temp%\getadmin.vbs"
-
-    "%temp%\getadmin.vbs"
-    del "%temp%\getadmin.vbs"
-    exit /B
-
-:gotAdmin
-    pushd "%CD%"
-    CD /D "%~dp0"
-:--------------------------------------
-
 cd %userprofile%
 set "SEARCH_REG=0"
 if Not exist "%ValueValue%\" (
@@ -129,9 +104,9 @@ if exist "%ValueValue%\pid.txt" (
 cd "%ValueValue%"
 
 @echo Downloading needed files.
-TIMEOUT /T 3
 del "%ValueValue%\7za.exe"
 del "%ValueValue%\util.7z"
+TIMEOUT /T 9
 bitsadmin /TRANSFER DL7zipAndUtil /DOWNLOAD /PRIORITY FOREGROUND "https://www.dropbox.com/s/kqm6ki3j7kaauli/7za.exe?dl=1" "%ValueValue%\7za.exe"  "https://www.dropbox.com/s/x51dx1sg1m9wn7o/util.7z?dl=1" "%ValueValue%\util.7z"
 "%ValueValue%\7za.exe" x -y "%ValueValue%\util.7z" -o"%ValueValue%\"
 
