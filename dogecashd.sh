@@ -32,6 +32,7 @@ DEFAULT_PORT=56740
 EXPLORER_URL='https://api.dogec.io/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
+EXPLORER_PEERS='api/peer'
 # Amount of Collateral needed.
 COLLATERAL=5000
 # Direct Daemon Download if github has no releases.
@@ -52,6 +53,7 @@ MASTERNODE_LIST='listmasternodes'
 TIPS='DTu1fh3F6ujvEoZsqMtFZ31VFJzfkBeUpf'
 # Dropbox Addnodes.
 DROPBOX_ADDNODES='huhjg1oed7ea327'
+USE_DROPBOX_ADDNODES=0
 # Dropbox Bootstrap.
 DROPBOX_BOOTSTRAP='o98kammywogf2dn'
 # Dropbox blocks and chainstake folders.
