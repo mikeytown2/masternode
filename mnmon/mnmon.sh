@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [[ -f /var/multi-masternode-data/.bashrc ]]
+then
+  # shellcheck disable=SC1091
+  source /var/multi-masternode-data/.bashrc
+fi
+
 WEBHOOK_USERNAME_DEFAULT='Masternode Monitor'
 WEBHOOK_AVATAR_DEFAULT='https://i.imgur.com/8WHSSa7s.jpg'
 
@@ -24,6 +30,12 @@ SQL_QUERY () {
 SQL_QUERY "CREATE TABLE IF NOT EXISTS webhook_urls (
  type TEXT PRIMARY KEY,
  url TEXT NOT NULL
+);"
+
+SQL_QUERY "CREATE TABLE IF NOT EXISTS telegram_token (
+ type TEXT PRIMARY KEY,
+ token TEXT NOT NULL,
+ chatid TEXT NOT NULL
 );"
 
 SQL_QUERY "CREATE TABLE IF NOT EXISTS events_log (
@@ -104,25 +116,75 @@ PAYLOAD
 }
 
 TELEGRAM_SEND () {
-  TOKEN=''
-  GET_UPDATES=$( curl "https://api.telegram.org/bot${TOKEN}/getUpdates" 2>/dev/null )
-  IS_OK=$( echo "${GET_UPDATES}" | jq '.ok' )
-  echo "${IS_OK}"
-  if [[ "${IS_OK}" == 'true' ]]
-    CHAT_ID=$( echo "${GET_UPDATES}" | jq '.result[0].message.chat.id' )
+  TOKEN="${1}"
+  CHAT_ID="${2}"
+  MESSAGE="${3}"
 
-  MESSAGE="Hello World"
   URL="https://api.telegram.org/bot$TOKEN/sendMessage"
   curl -s -X POST "${URL}" -d "chat_id=${CHAT_ID}" -d "text=${MESSAGE}"
+  sleep 0.3
 }
-TELEGRAM_SEND
 
-WEBHOOK_SEND_ERROR () {
+TELEGRAM_SETUP () {
+  TOKEN=$( SQL_QUERY "SELECT token FROM telegram_token WHERE type = 'All';" )
+  if [[ -z "${TOKEN}" ]]
+  then
+    echo "@botfather https://telegram.me/botfather with the following text: /newbot"
+    echo "Then paste in the token below"
+    echo
+    read -r
+    TOKEN="${REPLY}"
+  fi
+
+  CHAT_ID=$( SQL_QUERY "SELECT chatid FROM telegram_token WHERE type = 'All';" )
+  if [[ -z "${CHAT_ID}" ]]
+  then
+    while :
+    do
+      GET_UPDATES=$( curl "https://api.telegram.org/bot${TOKEN}/getUpdates" 2>/dev/null )
+      IS_OK=$( echo "${GET_UPDATES}" | jq '.ok' )
+      if [[ "${IS_OK}" != 'true' ]]
+      then
+        echo "Please message the bot."
+        read -p "When done press enter or q to quit." -r
+        REPLY=${REPLY,,} # tolower
+        if [[ "${REPLY}" == q ]]
+        then
+          return 1 2>/dev/null
+        fi
+        sleep 1
+      else
+        break
+      fi
+    done
+
+    while :
+    do
+      GET_UPDATES=$( curl "https://api.telegram.org/bot${TOKEN}/getUpdates" 2>/dev/null )
+      CHAT_ID=$( echo "${GET_UPDATES}" | jq '.result[0].message.chat.id' 2>/dev/null )
+      if [[ -z "${CHAT_ID}" ]]
+      then
+        echo "Please message the bot."
+      else
+        SQL_QUERY "REPLACE INTO telegram_token (type,token,chatid) VALUES ('All','${TOKEN}','${CHAT_ID}');"
+        break
+      fi
+    done
+  fi
+
+  MESSAGE="Bot Works!"
+  TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${MESSAGE}"
+}
+
+SEND_ERROR () {
   URL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Error';" )
+  TOKEN=$( SQL_QUERY "SELECT token FROM telegram_token WHERE type = 'All';" )
+  CHAT_ID=$( SQL_QUERY "SELECT chatid FROM telegram_token WHERE type = 'All';" )
+
   DESCRIPTION="${1}"
   if [[ -z "${DESCRIPTION}" ]]
   then
-    DESCRIPTION="Error!"
+    DESCRIPTION="Default Error Message!"
   fi
   TITLE="${2}"
   if [[ -z "${TITLE}" ]]
@@ -138,15 +200,30 @@ WEBHOOK_SEND_ERROR () {
   then
     URL="${6}"
   fi
-  WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${WEBHOOK_COLOR}"
+
+  if [[ ! -z "${URL}" ]]
+  then
+    WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${WEBHOOK_COLOR}"
+  fi
+  if [[ ! -z "${TOKEN}" ]] && [[ ! -z "${CHAT_ID}" ]]
+  then
+    MESSAGE="${TITLE}
+${DESCRIPTION}"
+    # https://apps.timwhitlock.info/emoji/tables/unicode
+    # :exclamation: \xE2\x9D\x97 %E2%9D%97
+    TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${MESSAGE}"
+  fi
 }
 
-WEBHOOK_SEND_WARNING () {
+SEND_WARNING () {
   URL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Warning';" )
+  TOKEN=$( SQL_QUERY "SELECT token FROM telegram_token WHERE type = 'All';" )
+  CHAT_ID=$( SQL_QUERY "SELECT chatid FROM telegram_token WHERE type = 'All';" )
+
   DESCRIPTION="${1}"
   if [[ -z "${DESCRIPTION}" ]]
   then
-    DESCRIPTION="Warning."
+    DESCRIPTION="Default Warning Message."
   fi
   TITLE="${2}"
   if [[ -z "${TITLE}" ]]
@@ -162,15 +239,28 @@ WEBHOOK_SEND_WARNING () {
   then
     URL="${6}"
   fi
-  WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${WEBHOOK_COLOR}"
+
+  if [[ ! -z "${URL}" ]]
+  then
+    WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${WEBHOOK_COLOR}"
+  fi
+  if [[ ! -z "${TOKEN}" ]] && [[ ! -z "${CHAT_ID}" ]]
+  then
+    MESSAGE="${TITLE}
+${DESCRIPTION}"
+    TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${MESSAGE}"
+  fi
 }
 
-WEBHOOK_SEND_INFO () {
+SEND_INFO () {
   URL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Information';" )
+  TOKEN=$( SQL_QUERY "SELECT token FROM telegram_token WHERE type = 'All';" )
+  CHAT_ID=$( SQL_QUERY "SELECT chatid FROM telegram_token WHERE type = 'All';" )
+
   DESCRIPTION="${1}"
   if [[ -z "${DESCRIPTION}" ]]
   then
-    DESCRIPTION="Information."
+    DESCRIPTION="Default Information Message."
   fi
   TITLE="${2}"
   if [[ -z "${TITLE}" ]]
@@ -186,15 +276,28 @@ WEBHOOK_SEND_INFO () {
   then
     URL="${6}"
   fi
-  WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${WEBHOOK_COLOR}"
+
+  if [[ ! -z "${URL}" ]]
+  then
+    WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${WEBHOOK_COLOR}"
+  fi
+  if [[ ! -z "${TOKEN}" ]] && [[ ! -z "${CHAT_ID}" ]]
+  then
+    MESSAGE="${TITLE}
+${DESCRIPTION}"
+    TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${MESSAGE}"
+  fi
 }
 
-WEBHOOK_SEND_SUCCESS () {
+SEND_SUCCESS () {
   URL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Success';" )
+  TOKEN=$( SQL_QUERY "SELECT token FROM telegram_token WHERE type = 'All';" )
+  CHAT_ID=$( SQL_QUERY "SELECT chatid FROM telegram_token WHERE type = 'All';" )
+
   DESCRIPTION="${1}"
   if [[ -z "${DESCRIPTION}" ]]
   then
-    DESCRIPTION="Success!"
+    DESCRIPTION="Default Success Message!"
   fi
   TITLE="${2}"
   if [[ -z "${TITLE}" ]]
@@ -210,7 +313,17 @@ WEBHOOK_SEND_SUCCESS () {
   then
     URL="${6}"
   fi
-  WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${WEBHOOK_COLOR}"
+
+  if [[ ! -z "${URL}" ]]
+  then
+    WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${WEBHOOK_COLOR}"
+  fi
+  if [[ ! -z "${TOKEN}" ]] && [[ ! -z "${CHAT_ID}" ]]
+  then
+    MESSAGE="${TITLE}
+${DESCRIPTION}"
+    TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${MESSAGE}"
+  fi
 }
 
 WEBHOOK_URL_PROMPT () {
@@ -241,26 +354,6 @@ WEBHOOK_URL_PROMPT () {
   SQL_QUERY "REPLACE INTO webhook_urls (type,url) VALUES ('${TEXT_A}','${WEBHOOKURL}');"
 }
 
-if [[ "${arg1}" != 'cron' ]]
-then
-  echo
-  PREFIX='Setup'
-  WEBHOOKURL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Error';" )
-  if [[ ! -z "${WEBHOOKURL}" ]]
-  then
-    PREFIX='Redo'
-  fi
-  read -p "Redo webhook URLs (y/n)? " -r
-  echo
-  REPLY=${REPLY,,} # tolower
-  if [[ "${REPLY}" == y ]]
-  then
-    return 1 2>/dev/null
-  fi
-
-  GET_DISCORD_WEBHOOKS
-fi
-
 GET_DISCORD_WEBHOOKS () {
   WEBHOOKURL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Error';" )
   if [[ -z "${WEBHOOKURL}" ]] || [[ "${REPLY}" == y ]]
@@ -276,27 +369,61 @@ GET_DISCORD_WEBHOOKS () {
     echo 'pings in the same channel.'
 
     WEBHOOK_URL_PROMPT "Error" "${WEBHOOKURL}"
-    WEBHOOK_SEND_ERROR "Test"
+    SEND_ERROR "Test"
   fi
   WEBHOOKURL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Warning';" )
   if [[ -z "${WEBHOOKURL}" ]] || [[ "${REPLY}" == y ]]
   then
     WEBHOOK_URL_PROMPT "Warning" "${WEBHOOKURL}"
-    WEBHOOK_SEND_WARNING "Test"
+    SEND_WARNING "Test"
   fi
   WEBHOOKURL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Information';" )
   if [[ -z "${WEBHOOKURL}" ]] || [[ "${REPLY}" == y ]]
   then
     WEBHOOK_URL_PROMPT "Information" "${WEBHOOKURL}"
-    WEBHOOK_SEND_INFO "Test"
+    SEND_INFO "Test"
   fi
   WEBHOOKURL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Success';" )
   if [[ -z "${WEBHOOKURL}" ]] || [[ "${REPLY}" == y ]]
   then
     WEBHOOK_URL_PROMPT "Success" "${WEBHOOKURL}"
-    WEBHOOK_SEND_SUCCESS "Test"
+    SEND_SUCCESS "Test"
   fi
 }
+
+if [[ "${arg1}" != 'cron' ]]
+then
+  echo
+  PREFIX='Setup'
+  WEBHOOKURL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Error';" )
+  if [[ ! -z "${WEBHOOKURL}" ]]
+  then
+    PREFIX='Redo'
+  fi
+  read -p "${PREFIX} Discord Bot webhook URLs (y/n)? " -r
+  echo
+  REPLY=${REPLY,,} # tolower
+  if [[ "${REPLY}" == y ]]
+  then
+    GET_DISCORD_WEBHOOKS
+  fi
+
+  echo
+  PREFIX='Setup'
+  CHAT_ID=$( SQL_QUERY "SELECT chatid FROM telegram_token WHERE type = 'All';" )
+  if [[ ! -z "${CHAT_ID}" ]]
+  then
+    PREFIX='Redo'
+  fi
+  read -p "${PREFIX} Telegram Bot token (y/n)? " -r
+  echo
+  REPLY=${REPLY,,} # tolower
+  if [[ "${REPLY}" == y ]]
+  then
+    TELEGRAM_SETUP
+  fi
+
+fi
 
 GET_LATEST_LOGINS () {
   while read -r DATE_1 DATE_2 DATE_3 LINE
@@ -310,7 +437,12 @@ GET_LATEST_LOGINS () {
 
     INFO=$( grep -B 20 -F "${DATE_1} ${DATE_2} ${DATE_3} ${LINE}" /var/log/auth.log | grep -v 'CRON\|preauth\|Invalid user\|user unknown\|Failed[[:space:]]password\|authentication[[:space:]]failure\|refused[[:space:]]connect\|ignoring[[:space:]]max\|not[[:space:]]receive[[:space:]]identification\|[[:space:]]sudo\|[[:space:]]su\|Bad[[:space:]]protocol' | grep 'port' | grep -oE '\]\: .*' | cut -c 4- )
 
-    ERRORS=$( WEBHOOK_SEND_INFO "${INFO}" ":unlock: User logged in" )
+    if [[ -z "${INFO}" ]]
+    then
+      continue
+    fi
+
+    ERRORS=$( SEND_INFO "${INFO}" ":unlock: User logged in" )
     if [[ -z "${ERRORS}" ]]
     then
       echo "${ERRORS}"
@@ -346,7 +478,7 @@ CHECK_DISK () {
   if [[ ! -z "${MESSAGE}" ]]
   then
     UNIX_TIME=$( date -u +%s )
-    ERRORS=$( WEBHOOK_SEND_WARNING ":floppy_disk: ${MESSAGE} :floppy_disk:" )
+    ERRORS=$( SEND_WARNING ":floppy_disk: ${MESSAGE} :floppy_disk:" )
     if [[ -z "${ERRORS}" ]]
     then
       echo "${ERRORS}"
@@ -371,7 +503,7 @@ CHECK_CPU_LOAD () {
 
   if [[ $( echo "${LOAD_PER_CPU} > 4" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
   then
-    ERRORS=$( WEBHOOK_SEND_ERROR ":desktop: :fire:  CPU LOAD is over 4: ${LOAD_PER_CPU} :fire: :desktop: " )
+    ERRORS=$( SEND_ERROR ":desktop: :fire:  CPU LOAD is over 4: ${LOAD_PER_CPU} :fire: :desktop: " )
     if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
     then
       echo "${ERRORS}"
@@ -380,7 +512,7 @@ CHECK_CPU_LOAD () {
   fi
   if ([[ $( echo "${LOAD_PER_CPU} > 2" | bc ) -gt 0 ]] && [[ $( echo "${LOAD_PER_CPU} <= 4" | bc ) -gt 0 ]]) || [[ "${arg1}" == 'test' ]]
   then
-    ERRORS=$( WEBHOOK_SEND_WARNING ":desktop: CPU LOAD is over 2: ${LOAD_PER_CPU} :desktop: " )
+    ERRORS=$( SEND_WARNING ":desktop: CPU LOAD is over 2: ${LOAD_PER_CPU} :desktop: " )
     if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
     then
       echo "${ERRORS}"
@@ -403,7 +535,7 @@ CHECK_SWAP () {
   SWAP_FREE_MB=$( free -wm | grep -i 'Swap:' | awk '{print $4}' )
   if [[ $( echo "${SWAP_FREE_MB} < 512" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
   then
-    ERRORS=$( WEBHOOK_SEND_ERROR ":desktop: :fire: Swap is under 512 MB: ${SWAP_FREE_MB} :fire: :desktop: " )
+    ERRORS=$( SEND_ERROR ":desktop: :fire: Swap is under 512 MB: ${SWAP_FREE_MB} :fire: :desktop: " )
     if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
     then
       echo "${ERRORS}"
@@ -412,7 +544,7 @@ CHECK_SWAP () {
   fi
   if ([[ $( echo "${SWAP_FREE_MB} >= 512" | bc ) -gt 0 ]] && [[ $( echo "${SWAP_FREE_MB} < 1024" | bc ) -gt 0 ]]) || [[ "${arg1}" == 'test' ]]
   then
-    ERRORS=$( WEBHOOK_SEND_WARNING ":desktop: Swap is under 1024 MB: ${SWAP_FREE_MB} :desktop: " )
+    ERRORS=$( SEND_WARNING ":desktop: Swap is under 1024 MB: ${SWAP_FREE_MB} :desktop: " )
     if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
     then
       echo "${ERRORS}"
@@ -437,7 +569,7 @@ CHECK_RAM () {
 
   if [[ $( echo "${MEM_AVAILABLE_MB} < 256" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
   then
-    ERRORS=$( WEBHOOK_SEND_ERROR ":desktop: :fire: Free RAM is under 256 MB: ${MEM_AVAILABLE_MB} :fire: :desktop: " )
+    ERRORS=$( SEND_ERROR ":desktop: :fire: Free RAM is under 256 MB: ${MEM_AVAILABLE_MB} :fire: :desktop: " )
     if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
     then
       echo "${ERRORS}"
@@ -446,7 +578,7 @@ CHECK_RAM () {
   fi
   if ([[ $( echo "${MEM_AVAILABLE_MB} >= 256" | bc ) -gt 0 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 512" | bc ) -gt 0 ]]) || [[ "${arg1}" == 'test' ]]
   then
-    ERRORS=$( WEBHOOK_SEND_WARNING ":desktop: Free RAM is under 512 MB: ${MEM_AVAILABLE_MB} :desktop: " )
+    ERRORS=$( SEND_WARNING ":desktop: Free RAM is under 512 MB: ${MEM_AVAILABLE_MB} :desktop: " )
     if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
     then
       echo "${ERRORS}"
