@@ -33,6 +33,7 @@ EXPLORER_URL='https://api.dogec.io/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 EXPLORER_PEERS='api/peer'
+EXPLORER_BLOCKCOUNT_OFFSET='+8'
 # Amount of Collateral needed.
 COLLATERAL=5000
 # Direct Daemon Download if github has no releases.
@@ -43,6 +44,7 @@ BLOCKTIME=60
 DAEMON_CYCLE=1
 # Multiple on single IP.
 MULTI_IP_MODE=1
+IPV6=1
 MASTERNODE_CALLER='getmasternode'
 MASTERNODE_NAME='masternode'
 MASTERNODE_GENKEY_COMMAND='createmasternodekey'
