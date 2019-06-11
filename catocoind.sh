@@ -40,7 +40,7 @@ TICKER='CATO'
 EXPLORER_URL='http://explorer.catocoin.info/'
 # Amount of Collateral needed
 COLLATERAL='25000
-50000
+60000
 100000'
 COLLATERAL_ALT=$( timeout 5s wget -4qO- -T 3 -t 2 -o- "${EXPLORER_URL}api/getinfo" )
 if [[ ! -z "${COLLATERAL_ALT}" ]]
