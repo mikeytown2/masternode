@@ -29,7 +29,7 @@ CONF='crave.conf'
 # Port.
 DEFAULT_PORT=48882
 # Explorer URL
-EXPLORER_URL='http://explorer.craveproject.net/'
+EXPLORER_URL='https://explorersite.cc/'
 # Amount of Collateral needed.
 COLLATERAL=5000
 # Multiple on single IP.
