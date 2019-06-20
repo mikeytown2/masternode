@@ -35,7 +35,7 @@ EXPLORER_SLEEP=1
 # Amount of Collateral needed.
 COLLATERAL=9999
 # Direct Daemon Download if github has no releases.
-DAEMON_DOWNLOAD='https://bitbucket.org/GOSSIPCOIN/gossip/downloads/gossip-2.1.0-x86_64-linux.tar.xz'
+DAEMON_DOWNLOAD='https://bitbucket.org/GOSSIPCOIN/gossip/downloads/gossip-2.1.1-x86_64-linux.tar.xz'
 # Blocktime in seconds.
 BLOCKTIME=60
 # Cycle Daemon on first start.
