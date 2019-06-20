@@ -459,6 +459,17 @@ _copy_wallet() {
   stty sane 2>/dev/null
   rm "${HOME}/___mn.sh"
 
+  # Wait for mnsync
+  MNSYNC_WAIT_FOR='999'
+  echo "Waiting for mnsync status..."
+  i=0
+  while [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' mnsync status | grep -cF "${MNSYNC_WAIT_FOR}" ) -eq 0 ]]
+  do
+    PERCENT_DONE=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' daemon_log tail 2000 | grep -m 1 -o 'nSyncProgress.*\|Progress.*' | tr '=' ' ' | awk -v SF=100 '{printf($2*SF )}' )
+    echo -e "\\r${SP:i++%${#SP}:1} Percent Done: %${PERCENT_DONE}      \\c"
+    sleep 0.3
+  done
+
   echo
   echo
   WALLET_BALANCE=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getbalance )
@@ -698,6 +709,7 @@ _setup_wallet_auto_pw () {
       dbus-user-session
   fi
 
+  # Wait for mnsync
   MNSYNC_WAIT_FOR='999'
   echo "Waiting for mnsync status..."
   i=0
@@ -779,11 +791,24 @@ _setup_wallet_auto_pw () {
   echo "waiting 30s for staking status to change after unlocking."
   sleep 30
 
+  # Wait for mnsync
+  MNSYNC_WAIT_FOR='999'
+  echo "Waiting for mnsync status..."
+  i=0
+  while [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' mnsync status | grep -cF "${MNSYNC_WAIT_FOR}" ) -eq 0 ]]
+  do
+    PERCENT_DONE=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' daemon_log tail 2000 | grep -m 1 -o 'nSyncProgress.*\|Progress.*' | tr '=' ' ' | awk -v SF=100 '{printf($2*SF )}' )
+    echo -e "\\r${SP:i++%${#SP}:1} Percent Done: %${PERCENT_DONE}      \\c"
+    sleep 0.3
+  done
+
   # Restart node if staking isn't enabled.
   if [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus | jq '.[]' | grep -c 'false' ) -eq 1 ]]
   then
     echo "Restarting the node"
     _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' restart
+
+    # Wait for mnsync
     MNSYNC_WAIT_FOR='999'
     echo "Waiting for mnsync status..."
     i=0
