@@ -459,6 +459,9 @@ _copy_wallet() {
   stty sane 2>/dev/null
   rm "${HOME}/___mn.sh"
 
+  # Wait for wallet to load; start if needed.
+  _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
+
   # Wait for mnsync
   MNSYNC_WAIT_FOR='999'
   echo "Waiting for mnsync status..."
@@ -532,6 +535,7 @@ _copy_wallet() {
       sudo chown "${USRNAME}":"${USRNAME}" "${CONF_DIR}/wallet.dat"
       sudo chmod 600 "${CONF_DIR}/wallet.dat"
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' enable
+      # Wait for wallet to load; start if needed.
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
 
       # See if wallet.dat can be opened.
@@ -582,6 +586,7 @@ _copy_wallet() {
       sudo chown "${USRNAME}":"${USRNAME}" "${CONF_DIR}/wallet.dat"
       sudo chmod 600 "${CONF_DIR}/wallet.dat"
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' enable
+      # Wait for wallet to load; start if needed.
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
 
       # See if wallet.dat can be opened.
@@ -590,6 +595,7 @@ _copy_wallet() {
         sudo rm "${CONF_DIR}/wallet.dat"
         sudo mv "${CONF_DIR}/wallet.dat.bak" "${CONF_DIR}/wallet.dat"
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' enable
+        # Wait for wallet to load; start if needed.
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
         echo "Wallet db version is different; try again using a dumpwallet file."
         REPLY=''
@@ -601,6 +607,7 @@ _copy_wallet() {
       if [[ $( grep -ic 'wallet dump' "${fullfile}" ) -gt 0 ]] || [[ $( grep -ic 'label=' "${fullfile}" ) -gt 0 ]]
       then
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' enable
+        # Wait for wallet to load; start if needed.
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
         if [[ -f "${HOME}/.pwd/${DATADIR_FILENAME}" ]]
         then
@@ -620,6 +627,7 @@ _copy_wallet() {
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' disable
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' conf edit staking 1
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' start-recover
+        # Wait for wallet to load; start if needed.
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
         _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' enable
         break
@@ -709,6 +717,9 @@ _setup_wallet_auto_pw () {
       dbus-user-session
   fi
 
+  # Wait for wallet to load; start if needed.
+  _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
+
   # Wait for mnsync
   MNSYNC_WAIT_FOR='999'
   echo "Waiting for mnsync status..."
@@ -791,6 +802,9 @@ _setup_wallet_auto_pw () {
   echo "waiting 30s for staking status to change after unlocking."
   sleep 30
 
+  # Wait for wallet to load; start if needed.
+  _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
+
   # Wait for mnsync
   MNSYNC_WAIT_FOR='999'
   echo "Waiting for mnsync status..."
@@ -807,6 +821,9 @@ _setup_wallet_auto_pw () {
   then
     echo "Restarting the node"
     _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' restart
+
+    # Wait for wallet to load; start if needed.
+    _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' wait_for_loaded
 
     # Wait for mnsync
     MNSYNC_WAIT_FOR='999'
