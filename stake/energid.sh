@@ -807,8 +807,13 @@ _setup_wallet_auto_pw () {
   echo "Node info: ${USRNAME} ${CONF_FILE}"
   echo "Staking Status:"
   _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus | grep -C 20 --color -E '^|.*false'
+  CONF_FILE_BASENAME=$( basename "${CONF_FILE}" )
   echo
-  echo "Be sure to add this to your desktop wallet's conf file and restart it:"
+  echo
+  echo
+  echo "Start or Restart your desktop wallet after adding the line below to the"
+  echo "desktop wallet's conf file ${CONF_FILE_BASENAME}"
+  echo
   echo "staking=0"
   echo
 }
