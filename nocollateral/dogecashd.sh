@@ -51,11 +51,11 @@ MASTERNODE_LIST='listmasternodes'
 # Tip Address.
 TIPS='DTu1fh3F6ujvEoZsqMtFZ31VFJzfkBeUpf'
 # Dropbox Addnodes.
-DROPBOX_ADDNODES='huhjg1oed7ea327'
+DROPBOX_ADDNODES='s0pdil1rehsy4fu'
 # Dropbox Bootstrap.
-DROPBOX_BOOTSTRAP='o98kammywogf2dn'
+DROPBOX_BOOTSTRAP='rawf808f0hv9jg'
 # Dropbox blocks and chainstake folders.
-DROPBOX_BLOCKS_N_CHAINS='92izghfso58g266'
+DROPBOX_BLOCKS_N_CHAINS='s4vy92sczk9c10s'
 
 ASCII_ART () {
 echo -e "\e[0m"
