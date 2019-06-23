@@ -27,7 +27,7 @@ DIRECTORY='.ZDXCore'
 # Conf File.
 CONF='zdx.conf'
 # Port.
-DEFAULT_PORT=MASTERNODE_PORT
+DEFAULT_PORT=19849
 # Explorer URL.
 EXPLORER_URL='http://zdxplorer.info/'
 # Rate limit explorer.
