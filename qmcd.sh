@@ -17,15 +17,9 @@ bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/maste
 # Github user and project.
 GITHUB_REPO='project-qmc/QMC'
 # Explorer URL
-EXPLORER_URL='https://api.chainmapper.com/qmc/'
+EXPLORER_URL='http://explorer.qmcoin.gq'
 # Rate limit explorer
 EXPLORER_SLEEP=1
-EXPLORER_BLOCKCOUNT_PATH='getblockcount'
-EXPLORER_BLOCKCOUNT_OFFSET='+1'
-#EXPLORER_RAWTRANSACTION_PATH='getrawtransaction?txid='
-EXPLORER_RAWTRANSACTION_PATH=' '
-EXPLORER_RAWTRANSACTION_PATH_SUFFIX=' '
-EXPLORER_GETADDRESS_PATH='getbalance/'
 # Directory
 DIRECTORY='.qmc'
 # Binary base name.
