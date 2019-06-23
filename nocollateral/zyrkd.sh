@@ -33,7 +33,7 @@ EXPLORER_URL='https://explorer.zyrk.io/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 # Amount of Collateral needed.
-COLLATERAL=
+COLLATERAL=10000
 # Direct Daemon Download if github has no releases.
 DAEMON_DOWNLOAD=''
 # Blocktime in seconds.
