@@ -17,7 +17,7 @@ bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/maste
 # Github user and project.
 GITHUB_REPO='project-qmc/QMC'
 # Explorer URL
-EXPLORER_URL='http://explorer.qmc.network/'
+EXPLORER_URL='http://explorer.qmcoin.gq/'
 # Rate limit explorer
 EXPLORER_SLEEP=1
 EXPLORER_BLOCKCOUNT_PATH='getblockcount'
