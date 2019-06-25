@@ -38,7 +38,7 @@ What you need:
 <details><summary><strong>Click here for the Windows Setup:</strong></summary>
 
 #### 1.0 Wallet Prep.  
-Enable coin control features and Show Masternodes Tab. 
+Enable coin control features. 
 In the desktop wallet go to Settings -> Options -> Wallet and make sure Enable coin control features is checked and click OK.  
 ![](https://i.imgur.com/TiqP96p.png "")  
 
