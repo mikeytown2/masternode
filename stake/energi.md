@@ -260,11 +260,7 @@ https://coinmarketcap.com/currencies/energi/
 
 #### Block Explorer
 https://explore.energi.network/
-
-#### 3rd party Monitoring service  
-https://masternodes.online/monitoring/  
-
-
+https://explore2.energi.network/
 
 ---
 ---
