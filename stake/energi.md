@@ -1,7 +1,6 @@
 # Table of Contents
 1. [Quick Guide](#quick-guide)
-1. [Masternode Guide](#masternode-guide)
-1. [Linux QT Wallet Install](#linux-qt-wallet-install)
+1. [VPS Staking Guide](#vps-staking-guide)
 1. [Troubleshooting / FAQ](#troubleshooting--faq)
 1. [Appendix](#appendix)
 1. [Energi Tip Address](#nrg-tip-address)
