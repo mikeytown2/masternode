@@ -226,6 +226,18 @@ Wait for it to scan your harddrive and then look for any files with wallet.dat i
 
 </details>
 
+
+<details><summary><strong> How do I recover a hard drive that doesn't work at all </strong></summary>
+
+If the drive still spins up but won't boot up and you suspect very minor damage SpinRite might be able to help.      
+https://www.grc.com/cs/prepurch.htm  
+
+If your drive needs a lot of help checkout profestional data recovery services like this one.  
+https://rossmanngroup.com/data-recovery-service-nyc/  
+
+</details>
+
+
 <details><summary><strong> Edit energi.conf </strong></summary>
 
 Tools -> Open wallet configuration file.
