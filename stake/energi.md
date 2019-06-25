@@ -280,38 +280,38 @@ https://coinmarketcap.com/currencies/energi/
 
 ## Useful commands to run on your VPS:
 
-Get the staking status
-`energi-cli getstakingstatus`
+Get the staking status  
+`energi-cli getstakingstatus`  
 
-Get the total number of NRG coins the wallet has
-`energi-cli getbalance`
+Get the total number of NRG coins the wallet has  
+`energi-cli getbalance`  
 
-Get the total number of NRG coins that will be staked
-`energi-cli liststakeinputs balance`
+Get the total number of NRG coins that will be staked  
+`energi-cli liststakeinputs balance`  
 
-Get how long the daemon has been running for in seconds.
-`energi-cli uptime`
+Get how long the daemon has been running for in seconds.  
+`energi-cli uptime`  
 
-Compare the local blockcount and the explorers blockcount.
-`energi-cli blockcheck`
+Compare the local blockcount and the explorers blockcount.  
+`energi-cli blockcheck`  
 
-Download the blocks and chainstake folders; fairly close to a new install. Will get the node back on the correct chain.
-`energi-cli dl_blocks_n_chains`
+Download the blocks and chainstake folders; fairly close to a new install. Will get the node back on the correct chain.  
+`energi-cli dl_blocks_n_chains`  
 
-Check github for a new version; and update if there is a new version.
-`energi-cli update_daemon`
+Check github for a new version; and update if there is a new version.  
+`energi-cli update_daemon`  
 
-Delete the node off of the VPS.
-`energi-cli remove_daemon`
+Delete the node off of the VPS.  
+`energi-cli remove_daemon`  
 
-Restart the daemon.
-`energi-cli restart`
+Restart the daemon.  
+`energi-cli restart`  
 
-Watch the last 20 entries in the daemon log
-`energi-cli daemon_log tail 20 watch`
+Watch the last 20 entries in the daemon log  
+`energi-cli daemon_log tail 20 watch`  
 
-Get the last 2 entries in the daemon log that deal with the node startup and shutdown
-`energi-cli daemon_log starts 2 20`
+Get the last 2 entries in the daemon log that deal with the node startup and shutdown  
+`energi-cli daemon_log starts 2 20`  
 
 
 ---
