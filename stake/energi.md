@@ -16,7 +16,7 @@ On your VPS run this to get VPS staking stup
 
 `O` and `o` are both the letter and not the number if you are typing this out.  
 [Bitvise](https://dl.bitvise.com/BvSshClient-Inst.exe) is highly recommended in order to use copy/paste (for windows).  
-You can view the script here https://github.com/mikeytown2/masternode/blob/master/stake/energid.sh. 
+You can view the script here https://github.com/mikeytown2/masternode/blob/master/stake/energid.sh.  
 At the prompts reply with `y` (recommended). 
 
 ___  
