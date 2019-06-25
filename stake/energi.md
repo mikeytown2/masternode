@@ -49,7 +49,7 @@ https://www.vultr.com/?ref=7333199
 
 Once signed up go here https://my.vultr.com/deploy/  
 
-1. Choose Server
+1. Choose Server  
    ![](https://i.imgur.com/gAfrQIq.png "")  
 1. Select a location  
    ![](https://i.imgur.com/njK2ncr.png "")  
@@ -127,79 +127,8 @@ click on the three dots to the right ... and select Server Reinstall.
 </details>
 
 <details><summary><b>Click here for the Mac Setup:</b></summary>
-
-#### 1.0 Wallet Prep.  
-Enable coin control features and Show Masternodes Tab. 
-In the desktop wallet go to Settings -> Options -> Wallet (Energi -> Preferences -> Wallet on Mac) and make sure Enable coin control features and Show Masternodes Tab is checked and click OK.  
-![](https://i.imgur.com/fdf3Iml.png "")  
-
-#### 2.0 Next you'll need a VPS.
-Any VPS provider will work; in this example vultr will be used.
-Get a VPS from here
-https://www.vultr.com/?ref=7333199
-
-Once signed up go here https://my.vultr.com/deploy/ 
-1. Select a location  
-   ![](https://i.imgur.com/WLvPLXR.png "")  
-2. Select Ubuntu 18.04  
-   ![](https://i.imgur.com/eRJtHgi.png "")  
-3. Select $3.50  
-   ![](https://i.imgur.com/0y8CcC0.jpg "")  
-4. Click deploy now button  
-   ![](https://i.imgur.com/39rK5xl.png "")  
-
-Once deployed (wait 2 minutes)  
-![](https://i.imgur.com/2t4Njq0.png "")  
-
-##### 3.0 Get vps IP.  
-Click the Cloud Instance link on the left or the Manage link on the right  
-![](https://i.imgur.com/5N1bZBA.png "")  
-
-Under IP click the copy icon 
-![copy icon](https://www.materialui.co/materialIcons/content/content_copy_black_24x24.png "copy icon" )  
-![](https://i.imgur.com/49G3uam.png "")  
-
-
-![](https://i.imgur.com/XOFN9EW.png  "")  
-Open up [Bitvise](https://dl.bitvise.com/BvSshClient-Inst.exe) and paste in the IP of your VPS into the Host field under Server on the left side. 
-To the right of that in the Username field put in `root` and change Initial method to `password`
-Go back to the vultr Server Information page and under password click the copy icon 
-![copy icon](https://www.materialui.co/materialIcons/content/content_copy_black_24x24.png "copy icon")  
-![](https://i.imgur.com/hRb01oa.png "")  
-Then in the Bitvise SSH client program under Password paste in the password from vultr. 
-Finally click the login button  
-![](https://i.imgur.com/j1A0hmk.png  "")  
-Click Accept and Save for host key verification  
-![](https://i.imgur.com/oewSrev.png  "")  
-
-
-#### 4.0 VPS Steps
-
-Copy the following line and paste into your remote terminal and press enter (right click to paste in Bitvise) ([How to connecto to your VPS (3.0)](#30-get-vps-ip)).  
-
-    bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/stake/energid.sh)" ; source ~/.bashrc`  
-
-`O` and `o` are both the letter and not the number if you are typing this out.  
-[Bitvise](https://dl.bitvise.com/BvSshClient-Inst.exe) is highly recommended in order to use copy/paste.  
-You can view the script here https://github.com/mikeytown2/masternode/blob/master/stake/energid.sh
-![](https://i.imgur.com/GixtXDw.png "")  
-
-Paste in your txid from notepad (right click to paste in Bitvise) when it asks [How to get the txhash (2.5)](#25-get-txhash )  
-![](https://i.imgur.com/Z8w6cyu.png "")  
-Press Enter at the prompts to use the defaults.  
-![](https://i.imgur.com/W7gY9wh.png "")  
-If setting up more than one master node, simply re-run the script if you have a 2nd IP; 
-or get a new VPS and run the script on your second one.  
-
-##### 4.1 Script will end with  
-- Auto starting energid daemon running under the newly created user  
-- The long string to paste into your masternode.conf file.  
-
-![](https://i.imgur.com/2Rmztdi.png "")  
-(Highlight to copy in Bitvise)  
-
-If you messed up and want to start over with a fresh VPS instance go to https://my.vultr.com/ 
-click on the three dots to the right ... and select Server Reinstall.
+    
+to do
 
 </details>
 
