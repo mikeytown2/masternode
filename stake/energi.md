@@ -32,7 +32,7 @@ What you need:
  [Linux](https://github.com/energicryptocurrency/energi/releases/download/v2.2.1/energicore-2.2.1-linux.tar.gz))
 - [recommended at least 100 NRG Coins](https://coinmarketcap.com/currencies/energi/#markets)
 - Help can be found on the [Discord chat](https://discord.gg/QACDTxt). 
-  BE CAREFULL; only trust help via the ticket support system.
+  BE CAREFUL; only trust help via the ticket support system.
   Usernames are not unique on discord so only trust green, yellow, blue, and red users (people with roles) IN the Energi Discord server.
 
 <details><summary><strong>Click here for the Windows Setup:</strong></summary>
@@ -88,7 +88,7 @@ Then paste in the password from vultr.
 
 #### 4.0 VPS Steps
 
-Copy the following line and paste into your remote terminal and press enter (right click to paste in Bitvise) ([How to connecto to your VPS (3.0)](#30-get-vps-ip)).  
+Copy the following line and paste into your remote terminal and press enter (right click to paste in Bitvise) ([How to connect to your VPS (3.0)](#30-get-vps-ip)).  
 
     bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/stake/energid.sh)" ; source ~/.bashrc  
 
@@ -99,7 +99,7 @@ You can view the script here https://github.com/mikeytown2/masternode/blob/maste
 
 Type in `y` when it asks to "Proceed with the script (y/n)?:"
 ![](https://i.imgur.com/cea9Sfc.png "")  
-This will take about 10 minutes to update Ubuntu 18.04 to the latest vesrion. 
+This will take about 10 minutes to update Ubuntu 18.04 to the latest package versions. 
 Please wait for Linux to be updated.
 
 Type in `y` when it asks to "Make it so only the above list of users can login via SSH (y/n)?:"
@@ -115,7 +115,7 @@ to use this 2 factor code.
 Type in `y` when it asks to "Install a new energid node on this vps (y/n)?:"
 ![](https://i.imgur.com/IWB6Pzt.png "")  
 
-Give it time to install the node on your linux box
+Give it time to install the node on your Linux box
 ![](https://i.imgur.com/1ZeSnBb.png "")  
 
 #### 5.0 Upload your wallet.dat to the VPS
@@ -161,7 +161,7 @@ Enter in your wallet's password
 
 ##### 6.0 Script will end with  
 Script will end with the amount of energi in the wallet.  
-The acmount of energi that is staking.  
+The amount of energi that is staking.  
 The staking status.
 (Note that I used an empty wallet for this example)
 ![](https://i.imgur.com/95TpuHl.png "")  
@@ -173,7 +173,8 @@ windows key + r
 and add in  
 `staking=0`  
 
-
+##### 8.0 Notes
+You can re-run the staking script to continue where you left off OR to upload a different wallet.dat file.
 
 If you messed up and want to start over with a fresh VPS instance go to https://my.vultr.com/ 
 click on the three dots to the right ... and select Server Reinstall.
@@ -198,7 +199,7 @@ You will need multiple IPs; rerun the script to setup a another masternode on yo
 ### How do I add an IP to vultr? ###
 <details><summary>Click here to see how to do so</summary>
 
-Login to Vultr and go to the server's infromation page  
+Login to Vultr and go to the server's information page  
 ![](https://i.imgur.com/kcv3tOS.png "")  
 Go to the settings page and click on "Add Another IPv4 Address"  
 ![](https://i.imgur.com/PVtZgA1.png "")  
