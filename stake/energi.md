@@ -35,7 +35,7 @@ What you need:
   BE CAREFULL; only trust help via the ticket support system.
   Usernames are not unique on discord so only trust green, yellow, blue, and red users (people with roles) IN the Energi Discord server.
 
-<details><summary><h2>Windows Setup:</h2></summary>
+<details><summary><b>Click here for the Windows Setup:</b></summary>
 
 #### 1.0 Wallet Prep.  
 Enable coin control features and Show Masternodes Tab. 
@@ -126,7 +126,7 @@ click on the three dots to the right ... and select Server Reinstall.
 
 </details>
 
-<details><summary><h2>Mac Setup:</h2></summary>
+<details><summary><b>Click here for the Mac Setup:</b></summary>
 
 #### 1.0 Wallet Prep.  
 Enable coin control features and Show Masternodes Tab. 
@@ -202,8 +202,9 @@ If you messed up and want to start over with a fresh VPS instance go to https://
 click on the three dots to the right ... and select Server Reinstall.
 
 </details>
----
----
+
+___  
+___  
 
 # Troubleshooting / FAQ  
 
