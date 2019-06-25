@@ -192,43 +192,6 @@ ___
 
 # Troubleshooting / FAQ  
 
-
-#### Do I need multiple IPs to run multiple masternodes on a single VPS?
-You will need multiple IPs; rerun the script to setup a another masternode on your VPS once you've followed the directions on how to add another IP to your VPS.
-
-### How do I add an IP to vultr? ###
-<details><summary>Click here to see how to do so</summary>
-
-Login to Vultr and go to the server's information page  
-![](https://i.imgur.com/kcv3tOS.png "")  
-Go to the settings page and click on "Add Another IPv4 Address"  
-![](https://i.imgur.com/PVtZgA1.png "")  
-Once done go to the networking configuration page  
-![](https://i.imgur.com/i4bvreS.png "")  
-Login to VPS and edit the /etc/netplan/10-ens3.yaml file using nano  
-`nano /etc/netplan/10-ens3.yaml`  
-![](https://i.imgur.com/UiuFwT4.png "")  
-Remove all lines from this file using `ctrl + k`  
-![](https://i.imgur.com/jBzo9T3.png "")  
-Copy the configuration and paste it into the nano text editor (right click is paste in Bitvise)  
-![](https://i.imgur.com/1LYVOSw.png "")  
-![](https://i.imgur.com/8G5SMUp.png "")  
-Press `ctrl + x` to exit  
-![](https://i.imgur.com/52iMXHo.png "")  
-press `y` and enter to save  
-![](https://i.imgur.com/wh4xmgO.png "")  
-Run `netplan apply` to apply the changes to the vps  
-![](https://i.imgur.com/FZOH4zx.png "")  
-You can verify that the new IP has been added by looking for the new IP in the output of this command  
-`ip -o addr show`  
-![](https://i.imgur.com/JrwlYtQ.png "")  
-
-</details>
-
-#### Can I run a masternode on my home computer?
-Technically yes. You need a static IP from your ISP as well as a way to open up the port that your masternode is running on
-in your router. A VPS is easier to setup and run.
-
 #### How do I backup my wallet?  
 Make sure it's been encrypted with a password and then store the wallet.dat file on 
 [Dropbox](https://www.dropbox.com/) or [Google Drive](https://drive.google.com/). 
@@ -262,31 +225,6 @@ Check enable deep scan
 ![](https://i.imgur.com/nSJ6oKK.png "")  
 Wait for it to scan your harddrive and then look for any files with wallet.dat in the name.  
 
-
-#### My VPS got restarted and now my masternode is not running.
-You need to start the Masternode again. Unlock the Wallet. 
-Energi - Wallet -> Masternodes -> Start MISSING. It should be running again.
-
-#### Wrong amout is shown in coin control features.  
-Send all coins from addreses that have a wrong amount so that the value in thoese are zero. Restart wallet. 
-
-#### Edit masternode.conf
-Tools -> Open masternode configuration file.
-
-If the above doesn't work you can do this:  
-Windows:  
-windows key + r  
-`nodepad %appdata%/energicore/masternode.conf`  
-Copy Paste the above line into the run dialog box.  
-and if that doesn't work try  
-windows key + r  
-`nodepad %userprofile%\AppData\Roaming\energicore\masternode.conf`  
-
-Mac:  
-go to Finder -> Menubar (top of screen) -> Go -> Utilities, open Terminal, type in  
-`open -a TextEdit ~/Library/Application\ Support/EnergiCore/masternode.conf`  
-If you already have a terminal window open and want another one, go to the Menubar (top of screen) -> new window -> new windows with profile - basic. Then paste in the above command.
-
 #### Edit energi.conf
 Tools -> Open wallet configuration file.
 
@@ -301,20 +239,10 @@ go to Finder -> Menubar (top of screen) -> Go -> Utilities, open Terminal, type 
 `open -a TextEdit ~/Library/Application\ Support/EnergiCore/energi.conf`  
 If you already have a terminal window open and want another one go to the Menubar (top of screen) -> new window -> new windows with profile - basic. Then paste in the above command.
 
-#### How to double check all details of the masternode
-Close and open your desktop wallet. 
-Tools -> Debug Console and type in `masternode outputs` at the bottom.
-Also go to Tools -> Open Masternode Configuration File.
-Connect to your VPS and run these commands as the root user. 
-Replace `enrg_mn1` with the username used for the masternode if needed.  
-`enrg_mn1 masternode.conf`
-
-Carefully comapre the IP, the masternodeprivkey, as well as the transaction id and output index.
-
 #### Remove user from VPS
-The following example uses the username `enrg_mn9`.  
+The following example uses the username `enrg_n1`.  
 
-    enrg_mn9 remove_daemon
+    enrg_n1 remove_daemon
 
 #### I've been locked out of the VPS
 You get one of these errors when trying to login via Bitvise:  
@@ -350,6 +278,38 @@ https://masternodes.online/monitoring/
 
 ## Useful commands to run on your VPS:
 
+Get the staking status
+`energi-cli getstakingstatus`
+
+Get the total number of NRG coins the wallet has
+`energi-cli getbalance`
+
+Get the total number of NRG coins that will be staked
+`energi-cli liststakeinputs balance`
+
+Get how long the daemon has been running for in seconds.
+`energi-cli uptime`
+
+Compare the local blockcount and the explorers blockcount.
+`energi-cli blockcheck`
+
+Download the blocks and chainstake folders; fairly close to a new install. Will get the node back on the correct chain.
+`energi-cli dl_blocks_n_chains`
+
+Check github for a new version; and update if there is a new version.
+`energi-cli update_daemon`
+
+Delete the node off of the VPS.
+`energi-cli remove_daemon`
+
+Restart the daemon.
+`energi-cli restart`
+
+Watch the last 20 entries in the daemon log
+`energi-cli daemon_log tail 20 watch`
+
+Get the last 2 entries in the daemon log that deal with the node startup and shutdown
+`energi-cli daemon_log starts 2 20`
 
 
 ---
