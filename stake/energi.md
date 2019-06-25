@@ -203,15 +203,10 @@ On windows the wallet can be found in the `%appdata%/energicore` directory
 On Mac it can be found in the `~/Library/Application Support/EnergiCore` directory; 
 Finder -> Menubar (top of screen) -> Go -> Utilities, open Terminal, type in `open ~/Library/Application\ Support/EnergiCore`.
 
-You can also backup via `dumpprivkey`. 
-Go to tools -> debug console and type in `listaccounts`; 
-then for each address name type in `getaddressesbyaccount ""`; 
-then do dumpprivkey on that address like so `dumpprivkey Exxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`. 
-The output from this can be used to steal your coins, and also used for backup purposes. Be careful!
-
-You can also backup via `dumpwallet`. 
-Go to tools -> debug console and type in `dumpwallet enrg.txt`. 
-enrg.txt is usually put in the same folder as the energi wallet executable. 
+You can also backup via `dumpwallet`.  
+Go to tools -> debug console and type in `dumpwallet enrg.txt`.  
+enrg.txt is usually put in the same folder as the energi wallet executable.  
+Print this out and keep it in a safe place.  
 
 #### How do I recover a deleted wallet.dat ####
 Download Recuva: https://www.ccleaner.com/recuva/download/standard  
