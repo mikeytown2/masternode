@@ -118,8 +118,47 @@ Type in `y` when it asks to "Install a new energid node on this vps (y/n)?:"
 Give it time to install the node on your linux box
 ![](https://i.imgur.com/1ZeSnBb.png "")  
 
-##### 5 Script will end with  
+#### 5.0 Upload your wallet.dat to the VPS
 
+This script uses https://send.firefox.com/ to transfer files from your desktop computer onto the vps. 
+All files are encrypted before being uploaded and decrypted on the client after downloading. 
+The encryption key is never sent to the server. 
+
+You should be at this point now.  
+![](https://i.imgur.com/bzJFhPy.png "")  
+
+Shutdown the energi wallet.
+
+Open up the energicore folder.
+windows key + r
+`explorer.exe %appdata%\energicore`
+![](https://i.imgur.com/v5qnHAg.png "")  
+
+If you see the database folder; please turn off the energi wallet  
+![](https://i.imgur.com/PO3tng9.png "")  
+
+Please go to https://send.firefox.com/  
+![](https://i.imgur.com/3Rr8fDU.png "")  
+
+Select wallet.dat and drag it into your browser to upload it  
+![](https://i.imgur.com/kGJ7qx2.png "")  
+![](https://i.imgur.com/agvAV66.png "")  
+
+Click the upload button and then copy link  
+![](https://i.imgur.com/c2weNT5.png "")  
+
+Then go to the ssh terminal and paste in (right click) the link and press enter.  
+![](https://i.imgur.com/uq2IDbB.png "")  
+Fill in the password you set on send.firefox.com if you set one.  
+
+Wait for the wallet to load  
+![](https://i.imgur.com/bdcWWEj.png "")  
+
+
+
+
+
+##### 6.0 Script will end with  
 
 If you messed up and want to start over with a fresh VPS instance go to https://my.vultr.com/ 
 click on the three dots to the right ... and select Server Reinstall.
