@@ -163,9 +163,14 @@ _setup_two_factor() {
   fi
   echo "Warning: pasting the following URL into your browser exposes the OTP secret to Google:"
   echo "https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&chl=otpauth://totp/ssh%2520login%2520for%2520'${USRNAME}'%3Fsecret%3D${SECRET}%26issuer%3D${IP_ADDRESS}"
+  echo
+  stty sane 2>/dev/null
   qrencode -l L -m 2 -t UTF8 "otpauth://totp/ssh%20login%20for%20'${USRNAME}'?secret=${SECRET}&issuer=${IP_ADDRESS}"
-  echo "Your secret key is: ${SECRET}"
-  echo "Please scan in the QR code with the Google Authenticator app."
+  stty sane 2>/dev/null
+  echo "Scan the QR code with the Google Authenticator app; or manually enter"
+  echo "Account: ${USRNAME}@${IP_ADDRESS}"
+  echo "Key: ${SECRET}"
+  echo "This is a time based code"
   echo "When logging into this VPS via password, a 6 digit code would also be required."
   echo "If you loose this code you can still use your wallet on your desktop."
 
