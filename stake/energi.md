@@ -192,7 +192,7 @@ ___
 
 # Troubleshooting / FAQ  
 
-#### How do I backup my wallet?  
+<details><summary><strong> How do I backup my wallet? </strong></summary>
 Make sure it's been encrypted with a password and then store the wallet.dat file on 
 [Dropbox](https://www.dropbox.com/) or [Google Drive](https://drive.google.com/). 
 Make sure the cloud backup provider has 2 factor authentication enabled 
@@ -207,8 +207,9 @@ You can also backup via `dumpwallet`.
 Go to tools -> debug console and type in `dumpwallet enrg.txt`.  
 enrg.txt is usually put in the same folder as the energi wallet executable.  
 Print this out and keep it in a safe place.  
+</details>
 
-#### How do I recover a deleted wallet.dat ####
+<details><summary><strong> How do I recover a deleted wallet.dat </strong></summary>
 Download Recuva: https://www.ccleaner.com/recuva/download/standard  
 Once you install run it and select all files  
 ![](https://i.imgur.com/MI3iDBt.png "")  
@@ -219,8 +220,9 @@ folder replaceing `username` with the correct path.
 Check enable deep scan  
 ![](https://i.imgur.com/nSJ6oKK.png "")  
 Wait for it to scan your harddrive and then look for any files with wallet.dat in the name.  
+</details>
 
-#### Edit energi.conf
+<details><summary><strong> Edit energi.conf </strong></summary>
 Tools -> Open wallet configuration file.
 
 If the above doesn't work you can do this:  
@@ -233,13 +235,16 @@ Mac:
 go to Finder -> Menubar (top of screen) -> Go -> Utilities, open Terminal, type in  
 `open -a TextEdit ~/Library/Application\ Support/EnergiCore/energi.conf`  
 If you already have a terminal window open and want another one go to the Menubar (top of screen) -> new window -> new windows with profile - basic. Then paste in the above command.
+</details>
 
-#### Remove user from VPS
+<details><summary><strong> Remove user from VPS </strong></summary>
 The following example uses the username `enrg_n1`.  
 
     enrg_n1 remove_daemon
 
-#### I've been locked out of the VPS
+</details>
+
+<details><summary><strong> I've been locked out of the VPS </strong></summary>
 You get one of these errors when trying to login via Bitvise:  
 "Network error: Connection timed out"  
 "Network error: Software caused a connection abort"  
@@ -252,15 +257,21 @@ once logged in type this in
 
 Replace "YOUR.DESKTOP.IP.ADDRESS" with the nubers found on http://ipinfo.io/ip
 
-#### Energi Website
-https://www.energi.world/
+</details>
 
-#### Coinmarketcap
-https://coinmarketcap.com/currencies/energi/
+<details><summary><strong> Useful Websites </strong></summary>
+Energi Website  
+https://www.energi.world/  
 
-#### Block Explorer
-https://explore.energi.network/
-https://explore2.energi.network/
+Block Explorer  
+https://explore.energi.network/  
+https://explore2.energi.network/  
+
+Coinmarketcap  
+https://coinmarketcap.com/currencies/energi/  
+
+</details>
+
 
 ---
 ---
