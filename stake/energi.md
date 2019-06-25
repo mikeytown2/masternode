@@ -129,9 +129,9 @@ You should be at this point now.
 
 Shutdown the energi wallet.
 
-Open up the energicore folder.
-windows key + r
-`explorer.exe %appdata%\energicore`
+Open up the energicore folder.  
+windows key + r  
+`explorer.exe %appdata%\energicore`  
 ![](https://i.imgur.com/v5qnHAg.png "")  
 
 If you see the database folder; please turn off the energi wallet  
@@ -154,11 +154,26 @@ Fill in the password you set on send.firefox.com if you set one.
 Wait for the wallet to load  
 ![](https://i.imgur.com/bdcWWEj.png "")  
 
-
+Enter in your wallet's password  
+![](https://i.imgur.com/3Y6RGf1.png "")  
 
 
 
 ##### 6.0 Script will end with  
+Script will end with the amount of energi in the wallet.  
+The acmount of energi that is staking.  
+The staking status.
+(Note that I used an empty wallet for this example)
+![](https://i.imgur.com/95TpuHl.png "")  
+
+
+##### 7.0 Edit energi.conf on your desktop
+windows key + r  
+`notepad.exe %appdata%\energicore\energi.conf`  
+and add in  
+`staking=0`  
+
+
 
 If you messed up and want to start over with a fresh VPS instance go to https://my.vultr.com/ 
 click on the three dots to the right ... and select Server Reinstall.
