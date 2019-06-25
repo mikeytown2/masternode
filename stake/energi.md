@@ -35,7 +35,7 @@ What you need:
   BE CAREFULL; only trust help via the ticket support system.
   Usernames are not unique on discord so only trust green, yellow, blue, and red users (people with roles) IN the Energi Discord server.
 
-<details><summary><b>Click here for the Windows Setup:</b></summary>
+<details><h2><summary>Click here for the Windows Setup:</summary></h2>
 
 #### 1.0 Wallet Prep.  
 Enable coin control features and Show Masternodes Tab. 
