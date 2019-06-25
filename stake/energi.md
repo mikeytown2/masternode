@@ -62,7 +62,7 @@ Once signed up go here https://my.vultr.com/deploy/
 Once deployed (wait 2 minutes)  
 ![](https://i.imgur.com/SySIwzL.png "")  
 
-##### 3.0 Get vps IP.  
+##### 3.0 Login to VPS via SSH.  
 Click the Cloud Instance link on the left or the Manage link/Server Details on the right  
 ![](https://i.imgur.com/g0Jdj4O.png "")  
 
@@ -155,8 +155,6 @@ Wait for the wallet to load
 
 Enter in your wallet's password  
 ![](https://i.imgur.com/3Y6RGf1.png "")  
-
-
 
 ##### 6.0 Script will end with  
 Script will end with the amount of energi in the wallet.  
