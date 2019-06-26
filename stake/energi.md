@@ -305,7 +305,7 @@ Then go to the ssh terminal and paste in (right click) the link and press enter.
 Fill in the password you set on send.firefox.com if you set one.  
 
 Wait for the wallet to load  
-![](https://i.imgur.com/bdcWWEj.png "")  
+![](https://i.imgur.com/vyOwZYR.png "")  
 
 Enter in your wallet's password  
 ![](https://i.imgur.com/3Y6RGf1.png "")  
