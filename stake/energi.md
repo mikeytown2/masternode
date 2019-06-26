@@ -315,12 +315,15 @@ Script will end with the amount of energi in the wallet.
 The amount of energi that is staking.  
 The staking status.
 (Note that I used an empty wallet for this example)
-![](https://i.imgur.com/95TpuHl.png "")  
+![](https://i.imgur.com/rEZ82wS.png "")  
 
 
 ##### 7.0 Edit energi.conf on your desktop
-windows key + r  
-`notepad.exe %appdata%\energicore\energi.conf`  
+Terminal -> Menubar (top of screen) -> Shell -> New Window -> New Window with Settings - Basic  
+Type/Paste in 
+
+    open -a TextEdit "${HOME}/Library/Application Support/EnergiCore/energi.conf"  
+
 and add in  
 `staking=0`  
 
