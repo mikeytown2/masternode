@@ -230,7 +230,7 @@ Go back to the vultr Server Information page and under password click the copy i
 ![copy icon](https://www.materialui.co/materialIcons/content/content_copy_black_24x24.png "copy icon")  
 ![](https://i.imgur.com/hRb01oa.png "")  
 Then paste in the password from vultr and press enter. 
-Note that there will not be any \*\*\*\*\*\*\*\* when you paste in the password.
+Note that there will not be any \*\*\*\*\*\*\*\* when you paste in the password.  
 ![](https://i.imgur.com/rodtUzV.png "")  
 
 
