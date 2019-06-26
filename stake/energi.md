@@ -180,7 +180,153 @@ click on the three dots to the right ... and select Server Reinstall.
 
 <details><summary><b>Click here for the Mac Setup:</b></summary>
     
-to do
+#### 1.0 Wallet Prep.  
+Enable coin control features. 
+In the desktop wallet go to Energi -> Preferences -> Wallet and make sure Enable coin control features is checked and click OK.  
+![](https://i.imgur.com/TiqP96p.png "")  
+
+#### 2.0 Next you'll need a VPS.
+Any VPS provider will work; in this example vultr will be used.
+Get a VPS from here
+https://www.vultr.com/?ref=7876413-4F
+
+Once signed up go here https://my.vultr.com/deploy/  
+
+1. Choose Server  
+   ![](https://i.imgur.com/gAfrQIq.png "")  
+1. Select a location  
+   ![](https://i.imgur.com/njK2ncr.png "")  
+1. Select Ubuntu 18.04  
+   ![](https://i.imgur.com/B3vKhdJ.png "")  
+1. Select $3.50  
+   ![](https://i.imgur.com/jgVFGDI.png "")  
+1. Click deploy now button  
+   ![](https://i.imgur.com/39rK5xl.png "")  
+
+Once deployed (wait 2 minutes)  
+![](https://i.imgur.com/SySIwzL.png "")  
+
+##### 3.0 Login to VPS via SSH.  
+Click the Cloud Instance link on the left or the Manage link/Server Details on the right  
+![](https://i.imgur.com/g0Jdj4O.png "")  
+
+Under IP click the copy icon 
+![copy icon](https://www.materialui.co/materialIcons/content/content_copy_black_24x24.png "copy icon" )  
+![](https://i.imgur.com/49G3uam.png "")  
+ 
+Finder -> Menubar (top of screen) -> Go -> Utilities. Open Terminal.  
+Then from the menubar to Shell -> New Remote Connection.  
+![](https://i.imgur.com/djlgZ7f.png  "")  
+
+Select Secure Shell (ssh); then click the right +.
+In the field paste in the ip address of your VPS.
+![](https://i.imgur.com/NlGZqyw.png  "") 
+Click the Connect button.  
+![](https://i.imgur.com/v6TcEKM.png  "")  
+Type in `yes` here
+![](https://i.imgur.com/MFx4817.png  "")  
+
+Go back to the vultr Server Information page and under password click the copy icon 
+![copy icon](https://www.materialui.co/materialIcons/content/content_copy_black_24x24.png "copy icon")  
+![](https://i.imgur.com/hRb01oa.png "")  
+Then paste in the password from vultr and press enter. 
+Note that there will not be any \*\*\*\*\*\*\*\* when you paste in the password.
+![](https://i.imgur.com/rodtUzV.png "")  
+
+
+#### 4.0 VPS Steps
+
+Copy the following line and paste into your remote terminal and press enter (right click to paste in Bitvise) ([How to connect to your VPS (3.0)](#30-get-vps-ip)).  
+
+    bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/stake/energid.sh)" ; source ~/.bashrc  
+
+`O` and `o` are both the letter and not the number if you are typing this out.  
+[Bitvise](https://dl.bitvise.com/BvSshClient-Inst.exe) is highly recommended in order to use copy/paste.  
+You can view the script here https://github.com/mikeytown2/masternode/blob/master/stake/energid.sh
+![](https://i.imgur.com/eHHs6eD.png "")  
+
+Type in `y` when it asks to "Proceed with the script (y/n)?:"
+![](https://i.imgur.com/plcq07d.png "")  
+This will take about 10 minutes to update Ubuntu 18.04 to the latest package versions. 
+Please wait for Linux to be updated.
+
+Type in `y` when it asks to "Make it so only the above list of users can login via SSH (y/n)?:"
+![](https://i.imgur.com/Xib0pXJ.png "")  
+
+Scan in your QR code and confirm it works by typing in the 6 digit code.  
+You'll want to make the terminal window bigger here to more easily scan in the QR code.  
+![](https://i.imgur.com/LJe2xs3.png "")  
+
+Write down the emergency scratch codes and then type in `y`
+to use this 2 factor code.
+![](https://i.imgur.com/cs6ZZFC.png "")  
+
+Type in `y` when it asks to "Install a new energid node on this vps (y/n)?:"
+![](https://i.imgur.com/UPDTtjQ.png "")  
+
+Give it time to install the node on your Linux box
+![](https://i.imgur.com/mvGHhsD.png "")  
+
+
+#### 5.0 Upload your wallet.dat to the VPS
+
+This script uses https://send.firefox.com/ to transfer files from your desktop computer onto the vps. 
+All files are encrypted before being uploaded and decrypted on the client after downloading. 
+The encryption key is never sent to the server. 
+
+You should be at this point now.  
+![](https://i.imgur.com/bzJFhPy.png "")  
+
+Shutdown the energi wallet.
+
+Open up the energicore folder.  
+windows key + r  
+`explorer.exe %appdata%\energicore`  
+![](https://i.imgur.com/v5qnHAg.png "")  
+
+If you see the database folder; please turn off the energi wallet  
+![](https://i.imgur.com/PO3tng9.png "")  
+
+Please go to https://send.firefox.com/  
+![](https://i.imgur.com/3Rr8fDU.png "")  
+
+Select wallet.dat and drag it into your browser to upload it  
+![](https://i.imgur.com/kGJ7qx2.png "")  
+![](https://i.imgur.com/agvAV66.png "")  
+
+Click the upload button and then copy link  
+![](https://i.imgur.com/c2weNT5.png "")  
+
+Then go to the ssh terminal and paste in (right click) the link and press enter.  
+![](https://i.imgur.com/uq2IDbB.png "")  
+Fill in the password you set on send.firefox.com if you set one.  
+
+Wait for the wallet to load  
+![](https://i.imgur.com/bdcWWEj.png "")  
+
+Enter in your wallet's password  
+![](https://i.imgur.com/3Y6RGf1.png "")  
+
+##### 6.0 Script will end with  
+Script will end with the amount of energi in the wallet.  
+The amount of energi that is staking.  
+The staking status.
+(Note that I used an empty wallet for this example)
+![](https://i.imgur.com/95TpuHl.png "")  
+
+
+##### 7.0 Edit energi.conf on your desktop
+windows key + r  
+`notepad.exe %appdata%\energicore\energi.conf`  
+and add in  
+`staking=0`  
+
+##### 8.0 Notes
+You can re-run the staking script to continue where you left off OR to upload a different wallet.dat file.
+
+If you messed up and want to start over with a fresh VPS instance go to https://my.vultr.com/ 
+click on the three dots to the right ... and select Server Reinstall.
+
 
 </details>
 
