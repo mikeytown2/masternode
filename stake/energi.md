@@ -275,14 +275,17 @@ All files are encrypted before being uploaded and decrypted on the client after 
 The encryption key is never sent to the server. 
 
 You should be at this point now.  
-![](https://i.imgur.com/bzJFhPy.png "")  
+![](https://i.imgur.com/qL8b5EV.png "")  
 
 Shutdown the energi wallet.
 
-Open up the energicore folder.  
-windows key + r  
-`explorer.exe %appdata%\energicore`  
-![](https://i.imgur.com/v5qnHAg.png "")  
+Open up the energicore folder (~/Library/Application Support/EnergiCore).  
+Terminal -> Menubar (top of screen) -> Shell -> New Window -> New Window with Settings - Basic  
+Type/Paste in 
+
+    open "${HOME}/Library/Application Support/EnergiCore"
+
+![](https://i.imgur.com/ADTVntH.png "")  
 
 If you see the database folder; please turn off the energi wallet  
 ![](https://i.imgur.com/PO3tng9.png "")  
