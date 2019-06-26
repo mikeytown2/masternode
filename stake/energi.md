@@ -404,14 +404,6 @@ If you already have a terminal window open and want another one go to the Menuba
 
 </details>
 
-<details><summary><strong> Remove user from VPS </strong></summary>
-
-The following example uses the username `enrg_n1`.  
-
-    enrg_n1 remove_daemon
-
-</details>
-
 <details><summary><strong> I've been locked out of the VPS </strong></summary>
     
 You get one of these errors when trying to login via Bitvise:  
