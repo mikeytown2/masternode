@@ -319,7 +319,7 @@ _get_node_info() {
     then
       if [[ ! -z "${DAEMON_BIN}" ]]
       then
-        REPLY=''
+        REPLY='y'
         read -p "Install a new ${DAEMON_BIN} node on this vps (y/n)?: " -r
         REPLY=${REPLY,,} # tolower
         if [[ "${REPLY}" == 'y' ]]
