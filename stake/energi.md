@@ -24,7 +24,8 @@ ___
 # VPS Staking Guide
 
 What you need:  
-- A Ubuntu 16.04 OR 18.04 Virtual Private Server ([VPS](https://www.vultr.com/?ref=7876413-4F)) for running the staking node  
+- A Ubuntu 16.04 OR 18.04 Virtual Private Server ([VPS](https://www.vultr.com/?ref=7876413-4F)) for running the staking node 
+- Be sure to setup 2 factor auth for vultr; see https://my.vultr.com/settings/twofactor/ 
 - A way to use SSH ([Bitvise](https://dl.bitvise.com/BvSshClient-Inst.exe) for windows or Terminal for Mac)  
 - [Energi Wallet](https://github.com/energicryptocurrency/energi/releases/latest) ([Windows](https://github.com/energicryptocurrency/energi/releases/download/v2.2.1/energicore-2.2.1-win64-setup.exe),
  [Mac](https://github.com/energicryptocurrency/energi/releases/download/v2.2.1/energicore-2.2.1-macos.dmg), 
