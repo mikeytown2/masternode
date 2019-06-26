@@ -219,11 +219,11 @@ Then from the menubar to Shell -> New Remote Connection.
 ![](https://i.imgur.com/djlgZ7f.png  "")  
 
 Select Secure Shell (ssh); then click the right +.
-In the field paste in the ip address of your VPS.
-![](https://i.imgur.com/NlGZqyw.png  "") 
+In the field paste in the ip address of your VPS.  
+![](https://i.imgur.com/NlGZqyw.png  "")  
 Click the Connect button.  
 ![](https://i.imgur.com/v6TcEKM.png  "")  
-Type in `yes` here
+Type in `yes` here  
 ![](https://i.imgur.com/MFx4817.png  "")  
 
 Go back to the vultr Server Information page and under password click the copy icon 
