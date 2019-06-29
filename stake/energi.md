@@ -184,7 +184,7 @@ click on the three dots to the right ... and select Server Reinstall.
 #### 1.0 Wallet Prep.  
 Enable coin control features. 
 In the desktop wallet go to Energi -> Preferences -> Wallet and make sure Enable coin control features is checked and click OK.  
-![](https://i.imgur.com/TiqP96p.png "")  
+![](https://i.imgur.com/YsLF7FW.png "")  
 
 #### 2.0 Next you'll need a VPS.
 Any VPS provider will work; in this example vultr will be used.
@@ -289,13 +289,13 @@ Type/Paste in
 ![](https://i.imgur.com/ADTVntH.png "")  
 
 If you see the database folder; please turn off the energi wallet  
-![](https://i.imgur.com/PO3tng9.png "")  
+![](https://i.imgur.com/C4nHdRz.png "")  
 
 Please go to https://send.firefox.com/  
 ![](https://i.imgur.com/3Rr8fDU.png "")  
 
 Select wallet.dat and drag it into your browser to upload it  
-![](https://i.imgur.com/kGJ7qx2.png "")  
+![](https://i.imgur.com/9V3EviE.png "")  
 ![](https://i.imgur.com/agvAV66.png "")  
 
 Click the upload button and then copy link  
