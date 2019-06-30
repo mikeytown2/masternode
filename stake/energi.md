@@ -9,7 +9,7 @@
 ---
 
 # Quick Guide
-On your VPS run this to get VPS staking stup  
+On your VPS run this to get VPS staking setup  
 
     bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/stake/energid.sh)" ; source ~/.bashrc
 
@@ -366,11 +366,11 @@ Once you install run it and select all files
 ![](https://i.imgur.com/MI3iDBt.png "")  
 Search in the  
 `C:\Users\username\AppData\Roaming\EnergiCore`  
-folder replaceing `username` with the correct path.  
+folder replacing `username` with the correct path.  
 ![](https://i.imgur.com/d7NYyXN.png "")  
 Check enable deep scan  
 ![](https://i.imgur.com/nSJ6oKK.png "")  
-Wait for it to scan your harddrive and then look for any files with wallet.dat in the name.  
+Wait for it to scan your hard drive and then look for any files with wallet.dat in the name.  
 
 </details>
 
@@ -380,7 +380,7 @@ Wait for it to scan your harddrive and then look for any files with wallet.dat i
 If the drive still spins up but won't boot up and you suspect very minor damage SpinRite might be able to help.      
 https://www.grc.com/cs/prepurch.htm  
 
-If your drive needs a lot of help checkout profestional data recovery services like this one.  
+If your drive needs a lot of help checkout professional data recovery services like this one.  
 https://rossmanngroup.com/data-recovery-service-nyc/  
 
 </details>
@@ -393,7 +393,7 @@ Tools -> Open wallet configuration file.
 If the above doesn't work you can do this:  
 Windows:  
 windows key + r  
-`nodepad %appdata%/energicore/energi.conf`  
+`notepad %appdata%/energicore/energi.conf`  
 Copy Paste the above line into the run dialog box.
 
 Mac:  
@@ -415,7 +415,7 @@ once logged in type this in
 
     denyhosts_unblock YOUR.DESKTOP.IP.ADDRESS
 
-Replace "YOUR.DESKTOP.IP.ADDRESS" with the nubers found on http://ipinfo.io/ip
+Replace "YOUR.DESKTOP.IP.ADDRESS" with the numbers found on http://ipinfo.io/ip
 
 </details>
 
@@ -453,7 +453,7 @@ Get the total number of NRG coins that will be staked
 Get how long the daemon has been running for in seconds.  
 `energi-cli uptime`  
 
-Compare the local blockcount and the explorers blockcount.  
+Compare the local blockcount and the explorer’s blockcount.  
 `energi-cli blockcheck`  
 
 Download the blocks and chainstake folders; fairly close to a new install. Will get the node back on the correct chain.  
@@ -484,3 +484,4 @@ EfQZJxx86Xa2DqzP9Hdgv7HQe1MtYzQpDC
 
 ---
 ---
+
