@@ -308,7 +308,7 @@ Wait for the wallet to load
 ![](https://i.imgur.com/vyOwZYR.png "")  
 
 Enter in your wallet's password  
-![](https://i.imgur.com/3Y6RGf1.png "")  
+![](https://i.imgur.com/sloB52B.png "")  
 
 ##### 6.0 Script will end with  
 Script will end with the amount of energi in the wallet.  
