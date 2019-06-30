@@ -160,7 +160,7 @@ Enter in your wallet's password
 ##### 6.0 Script will end with  
 Script will end with the amount of energi in the wallet.  
 The amount of energi that is staking.  
-The staking status.
+The staking status.  
 ![](https://i.imgur.com/FXfWo3E.png "")  
 
 
@@ -313,7 +313,7 @@ Enter in your wallet's password
 ##### 6.0 Script will end with  
 Script will end with the amount of energi in the wallet.  
 The amount of energi that is staking.  
-The staking status.
+The staking status.  
 ![](https://i.imgur.com/6Y9IinA.png "")  
 
 
