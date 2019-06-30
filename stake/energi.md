@@ -439,7 +439,7 @@ https://coinmarketcap.com/currencies/energi/
 
 # Appendix
 
-## Useful commands to run on your VPS:
+<details><summary><strong>Useful commands to run on your VPS:</strong></summary>
 
 Get the staking status  
 `energi-cli getstakingstatus`  
@@ -474,6 +474,7 @@ Watch the last 20 entries in the daemon log
 Get the last 2 entries in the daemon log that deal with the node startup and shutdown  
 `energi-cli daemon_log starts 2 20`  
 
+</details>
 
 ---
 ---
