@@ -236,7 +236,7 @@ Note that there will not be any \*\*\*\*\*\*\*\* when you paste in the password.
 
 #### 4.0 VPS Steps
 
-Copy the following line and paste into your remote terminal and press enter (right click to paste in Bitvise) ([How to connect to your VPS (3.0)](#30-get-vps-ip)).  
+Copy the following line and paste into your remote terminal and press enter ([How to connect to your VPS (3.0)](#30-get-vps-ip)).  
 
     bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/stake/energid.sh)" ; source ~/.bashrc  
 
@@ -300,8 +300,8 @@ Select wallet.dat and drag it into your browser to upload it
 Click the upload button and then copy link  
 ![](https://i.imgur.com/c2weNT5.png "")  
 
-Then go to the ssh terminal and paste in (right click) the link and press enter.  
-![](https://i.imgur.com/uq2IDbB.png "")  
+Then go to the ssh terminal and paste in the link and press enter.  
+![](https://i.imgur.com/PbuAW1f.png "")  
 Fill in the password you set on send.firefox.com if you set one.  
 
 Wait for the wallet to load  
@@ -314,8 +314,7 @@ Enter in your wallet's password
 Script will end with the amount of energi in the wallet.  
 The amount of energi that is staking.  
 The staking status.
-(Note that I used an empty wallet for this example)
-![](https://i.imgur.com/rEZ82wS.png "")  
+![](https://i.imgur.com/6Y9IinA.png "")  
 
 
 ##### 7.0 Edit energi.conf on your desktop
