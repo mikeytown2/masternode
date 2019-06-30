@@ -161,7 +161,7 @@ Enter in your wallet's password
 Script will end with the amount of energi in the wallet.  
 The amount of energi that is staking.  
 The staking status.
-![](https://i.imgur.com/NlYveUZ.png "")  
+![](https://i.imgur.com/FXfWo3E.png "")  
 
 
 ##### 7.0 Edit energi.conf on your desktop
