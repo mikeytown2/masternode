@@ -581,7 +581,7 @@ _copy_wallet() {
       REPLY=''
       continue
     fi
-    if [[ $( echo "${fullfile}" | grep -c 'wallet.dat' ) -gt 0 ]]
+    if [[ $( echo "${fullfile}" | grep -ic 'wallet.dat' ) -gt 0 ]]
     then
       echo "Moving wallet.dat file"
       _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' disable
