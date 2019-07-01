@@ -159,8 +159,8 @@ _setup_two_factor() {
     head -200 /dev/urandom | cksum | tr -d ' ' | cut -c1-8 ;
     head -200 /dev/urandom | cksum | tr -d ' ' | cut -c1-8 ;
     } >> "${HOME}/.google_authenticator"
-    SECRET=$( head -n 1 "${HOME}/.google_authenticator" )
   fi
+  SECRET=$( head -n 1 "${HOME}/.google_authenticator" )
   echo "Warning: pasting the following URL into your browser exposes the OTP secret to Google:"
   echo "https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&chl=otpauth://totp/ssh%2520login%2520for%2520'${USRNAME}'%3Fsecret%3D${SECRET}%26issuer%3D${IP_ADDRESS}"
   echo
