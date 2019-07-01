@@ -35,7 +35,7 @@ What you need:
   BE CAREFUL; only trust help via the ticket support system.
   Usernames are not unique on discord so only trust green, yellow, blue, and red users (people with roles) IN the Energi Discord server.
 
-<details><summary><strong>Click here for the Windows Setup:</strong></summary>
+<details><summary id="win"><strong>Click here for the Windows Setup:</strong></summary>
 
 #### 1.0 Wallet Prep.  
 Enable coin control features. 
@@ -178,7 +178,7 @@ click on the three dots to the right ... and select Server Reinstall.
 
 </details>
 
-<details><summary><b>Click here for the Mac Setup:</b></summary>
+<details><summary id='mac'><b>Click here for the Mac Setup:</b></summary>
     
 #### 1.0 Wallet Prep.  
 Enable coin control features. 
