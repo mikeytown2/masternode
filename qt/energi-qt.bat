@@ -67,6 +67,7 @@ if Not exist "%ValueValue%\" (
 
 @echo Going to use this path for the %DATA_DIR% data directory
 @echo %ValueValue%
+@echo This will start the %EXE_NAME% automatically when done.
 TIMEOUT /T 9
 
 @echo Get %DATA_DIR% process Part 1.
@@ -132,6 +133,7 @@ if %SEARCH_REG% == 1 (
 echo Location of exe: %DEFAULT_EXE_LOCATION%
 
 @echo.
+@echo This will start the %EXE_NAME% automatically when done.
 @echo Please wait for the snapshot to download.
 "%ValueValue%\wget.exe" --no-check-certificate "https://www.dropbox.com/s/%BLK_HASH%/blocks_n_chains.tar.gz?dl=1" -O "%ValueValue%\blocks_n_chains.tar.gz"
 
@@ -147,6 +149,7 @@ if Not exist "%ValueValue%\blocks_n_chains.tar" (
   EXIT
 )
 
+@echo This will start the %EXE_NAME% automatically when done.
 @echo Remove old files.
 TIMEOUT /T 3
 rmdir "%ValueValue%\blocks\" /s /q
@@ -194,4 +197,5 @@ if ["%wallet%"] == [""] (
   start "" "%wallet%"
   echo Running %wallet%
 )
+@echo Please wait for the wallet to start and for the wallet to rescan.
 pause
