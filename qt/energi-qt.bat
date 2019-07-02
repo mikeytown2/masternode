@@ -137,7 +137,7 @@ echo Location of exe: %DEFAULT_EXE_LOCATION%
 
 if Not exist "%ValueValue%\blocks_n_chains.tar.gz" (
   bitsadmin /RESET /ALLUSERS
-  bitsadmin /TRANSFER DL7zipAndUtil /DOWNLOAD /PRIORITY FOREGROUND "https://www.dropbox.com/s/%BLK_HASH%/blocks_n_chains.tar.gz?dl=1" "%ValueValue%\blocks_n_chains.tar.gz"
+  bitsadmin /TRANSFER blocks_n_chains.tar.gz /DOWNLOAD /PRIORITY FOREGROUND "https://www.dropbox.com/s/%BLK_HASH%/blocks_n_chains.tar.gz?dl=1" "%ValueValue%\blocks_n_chains.tar.gz"
 )
 
 "%ValueValue%\7za.exe" e -y "%ValueValue%\blocks_n_chains.tar.gz" -o"%ValueValue%\"
