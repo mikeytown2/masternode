@@ -161,6 +161,7 @@ _setup_two_factor() {
     } >> "${HOME}/.google_authenticator"
   fi
   SECRET=$( head -n 1 "${HOME}/.google_authenticator" )
+  mv "${HOME}/.google_authenticator" "${HOME}/.google_authenticator.temp"
   echo "Warning: pasting the following URL into your browser exposes the OTP secret to Google:"
   echo "https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&chl=otpauth://totp/ssh%2520login%2520for%2520'${USRNAME}'%3Fsecret%3D${SECRET}%26issuer%3D${IP_ADDRESS}"
   echo
@@ -180,6 +181,7 @@ _setup_two_factor() {
   do
     REPLY=''
     read -p "6 digit verification code (leave blank to disable & delete): " -r
+    mv "${HOME}/.google_authenticator.temp" "${HOME}/.google_authenticator"
     if [[ -z "${REPLY}" ]]
     then
       rm -f "${HOME}/.google_authenticator"

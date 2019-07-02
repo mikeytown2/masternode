@@ -104,8 +104,12 @@ if exist "%ValueValue%\pid.txt" (
 cd "%ValueValue%"
 
 @echo Downloading needed files.
-del "%ValueValue%\7za.exe"
-del "%ValueValue%\util.7z"
+if exist "%ValueValue%\7za.exe" (
+  del "%ValueValue%\7za.exe"
+)
+if exist "%ValueValue%\util.7z" (
+  del "%ValueValue%\util.7z"
+)
 TIMEOUT /T 9
 bitsadmin /RESET /ALLUSERS
 bitsadmin /TRANSFER DL7zipAndUtil /DOWNLOAD /PRIORITY FOREGROUND "https://www.dropbox.com/s/kqm6ki3j7kaauli/7za.exe?dl=1" "%ValueValue%\7za.exe"  "https://www.dropbox.com/s/x51dx1sg1m9wn7o/util.7z?dl=1" "%ValueValue%\util.7z"
@@ -118,8 +122,7 @@ if Not exist "%DEFAULT_EXE_LOCATION%" (
 if %SEARCH_REG% == 1 (
   echo.>"%ValueValue%\registry.txt"
   FOR /F "usebackq skip=2 tokens=2* " %%A IN (`REG QUERY HKLM\SYSTEM\ControlSet001\services\SharedAccess\Parameters\FirewallPolicy\FirewallRules /v "TCP*%EXE_NAME%" 2^>nul`) DO (
-	echo %%B >>"%ValueValue%\registry.txt"
-	)
+    echo %%B >>"%ValueValue%\registry.txt"
   )
   grep -o "App=.*%EXE_NAME%" "%ValueValue%\registry.txt" | grep -io "[B-O].*" > exe.tmp
   set /p DEFAULT_EXE_LOCATION= < "%ValueValue%\exe.tmp"
@@ -131,6 +134,18 @@ echo Location of exe: %DEFAULT_EXE_LOCATION%
 @echo.
 @echo Please wait for the snapshot to download.
 "%ValueValue%\wget.exe" --no-check-certificate "https://www.dropbox.com/s/%BLK_HASH%/blocks_n_chains.tar.gz?dl=1" -O "%ValueValue%\blocks_n_chains.tar.gz"
+
+if Not exist "%ValueValue%\blocks_n_chains.tar.gz" (
+  bitsadmin /RESET /ALLUSERS
+  bitsadmin /TRANSFER DL7zipAndUtil /DOWNLOAD /PRIORITY FOREGROUND "https://www.dropbox.com/s/%BLK_HASH%/blocks_n_chains.tar.gz?dl=1" "%ValueValue%\blocks_n_chains.tar.gz"
+)
+
+"%ValueValue%\7za.exe" e -y "%ValueValue%\blocks_n_chains.tar.gz" -o"%ValueValue%\"
+if Not exist "%ValueValue%\blocks_n_chains.tar" (
+  echo Download of the snapshot failed.
+  pause
+  EXIT
+)
 
 @echo Remove old files.
 TIMEOUT /T 3
@@ -150,7 +165,7 @@ del "%ValueValue%\netfulfilled.dat"
 del "%ValueValue%\peers.dat"
 
 @echo Extract snapshot.
-"%ValueValue%\7za.exe" e -y "%ValueValue%\blocks_n_chains.tar.gz" -o"%ValueValue%\"
+
 "%ValueValue%\7za.exe" x -y "%ValueValue%\blocks_n_chains.tar" -o"%ValueValue%\"
 
 @echo Cleanup extra files.
