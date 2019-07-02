@@ -340,7 +340,7 @@ ___
 
 # Troubleshooting / FAQ  
 
-<details><summary><strong> How do I backup my wallet? </strong></summary>
+<details><summary id="backup"><strong> How do I backup my wallet? </strong></summary>
 
 Make sure it's been encrypted with a password and then store the wallet.dat file on 
 [Dropbox](https://www.dropbox.com/) or [Google Drive](https://drive.google.com/). 
@@ -359,7 +359,7 @@ Print this out and keep it in a safe place.
 
 </details>
 
-<details><summary><strong> How do I recover a deleted wallet.dat </strong></summary>
+<details><summary id="file-recovery"><strong> How do I recover a deleted wallet.dat </strong></summary>
 
 Download Recuva: https://www.ccleaner.com/recuva/download/standard  
 Once you install run it and select all files  
@@ -375,7 +375,7 @@ Wait for it to scan your hard drive and then look for any files with wallet.dat 
 </details>
 
 
-<details><summary><strong> How do I recover a hard drive that doesn't work at all </strong></summary>
+<details><summary id="hd-recovery"><strong> How do I recover a hard drive that doesn't work at all </strong></summary>
 
 If the drive still spins up but won't boot up and you suspect very minor damage SpinRite might be able to help.      
 https://www.grc.com/cs/prepurch.htm  
@@ -386,7 +386,7 @@ https://rossmanngroup.com/data-recovery-service-nyc/
 </details>
 
 
-<details><summary><strong> Edit energi.conf </strong></summary>
+<details><summary id="edit-energi"><strong> Edit energi.conf </strong></summary>
 
 Tools -> Open wallet configuration file.
 
@@ -403,7 +403,7 @@ If you already have a terminal window open and want another one go to the Menuba
 
 </details>
 
-<details><summary><strong> I've been locked out of the VPS </strong></summary>
+<details><summary id="vps-lockout"><strong> I've been locked out of the VPS </strong></summary>
     
 You get one of these errors when trying to login via Bitvise:  
 "Network error: Connection timed out"  
@@ -419,7 +419,7 @@ Replace "YOUR.DESKTOP.IP.ADDRESS" with the numbers found on http://ipinfo.io/ip
 
 </details>
 
-<details><summary><strong> Useful Websites </strong></summary>
+<details><summary id="websites"><strong> Useful Websites </strong></summary>
 
 Energi Website  
 https://www.energi.world/  
@@ -439,7 +439,7 @@ https://coinmarketcap.com/currencies/energi/
 
 # Appendix
 
-<details><summary><strong>Useful commands to run on your VPS:</strong></summary>
+<details><summar id="vps-commands"y><strong>Useful commands to run on your VPS:</strong></summary>
 
 Get the staking status  
 `energi-cli getstakingstatus`  
