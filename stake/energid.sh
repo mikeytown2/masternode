@@ -481,6 +481,7 @@ _copy_wallet() {
   # Wait for mnsync
   MNSYNC_WAIT_FOR='999'
   echo "Waiting for mnsync status..."
+  echo "This can sometimes take up 10 minutes; please wait for mnsync."
   i=0
   while [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' mnsync status | grep -cF "${MNSYNC_WAIT_FOR}" ) -eq 0 ]]
   do
@@ -739,6 +740,7 @@ _setup_wallet_auto_pw () {
   # Wait for mnsync
   MNSYNC_WAIT_FOR='999'
   echo "Waiting for mnsync status..."
+  echo "This can sometimes take up 10 minutes; please wait for mnsync."
   i=0
   while [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' mnsync status | grep -cF "${MNSYNC_WAIT_FOR}" ) -eq 0 ]]
   do
@@ -824,6 +826,7 @@ _setup_wallet_auto_pw () {
   # Wait for mnsync
   MNSYNC_WAIT_FOR='999'
   echo "Waiting for mnsync status..."
+  echo "This can sometimes take up 10 minutes; please wait for mnsync."
   i=0
   while [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' mnsync status | grep -cF "${MNSYNC_WAIT_FOR}" ) -eq 0 ]]
   do
@@ -844,6 +847,7 @@ _setup_wallet_auto_pw () {
     # Wait for mnsync
     MNSYNC_WAIT_FOR='999'
     echo "Waiting for mnsync status..."
+    echo "This can sometimes take up 10 minutes; please wait for mnsync."
     i=0
     while [[ $( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' mnsync status | grep -cF "${MNSYNC_WAIT_FOR}" ) -eq 0 ]]
     do
