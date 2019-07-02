@@ -851,9 +851,9 @@ _setup_wallet_auto_pw () {
   STAKE_INPUTS=$( _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' liststakeinputs )
   STAKING_BALANCE=$( echo "${STAKE_INPUTS}" | jq '.[].amount' 2>/dev/null | awk '{s+=$1} END {print s}' 2>/dev/null )
   STAKING_INPUTS_COUNT=$( echo "${STAKE_INPUTS}" | grep -c 'amount' )
-  echo "Current wallet.dat balance: ${WALLET_BALANCE}"
-  echo "Value of coins that can stake: ${STAKING_BALANCE}"
-  echo "Number of staking inputs: ${STAKING_INPUTS_COUNT}"
+  echo -e "Current wallet.dat balance: \e[1m${WALLET_BALANCE}\e[0m"
+  echo -e "Value of coins that can stake: \e[1m${STAKING_BALANCE}\e[0m"
+  echo -e "Number of staking inputs: \e[1m${STAKING_INPUTS_COUNT}\e[0m"
   echo "Node info: ${USRNAME} ${CONF_FILE}"
   echo "Staking Status:"
   _masternode_dameon_2 "${USRNAME}" "${CONTROLLER_BIN}" '' "${DAEMON_BIN}" "${CONF_FILE}" '' '-1' '-1' getstakingstatus | grep -C 20 --color -E '^|.*false'
