@@ -10,6 +10,8 @@ SNAPSHOT_HASH='gsaqiry3h1ho3nh'
 echo "Stopping ${QT_BIN_NAME} if it's running."
 sudo killall -I -q "${QT_BIN_NAME}"
 
+
+echo "This will start ${QT_BIN_NAME} automatically when done."
 echo "Downloading the latest snapshot to ${HOME}/Library/Application Support/${DATA_DIR}/"
 curl -L "https://www.dropbox.com/s/${SNAPSHOT_HASH}/blocks_n_chains.tar.gz?dl=1" -o "${HOME}/Library/Application Support/${DATA_DIR}/blocks_n_chains.tar.gz"
 
@@ -29,6 +31,7 @@ rm -f "${HOME}/Library/Application Support/${DATA_DIR}/mnpayments.dat"
 rm -f "${HOME}/Library/Application Support/${DATA_DIR}/netfulfilled.dat"
 rm -f "${HOME}/Library/Application Support/${DATA_DIR}/peers.dat"
 
+echo "This will start ${QT_BIN_NAME} automatically when done."
 echo "Extract the snapshot into ${HOME}/Library/Application Support/${DATA_DIR}/"
 tar -xzf "${HOME}/Library/Application Support/${DATA_DIR}/blocks_n_chains.tar.gz" -C "${HOME}/Library/Application Support/${DATA_DIR}/"
 
