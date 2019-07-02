@@ -161,6 +161,10 @@ _setup_two_factor() {
     } >> "${HOME}/.google_authenticator"
   fi
   SECRET=$( head -n 1 "${HOME}/.google_authenticator" )
+  if [[ -f "${HOME}/.google_authenticator.temp" ]]
+  then
+   rm "${HOME}/.google_authenticator.temp"
+  fi
   mv "${HOME}/.google_authenticator" "${HOME}/.google_authenticator.temp"
   echo "Warning: pasting the following URL into your browser exposes the OTP secret to Google:"
   echo "https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&chl=otpauth://totp/ssh%2520login%2520for%2520'${USRNAME}'%3Fsecret%3D${SECRET}%26issuer%3D${IP_ADDRESS}"
@@ -188,8 +192,13 @@ _setup_two_factor() {
       return
     fi
   done
+  if [[ -f "${HOME}/.google_authenticator.temp" ]]
+  then
+    mv "${HOME}/.google_authenticator.temp" "${HOME}/.google_authenticator"
+  fi
+
   echo "Your emergency scratch codes are (write these down in a safe place):"
-  grep -oE "[0-9]{8}" .google_authenticator | awk '{print "  " $1 }'
+  grep -oE "[0-9]{8}" "${HOME}/.google_authenticator" | awk '{print "  " $1 }'
 
   read -r -p $'Use this 2 factor code \e[7m(y/n)\e[0m? ' -e 2>&1
   REPLY=${REPLY,,} # tolower
