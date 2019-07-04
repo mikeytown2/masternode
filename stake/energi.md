@@ -403,7 +403,7 @@ If you already have a terminal window open and want another one go to the Menuba
 
 </details>
 
-<details><summary id="fastsync-windows"><strong> Use the snapshot on windows </strong></summary>
+<details><summary id="fastsync-windows"><strong> Use the snapshot/bootstrap/fast-sync on windows </strong></summary>
 
 #### Automatic 
 
@@ -418,18 +418,48 @@ If you already have a terminal window open and want another one go to the Menuba
 3. You'll need [7zip](https://www.7-zip.org/download.html) to open up the tar.gz file. Go to the energicore folder by pressing the 
 `windows key + r` and then pasting in this  
 ```
-explorer.exe %appdata%\energicore
+explorer.exe %appdata%\EnergiCore
 ```
 and if that doesn't work try pasting in this  
 ```
-explorer.exe %userprofile%\AppData\Roaming\energicore
+explorer.exe %userprofile%\AppData\Roaming\EnergiCore
 ```
 4. And then delete everything in the energicore folder **except** for  
 - the backups folder  
 - wallet.dat  
 - masternode.conf  
 - energi.conf  
-5. Extract the contents of the archive into the energicore folder.  
+5. Extract the contents of the archive into the EnergiCore folder.  
+6. Start wallet up again.  
+
+</details>
+
+<details><summary id="fastsync-windows"><strong> Use the snapshot/bootstrap/fast-sync on mac </strong></summary>
+
+#### Automatic 
+
+1. Close out the Energi Wallet.  
+2. Go to the Finder -> Menubar (top of screen) -> Go -> Utilities, open Terminal, type/paste in
+```
+bash -i <( curl -sL https://raw.githack.com/mikeytown2/masternode/master/qt/energi-qt-mac.sh )
+```
+3. Wait for the energi wallet to start up again (give it about 10 min to start after running the above command).  
+
+#### Manual
+
+1. Download the latest snapshot [here](https://www.dropbox.com/s/gsaqiry3h1ho3nh/blocks_n_chains.tar.gz?dl=1)
+2. Close out the Energi Wallet.
+3. Open up the EnergiCore folder
+Go to the Finder -> Menubar (top of screen) -> Go -> Utilities, open Terminal, type/paste in 
+```
+open "${HOME}/Library/Application Support/EnergiCore"
+```
+4. And then delete everything in the energicore folder **except** for  
+- the backups folder  
+- wallet.dat  
+- masternode.conf  
+- energi.conf  
+5. Extract the contents of the archive into the EnergiCore folder.  
 6. Start wallet up again.  
 
 </details>
