@@ -417,13 +417,13 @@ If you already have a terminal window open and want another one go to the Menuba
 2. Close out the Energi Wallet.
 3. You'll need [7zip](https://www.7-zip.org/download.html) to open up the tar.gz file. Go to the energicore folder
 windows key + r  
-
-    explorer.exe %appdata%\energicore
-
+```
+explorer.exe %appdata%\energicore
+```
 and if that doesn't work try  
-
-    explorer.exe %userprofile%\AppData\Roaming\energicore
-
+```
+explorer.exe %userprofile%\AppData\Roaming\energicore
+```
 4. And then delete everything in the energicore folder **except** for  
 - the backups folder  
 - wallet.dat  
