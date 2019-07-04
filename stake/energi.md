@@ -403,6 +403,37 @@ If you already have a terminal window open and want another one go to the Menuba
 
 </details>
 
+<details><summary id="fastsync-windows"><strong> Use the snapshot on windows </strong></summary>
+
+#### Automatic 
+
+1. Close out the Energi Wallet.  
+2. Download and run this file: [energi-qt.bat](https://raw.githack.com/mikeytown2/masternode/master/qt/energi-qt.bat).  
+3. Wait for the energi wallet to start up again (give it about 10 min to start after running the bat file).  
+
+#### Manual
+
+1. Download the latest snapshot [here](https://www.dropbox.com/s/gsaqiry3h1ho3nh/blocks_n_chains.tar.gz?dl=1)
+2. Close out the Energi Wallet.
+3. You'll need [7zip](https://www.7-zip.org/download.html) to open up the tar.gz file. Go to the energicore folder
+windows key + r  
+
+    explorer.exe %appdata%\energicore
+
+and if that doesn't work try  
+
+    explorer.exe %userprofile%\AppData\Roaming\energicore
+
+4. And then delete everything in the energicore folder **except** for  
+- the backups folder  
+- wallet.dat  
+- masternode.conf  
+- energi.conf  
+5. Extract the contents of the archive into the energicore folder.  
+6. Start wallet up again.  
+
+</details>
+
 <details><summary id="vps-lockout"><strong> I've been locked out of the VPS </strong></summary>
     
 You get one of these errors when trying to login via Bitvise:  
