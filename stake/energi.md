@@ -415,12 +415,12 @@ If you already have a terminal window open and want another one go to the Menuba
 
 1. Download the latest snapshot [here](https://www.dropbox.com/s/gsaqiry3h1ho3nh/blocks_n_chains.tar.gz?dl=1)
 2. Close out the Energi Wallet.
-3. You'll need [7zip](https://www.7-zip.org/download.html) to open up the tar.gz file. Go to the energicore folder
-windows key + r  
+3. You'll need [7zip](https://www.7-zip.org/download.html) to open up the tar.gz file. Go to the energicore folder by pressing the 
+`windows key + r` and then pasting in this  
 ```
 explorer.exe %appdata%\energicore
 ```
-and if that doesn't work try  
+and if that doesn't work try pasting in this  
 ```
 explorer.exe %userprofile%\AppData\Roaming\energicore
 ```
