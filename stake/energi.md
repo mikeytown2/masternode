@@ -500,7 +500,7 @@ https://coinmarketcap.com/currencies/energi/
 
 # Appendix
 
-<details><summar id="vps-commands"y><strong>Useful commands to run on your VPS:</strong></summary>
+<details><summary id="vps-commands"y><strong>Useful commands to run on your VPS:</strong></summary>
 
 Get the staking status  
 `energi-cli getstakingstatus`  
