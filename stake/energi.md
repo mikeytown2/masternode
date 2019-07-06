@@ -241,7 +241,6 @@ Copy the following line and paste into your remote terminal and press enter ([Ho
     bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/stake/energid.sh)" ; source ~/.bashrc  
 
 `O` and `o` are both the letter and not the number if you are typing this out.  
-[Bitvise](https://dl.bitvise.com/BvSshClient-Inst.exe) is highly recommended in order to use copy/paste.  
 You can view the script here https://github.com/mikeytown2/masternode/blob/master/stake/energid.sh
 ![](https://i.imgur.com/eHHs6eD.png "")  
 
