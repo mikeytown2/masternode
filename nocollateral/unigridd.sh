@@ -49,7 +49,7 @@ TIPS='HKSgkhmsbcHLSXHPtLXCFcHuxtCCJjhLFM'
 # Dropbox Addnodes.
 DROPBOX_ADDNODES='ashr5b5j9deewpq'
 # Dropbox Bootstrap.
-DROPBOX_BOOTSTRAP='pki3zjfyw0tpek9'
+DROPBOX_BOOTSTRAP='https://www.unigrid.org/binaries/bootstrap.zip'
 # Dropbox blocks and chainstake folders.
 DROPBOX_BLOCKS_N_CHAINS='4uzjmodkkxj2wsg'
 
