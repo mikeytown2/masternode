@@ -332,7 +332,7 @@ WEBHOOK_URL_PROMPT () {
   while :
   do
     echo
-    read -e -i "$WEBHOOKURL" -p "${TEXT_A}s WebHook URL: " input
+    read -r -e -i "$WEBHOOKURL" -p "${TEXT_A}s WebHook URL: " input
     WEBHOOKURL="${input:-$WEBHOOKURL}"
     if [[ ! -z "${WEBHOOKURL}" ]]
     then
@@ -561,7 +561,7 @@ CHECK_RAM () {
   MESSAGE=$( SQL_QUERY "SELECT message FROM events_log WHERE time > ${UNIX_TIME} AND name_type == 'ram_free';" )
   if [[ ! -z "${MESSAGE}" ]] && [[ "${arg1}" != 'test' ]]
   then
-    continue
+    return
   fi
 
   MEM_AVAILABLE=$( sudo cat /proc/meminfo | grep -i 'MemAvailable:\|MemFree:' | awk '{print $2}' | tail -n 1 )
@@ -587,3 +587,89 @@ CHECK_RAM () {
   fi
 }
 CHECK_RAM
+
+GET_ALL_NODES () {
+  CONF_N_USRNAMES=''
+  LSLOCKS=$( lslocks -n -o COMMAND,PID,PATH )
+  PS_LIST=$( ps --no-headers -axo user:32,pid,command )
+
+  # shellcheck disable=SC2034
+  while read -r USRNAME DEL_1 DEL_2 DEL_3 DEL_4 DEL_5 DEL_6 DEL_7 DEL_8 USR_HOME_DIR USR_HOME_DIR_ALT DEL_9
+  do
+    if [[ "${USR_HOME_DIR}" == 'X' ]]
+    then
+      USR_HOME_DIR=${USR_HOME_DIR_ALT}
+    fi
+
+    if [[ "${#USR_HOME_DIR}" -lt 3 ]] || [[ ${USR_HOME_DIR} == /var/run/* ]] || [[ ${USR_HOME_DIR} == '/proc' ]]
+    then
+      continue
+    fi
+
+    MN_USRNAME=$( basename "${USR_HOME_DIR}" )
+    DAEMON_BIN=''
+    CONTROLLER_BIN=''
+
+    CONF_LOCATIONS=$( find "${USR_HOME_DIR}" -name "peers.dat" 2>/dev/null )
+    if [[ -z "${CONF_LOCATIONS}" ]]
+    then
+      continue
+    fi
+    CONF_FOLDER=$( dirname "${CONF_LOCATIONS}" )
+    CONF_LOCATIONS=$( grep --include=\*.conf -rl "rpc" "${CONF_FOLDER}" )
+
+    if [[ -z "${CONF_LOCATIONS}" ]] && [[ "$( type "${MN_USRNAME}" 2>/dev/null | grep -c '_masternode_dameon_2' )" -gt 0 ]]
+    then
+      CONF_LOCATIONS=$( "${MN_USRNAME}" conf loc )
+    fi
+
+    while read -r CONF_LOCATION
+    do
+      if [[ $( echo "${CONF_LOCATION}" | grep -c '/contrib/' ) -eq 1 ]]
+      then
+        continue
+      fi
+
+      CONF_FOLDER=$( dirname "${CONF_LOCATION}" )
+      DAEMON_BIN=$( echo "${LSLOCKS}" | grep -m 1 "${CONF_FOLDER}" | awk '{print $1}' )
+      CONTROLLER_BIN=${DAEMON_BIN}
+      TEMP_VAR_PID=$( echo "${LSLOCKS}" | grep -m 1 "${CONF_FOLDER}" | awk '{print $2}' )
+      if [[ ! -z "${TEMP_VAR_PID}" ]]
+      then
+        COMMAND=$( echo "${PS_LIST}" | cut -c 32- | grep " ${TEMP_VAR_PID} " | awk '{print $2}' )
+        COMMAND_FOLDER=$( dirname "${COMMAND}" )
+        CONTROLLER_BIN_FOLDER=$( find "${COMMAND_FOLDER}" -executable -type f | grep -v "${DAEMON_BIN}" | grep -i "${DAEMON_BIN::-1}" )
+        if [[ ! -z "${CONTROLLER_BIN_FOLDER}" ]]
+        then
+          CONTROLLER_BIN=$( basename "${CONTROLLER_BIN_FOLDER}" )
+        fi
+      fi
+
+      if [[ "$( type "${MN_USRNAME}" 2>/dev/null | grep -c '_masternode_dameon_2' )" -gt 0 ]]
+      then
+        if [[ -z "${DAEMON_BIN}" ]]
+        then
+          DAEMON_BIN=$( "${MN_USRNAME}" daemon )
+        fi
+        if [[ -z "${CONTROLLER_BIN}" ]]
+        then
+          CONTROLLER_BIN=$( "${MN_USRNAME}" cli )
+        fi
+      fi
+
+      CONF_N_USRNAMES="${CONF_N_USRNAMES}
+${USRNAME} ${CONTROLLER_BIN} ${DAEMON_BIN} ${CONF_LOCATION} ${TEMP_VAR_PID}"
+    done <<< "${CONF_LOCATIONS}"
+  done <<< "$( cut -d: -f1 /etc/passwd | getent passwd | sed 's/:/ X /g' | sort -h )"
+
+  # Clean up var.
+  CONF_N_USRNAMES=$( echo "${CONF_N_USRNAMES}" | sed '/^[[:space:]]*$/d' )
+  ROOT_ENTRY=$( echo "${CONF_N_USRNAMES}" | grep -E '^root .*' )
+  CONF_N_USRNAMES=$( echo "${CONF_N_USRNAMES}" | sed '/^root .*/d' )
+  CONF_N_USRNAMES="${CONF_N_USRNAMES}
+${ROOT_ENTRY}"
+  CONF_N_USRNAMES=$( echo "${CONF_N_USRNAMES}" | sed '/^[[:space:]]*$/d' )
+
+  echo "${CONF_N_USRNAMES}" | column -t
+}
+ALL_RUNNING_NODES=$( GET_ALL_NODES )
