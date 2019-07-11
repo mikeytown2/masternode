@@ -592,7 +592,6 @@ GET_ALL_NODES () {
   CONF_N_USRNAMES=''
   LSLOCKS=$( lslocks -n -o COMMAND,PID,PATH )
   PS_LIST=$( ps --no-headers -axo user:32,pid,command )
-
   # shellcheck disable=SC2034
   while read -r USRNAME DEL_1 DEL_2 DEL_3 DEL_4 DEL_5 DEL_6 DEL_7 DEL_8 USR_HOME_DIR USR_HOME_DIR_ALT DEL_9
   do
@@ -601,12 +600,13 @@ GET_ALL_NODES () {
       USR_HOME_DIR=${USR_HOME_DIR_ALT}
     fi
 
-    if [[ "${#USR_HOME_DIR}" -lt 3 ]] || [[ ${USR_HOME_DIR} == /var/run/* ]] || [[ ${USR_HOME_DIR} == '/proc' ]]
+    if [[ "${#USR_HOME_DIR}" -lt 3 ]] || [[ ${USR_HOME_DIR} == /var/* ]] || [[ ${USR_HOME_DIR} == '/proc' ]] || [[ ${USR_HOME_DIR} == '/dev' ]] || [[ ${USR_HOME_DIR} == /run/* ]] || [[ ${USR_HOME_DIR} == '/nonexistent' ]]
     then
       continue
     fi
 
     MN_USRNAME=$( basename "${USR_HOME_DIR}" )
+
     DAEMON_BIN=''
     CONTROLLER_BIN=''
 
@@ -623,42 +623,44 @@ GET_ALL_NODES () {
       CONF_LOCATIONS=$( "${MN_USRNAME}" conf loc )
     fi
 
+    HAS_FUNCTION=0
+    if [[ "$( type "${MN_USRNAME}" 2>/dev/null | grep -c '_masternode_dameon_2' )" -gt 0 ]]
+    then
+      HAS_FUNCTION=1
+    fi
+
     while read -r CONF_LOCATION
     do
-      if [[ $( echo "${CONF_LOCATION}" | grep -c '/contrib/' ) -eq 1 ]]
-      then
-        continue
-      fi
-
       CONF_FOLDER=$( dirname "${CONF_LOCATION}" )
       DAEMON_BIN=$( echo "${LSLOCKS}" | grep -m 1 "${CONF_FOLDER}" | awk '{print $1}' )
-      CONTROLLER_BIN=${DAEMON_BIN}
+      CONTROLLER_BIN="${DAEMON_BIN}"
       TEMP_VAR_PID=$( echo "${LSLOCKS}" | grep -m 1 "${CONF_FOLDER}" | awk '{print $2}' )
       if [[ ! -z "${TEMP_VAR_PID}" ]]
       then
-        COMMAND=$( echo "${PS_LIST}" | cut -c 32- | grep " ${TEMP_VAR_PID} " | awk '{print $2}' )
-        COMMAND_FOLDER=$( dirname "${COMMAND}" )
+        DAEMON_BIN=$( echo "${PS_LIST}" | cut -c 32- | grep " ${TEMP_VAR_PID} " | awk '{print $2}' )
+        CONTROLLER_BIN="${DAEMON_BIN}"
+        COMMAND_FOLDER=$( dirname "${DAEMON_BIN}" )
         CONTROLLER_BIN_FOLDER=$( find "${COMMAND_FOLDER}" -executable -type f | grep -v "${DAEMON_BIN}" | grep -i "${DAEMON_BIN::-1}" )
         if [[ ! -z "${CONTROLLER_BIN_FOLDER}" ]]
         then
-          CONTROLLER_BIN=$( basename "${CONTROLLER_BIN_FOLDER}" )
+          CONTROLLER_BIN="${CONTROLLER_BIN_FOLDER}"
         fi
       fi
 
-      if [[ "$( type "${MN_USRNAME}" 2>/dev/null | grep -c '_masternode_dameon_2' )" -gt 0 ]]
+      if [[ "${HAS_FUNCTION}" -gt 0 ]]
       then
         if [[ -z "${DAEMON_BIN}" ]]
         then
-          DAEMON_BIN=$( "${MN_USRNAME}" daemon )
+          DAEMON_BIN=$( "${MN_USRNAME}" daemon loc )
         fi
         if [[ -z "${CONTROLLER_BIN}" ]]
         then
-          CONTROLLER_BIN=$( "${MN_USRNAME}" cli )
+          CONTROLLER_BIN=$( "${MN_USRNAME}" cli loc )
         fi
       fi
 
       CONF_N_USRNAMES="${CONF_N_USRNAMES}
-${USRNAME} ${CONTROLLER_BIN} ${DAEMON_BIN} ${CONF_LOCATION} ${TEMP_VAR_PID}"
+${HAS_FUNCTION} ${USRNAME} ${CONTROLLER_BIN} ${DAEMON_BIN} ${CONF_LOCATION} ${TEMP_VAR_PID}"
     done <<< "${CONF_LOCATIONS}"
   done <<< "$( cut -d: -f1 /etc/passwd | getent passwd | sed 's/:/ X /g' | sort -h )"
 
@@ -672,4 +674,106 @@ ${ROOT_ENTRY}"
 
   echo "${CONF_N_USRNAMES}" | column -t
 }
-ALL_RUNNING_NODES=$( GET_ALL_NODES )
+
+GET_INFO_ON_ALL_NODES () {
+  ALL_RUNNING_NODES=$( GET_ALL_NODES )
+
+  PS_LIST=$( ps --no-headers -axo user:32,pid,etimes,command )
+
+  while read -r HAS_FUNCTION USRNAME CONTROLLER_BIN DAEMON_BIN CONF_LOCATION DAEMON_PID
+  do
+    # is the daemon running.
+    if [[ -z "${DAEMON_PID}" ]]
+    then
+      echo "${USRNAME} not-running"
+      continue
+    fi
+
+    UPTIME=$( echo "${PS_LIST}" | cut -c 32- | grep " ${DAEMON_PID} " | awk '{print $2}' | head -n 1 | awk '{print $1}' | grep -o '[0-9].*' )
+
+    # setup vars.
+    CONF_FOLDER=$( dirname "${CONF_LOCATION}" )
+
+    GETCONNECTIONCOUNT=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getconnectioncount" 2>&1 | grep -o '[0-9].*' )
+    GETBLOCKCOUNT=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getblockcount" 2>&1 | grep -o '[0-9].*' )
+
+    # is a masternode?
+    MASTERNODE=0
+    if [[ $( grep 'privkey=' "${CONF_LOCATION}" | grep -vE -c '^#' ) -gt 0 ]]
+    then
+      MASTERNODE=1
+      MASTERNODE_STATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" masternode status" 2>&1 )
+      if [[ $( echo "${MASTERNODE_STATUS}" | grep -ic "method not found" ) -gt 0 ]]
+      then
+        MASTERNODE_STATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" masternode debug" 2>&1 )
+      fi
+      if [[ $( echo "${MASTERNODE_STATUS}" | grep -ic "method not found" ) -gt 0 ]] && [[ "${HAS_FUNCTION}" -gt 0 ]]
+      then
+        MASTERNODE_STATUS=$( "${USRNAME}" mnstatus )
+      fi
+
+      if [[ $( echo "${MASTERNODE_STATUS}" | grep -ic " successfully started" ) -eq 1 ]] || [[ $( echo "${MASTERNODE_STATUS}" | grep -ic " started remotely" ) -eq 1 ]]
+      then
+        MASTERNODE=2
+      fi
+    fi
+
+    # check mninfo.
+    MNINFO=0
+    if [[ "${MASTERNODE}" -ge 2 ]]
+    then
+      if [[ "${HAS_FUNCTION}" -gt 0 ]]
+      then
+        MNINFO_OUTPUT=$( "${USRNAME}" mninfo )
+        if [[ "${#MNINFO_OUTPUT}" -gt 1 ]]
+        then
+          MNINFO=1
+          if [[ $( echo "${MNINFO_OUTPUT}" | grep -iEc 'status.*ENABLED' ) -gt 0 ]]
+          then
+            MNINFO=2
+          fi
+        fi
+      fi
+    fi
+
+    MNWIN=''
+    if [[ "${MNINFO}" -eq 2 ]] && [[ "${HAS_FUNCTION}" -gt 0 ]]
+    then
+      MNWIN=$( "${USRNAME}" mnwin )
+    fi
+
+
+    # check balance.
+    GETBALANCE=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getbalance" 2>&1 | grep -Eo '[+-]?[0-9]+([.][0-9]+)?' 2>/dev/null )
+    if [[ -z "${GETBALANCE}" ]]
+    then
+      GETBALANCE=0
+    fi
+
+    # check staking status.
+    STAKING=0
+    GETSTAKINGSTATUS=''
+    if [[ $( echo "${GETBALANCE} > 0" | bc -l ) -gt 0 ]]
+    then
+      GETSTAKINGSTATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getstakingstatus" 2>&1 )
+      if [[ $( echo "${GETSTAKINGSTATUS}" | grep -c 'false' ) -eq 0 ]]
+      then
+        STAKING=1
+      fi
+    fi
+
+
+
+
+  #   if [[ $( echo "${GETBALANCE} > 0" | bc -l )
+  #   echo "${GETBALANCE}"
+  #   getstakingstatus | jq '.[]' | grep -c 'false'
+
+    DAEMON_BIN=$( basename "${DAEMON_BIN}" )
+    CONF_LOCATION=$( dirname "${CONF_LOCATION}" )
+    echo "${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION} ${MASTERNODE} ${MNINFO} ${GETBALANCE} ${STAKING} ${GETCONNECTIONCOUNT} ${GETBLOCKCOUNT} ${UPTIME} ${DAEMON_PID} ${MNWIN}"
+  done <<< "${ALL_RUNNING_NODES}"
+}
+
+NODE_INFO=$( GET_INFO_ON_ALL_NODES )
+echo "${NODE_INFO}" | column -t
