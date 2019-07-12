@@ -125,6 +125,9 @@ TELEGRAM_SEND () {
   CHAT_ID="${2}"
   MESSAGE="${3}"
 
+  MESSAGE=$( echo "${MESSAGE}" | sed 's/:exclamation:/\xE2\x9D\x97/g' )
+  MESSAGE=$( echo "${MESSAGE}" | sed 's/:unlock:/\xF0\x9F\x94\x93/g' )
+
   CONTENT=$( date -u )
   CONTENT=$( echo -n "${CONTENT} - " ; hostname -i )
   CONTENT=$( echo -n "${CONTENT} - " ; hostname )
