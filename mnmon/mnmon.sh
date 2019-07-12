@@ -89,7 +89,7 @@ WEBHOOK_SEND () {
   fi
   WEBHOOK_COLOR="${6}"
 
-  CONTENT=$( date -u )
+  CONTENT=$( date -Ru )
   CONTENT=$( echo -n "${CONTENT} - " ; hostname -i )
   CONTENT=$( echo -n "${CONTENT} - " ; hostname )
   if [[ ! -z "${7}" ]]
@@ -139,7 +139,7 @@ TELEGRAM_SEND () {
     sed 's/:desktop:/\xF0\x9F\x96\xA5/g' | \
     sed 's/:fire:/\xF0\x9F\x94\xA5/g' )
 
-  CONTENT=$( date -u )
+  CONTENT=$( date -Ru )
   CONTENT=$( echo -n "${CONTENT} - " ; hostname -i )
   CONTENT=$( echo -n "${CONTENT} - " ; hostname )
   if [[ ! -z "${4}" ]]
