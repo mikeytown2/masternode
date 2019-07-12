@@ -125,8 +125,19 @@ TELEGRAM_SEND () {
   CHAT_ID="${2}"
   MESSAGE="${3}"
 
-  MESSAGE=$( echo "${MESSAGE}" | sed 's/:exclamation:/\xE2\x9D\x97/g' )
-  MESSAGE=$( echo "${MESSAGE}" | sed 's/:unlock:/\xF0\x9F\x94\x93/g' )
+  # https://apps.timwhitlock.info/emoji/tables/unicode
+  # http://www.unicode.org/emoji/charts/full-emoji-list.html
+  # https://onlineutf8tools.com/convert-utf8-to-bytes
+  MESSAGE=$( echo "${MESSAGE}" | \
+    sed 's/:exclamation:/\xE2\x9D\x97/g' | \
+    sed 's/:unlock:/\xF0\x9F\x94\x93/g' | \
+    sed 's/:warning:/\xE2\x9A\xA0/g' | \
+    sed 's/:blue_book:/\xF0\x9F\x93\x98/g' | \
+    sed 's/:money_mouth:/\xF0\x9F\xA4\x91/g' | \
+    sed 's/:moneybag:/\xF0\x9F\x92\xB0/g' | \
+    sed 's/:floppy_disk:/\xF0\x9F\x92\xBE/g' | \
+    sed 's/:desktop:/\xF0\x9F\x96\xA5/g' | \
+    sed 's/:fire:/\xF0\x9F\x94\xA5/g' )
 
   CONTENT=$( date -u )
   CONTENT=$( echo -n "${CONTENT} - " ; hostname -i )
@@ -234,8 +245,6 @@ SEND_ERROR () {
   then
     MESSAGE="${TITLE}
 ${DESCRIPTION}"
-    # https://apps.timwhitlock.info/emoji/tables/unicode
-    # :exclamation: \xE2\x9D\x97 %E2%9D%97
     TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${MESSAGE}"
   fi
 }
