@@ -74,6 +74,7 @@ SYSTEMD_CONF
 }
 
 WEBHOOK_SEND () {
+(
   URL="${1}"
   DESCRIPTION="${2}"
   TITLE="${3}"
@@ -89,41 +90,57 @@ WEBHOOK_SEND () {
   fi
   WEBHOOK_COLOR="${6}"
 
-  CONTENT=$( date -Ru )
-  CONTENT=$( echo -n "${CONTENT} - " ; hostname -i )
-  CONTENT=$( echo -n "${CONTENT} - " ; hostname )
+  SERVER_INFO=$( date -Ru )
+  # shellcheck disable=SC2028
+  SERVER_INFO=$( echo -n "${SERVER_INFO}\n - " ; hostname -i )
+  # shellcheck disable=SC2028
+  SERVER_INFO=$( echo -n "${SERVER_INFO}\n - " ; hostname )
   if [[ ! -z "${7}" ]]
   then
-    CONTENT="${7}"
+    SERVER_INFO="${7}"
   fi
+
+  # Replace new line with \n
+  DESCRIPTION=$( echo "${DESCRIPTION}" | awk '{printf "%s\\n", $0}' )
+  SERVER_INFO=$( echo "${SERVER_INFO}" | awk '{printf "%s\\n", $0}' )
+  TITLE=$( echo "${TITLE}" | awk '{printf "%s\\n", $0}' )
 
   # Build HTTP POST.
   _PAYLOAD=$( cat << PAYLOAD
-{"username": "${WEBHOOK_USERNAME}",
+{
+  "username": "${WEBHOOK_USERNAME}",
   "avatar_url": "${WEBHOOK_AVATAR}",
-  "content": "${CONTENT}",
-  "embeds": [
-    {
-      "title": "${TITLE}",
-      "color": ${WEBHOOK_COLOR},
-      "description": "${DESCRIPTION}"
-    }
-  ]
+  "content": "**${TITLE}**",
+  "embeds": [{
+    "color": ${WEBHOOK_COLOR},
+    "title": "${DESCRIPTION}",
+    "description": "${SERVER_INFO}"
+  }]
 }
 PAYLOAD
 )
 
   # Do the post.
-  curl -H "Content-Type: application/json" \
-  -X POST \
-  -d "${_PAYLOAD}" "${URL}" 2>/dev/null | sed '/^[[:space:]]*$/d'
+  OUTPUT=$( curl -H "Content-Type: application/json" -s -X POST "${URL}" -d "${_PAYLOAD}" | sed '/^[[:space:]]*$/d' )
+  if [[ ! -z "${OUTPUT}" ]]
+  then
+    echo "Discord Error"
+    echo "curl -H Content-Type: application/json -s -X POST ${URL} -d '${_PAYLOAD}'"
+    echo "${OUTPUT}" | jq '.'
+    echo "Payload:"
+    echo "${_PAYLOAD}"
+    echo "-"
+  fi
   sleep 0.3
+)
 }
 
 TELEGRAM_SEND () {
+(
   TOKEN="${1}"
   CHAT_ID="${2}"
-  MESSAGE="${3}"
+  TITLE="${3}"
+  MESSAGE="${4}"
 
   # https://apps.timwhitlock.info/emoji/tables/unicode
   # http://www.unicode.org/emoji/charts/full-emoji-list.html
@@ -139,33 +156,52 @@ TELEGRAM_SEND () {
     sed 's/:desktop:/\xF0\x9F\x96\xA5/g' | \
     sed 's/:fire:/\xF0\x9F\x94\xA5/g' )
 
-  CONTENT=$( date -Ru )
-  CONTENT=$( echo -n "${CONTENT} - " ; hostname -i )
-  CONTENT=$( echo -n "${CONTENT} - " ; hostname )
-  if [[ ! -z "${4}" ]]
+  TITLE=$( echo "${TITLE}" | \
+    sed 's/:exclamation:/\xE2\x9D\x97/g' | \
+    sed 's/:unlock:/\xF0\x9F\x94\x93/g' | \
+    sed 's/:warning:/\xE2\x9A\xA0/g' | \
+    sed 's/:blue_book:/\xF0\x9F\x93\x98/g' | \
+    sed 's/:money_mouth:/\xF0\x9F\xA4\x91/g' | \
+    sed 's/:moneybag:/\xF0\x9F\x92\xB0/g' | \
+    sed 's/:floppy_disk:/\xF0\x9F\x92\xBE/g' | \
+    sed 's/:desktop:/\xF0\x9F\x96\xA5/g' | \
+    sed 's/:fire:/\xF0\x9F\x94\xA5/g' )
+
+  SERVER_INFO=$( date -Ru )
+  SERVER_INFO=$( echo -ne "${SERVER_INFO}\n - " ; hostname -i )
+  SERVER_INFO=$( echo -ne "${SERVER_INFO}\n - " ; hostname )
+  if [[ ! -z "${5}" ]]
   then
-    CONTENT="${4}"
+    SERVER_INFO="${5}"
   fi
 
+  _PAYLOAD="text=<b>${TITLE}</b>
+<i>${SERVER_INFO}</i>
+${MESSAGE}"
+
   URL="https://api.telegram.org/bot$TOKEN/sendMessage"
-  TELEGRAM_MSG=$( curl -X POST "${URL}" -d "chat_id=${CHAT_ID}" -d "text=${CONTENT}
-${MESSAGE}" 2>/dev/null )
+  TELEGRAM_MSG=$( curl -s -X POST "${URL}" -d "chat_id=${CHAT_ID}&parse_mode=html" -d "${_PAYLOAD}" | sed '/^[[:space:]]*$/d' )
   IS_OK=$( echo "${TELEGRAM_MSG}" | jq '.ok' )
+
   if [[ "${IS_OK}" != 'true' ]]
   then
+    echo "Telegram Error"
     echo "${TELEGRAM_MSG}" | jq '.'
+    echo "Payload:"
+    echo "${_PAYLOAD}"
+    echo "-"
   fi
   sleep 0.3
+)
 }
 
 TELEGRAM_SETUP () {
   TOKEN=$( SQL_QUERY "SELECT token FROM telegram_token WHERE type = 'All';" )
-  echo "Message the @botfather with the following text: "
+  echo "Message the @botfather https://web.telegram.org/#/im?p=@BotFather"
+  echo "with the following text: "
   echo "/start"
   echo "/newbot"
-  echo "https://web.telegram.org/#/im?p=@BotFather"
   echo "Then paste in the token below"
-  echo
   read -r -e -i "${TOKEN}" -p "Telegram Token: "
   if [[ ! -z "${REPLY}" ]]
   then
@@ -177,7 +213,7 @@ TELEGRAM_SETUP () {
   then
     while :
     do
-      GET_UPDATES=$( curl "https://api.telegram.org/bot${TOKEN}/getUpdates" 2>/dev/null )
+      GET_UPDATES=$( curl -s "https://api.telegram.org/bot${TOKEN}/getUpdates" )
       IS_OK=$( echo "${GET_UPDATES}" | jq '.ok' )
       if [[ "${IS_OK}" != 'true' ]]
       then
@@ -196,7 +232,7 @@ TELEGRAM_SETUP () {
 
     while :
     do
-      GET_UPDATES=$( curl "https://api.telegram.org/bot${TOKEN}/getUpdates" 2>/dev/null )
+      GET_UPDATES=$( curl -s "https://api.telegram.org/bot${TOKEN}/getUpdates" )
       CHAT_ID=$( echo "${GET_UPDATES}" | jq '.result[0].message.chat.id' 2>/dev/null )
       if [[ -z "${CHAT_ID}" ]]
       then
@@ -208,8 +244,9 @@ TELEGRAM_SETUP () {
     done
   fi
 
+  TITLE="Test Title"
   MESSAGE="Bot Works!"
-  TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${MESSAGE}"
+  TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${TITLE}" "<pre>${MESSAGE}</pre>"
 }
 
 SEND_ERROR () {
@@ -243,9 +280,7 @@ SEND_ERROR () {
   fi
   if [[ ! -z "${TOKEN}" ]] && [[ ! -z "${CHAT_ID}" ]]
   then
-    MESSAGE="${TITLE}
-${DESCRIPTION}"
-    TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${MESSAGE}"
+    TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${TITLE}" "<code>${DESCRIPTION}</code>"
   fi
 }
 
@@ -280,9 +315,7 @@ SEND_WARNING () {
   fi
   if [[ ! -z "${TOKEN}" ]] && [[ ! -z "${CHAT_ID}" ]]
   then
-    MESSAGE="${TITLE}
-${DESCRIPTION}"
-    TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${MESSAGE}"
+    TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${TITLE}" "<pre>${DESCRIPTION}</pre>"
   fi
 }
 
@@ -317,9 +350,7 @@ SEND_INFO () {
   fi
   if [[ ! -z "${TOKEN}" ]] && [[ ! -z "${CHAT_ID}" ]]
   then
-    MESSAGE="${TITLE}
-${DESCRIPTION}"
-    TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${MESSAGE}"
+    TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${TITLE}" "<pre>${DESCRIPTION}</pre>"
   fi
 }
 
@@ -354,9 +385,7 @@ SEND_SUCCESS () {
   fi
   if [[ ! -z "${TOKEN}" ]] && [[ ! -z "${CHAT_ID}" ]]
   then
-    MESSAGE="${TITLE}
-${DESCRIPTION}"
-    TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${MESSAGE}"
+    TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${TITLE}" "<pre>${DESCRIPTION}</pre>"
   fi
 }
 
@@ -427,7 +456,6 @@ GET_DISCORD_WEBHOOKS () {
 
 if [[ "${arg1}" != 'cron' ]]
 then
-  echo
   PREFIX='Setup'
   WEBHOOKURL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Error';" )
   if [[ ! -z "${WEBHOOKURL}" ]]
@@ -448,7 +476,6 @@ then
     PREFIX='Redo'
   fi
   read -p "${PREFIX} Telegram Bot token (y/n)? " -r
-  echo
   REPLY=${REPLY,,} # tolower
   if [[ "${REPLY}" == y ]]
   then
@@ -475,9 +502,11 @@ GET_LATEST_LOGINS () {
     fi
 
     ERRORS=$( SEND_INFO "${INFO}" ":unlock: User logged in" )
-    if [[ -z "${ERRORS}" ]]
+    if [[ ! -z "${ERRORS}" ]]
     then
       echo "${ERRORS}"
+    elif [[ "${arg1}" != 'test' ]]
+    then
       SQL_QUERY "REPLACE INTO events_log (time,name_type,message,state) VALUES ('${UNIX_TIME}','ssh_login','${INFO}','9999');"
     fi
   done <<< "$( grep ' systemd-logind'  /var/log/auth.log | grep 'New' )"
@@ -512,9 +541,11 @@ CHECK_DISK () {
   then
     UNIX_TIME=$( date -u +%s )
     ERRORS=$( SEND_WARNING ":floppy_disk: ${MESSAGE} :floppy_disk:" )
-    if [[ -z "${ERRORS}" ]]
+    if [[ ! -z "${ERRORS}" ]]
     then
       echo "${ERRORS}"
+    elif [[ "${arg1}" != 'test' ]]
+    then
       SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','disk_space','${MESSAGE}');"
     fi
   fi
@@ -537,18 +568,22 @@ CHECK_CPU_LOAD () {
   if [[ $( echo "${LOAD_PER_CPU} > 4" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
   then
     ERRORS=$( SEND_ERROR ":desktop: :fire:  CPU LOAD is over 4: ${LOAD_PER_CPU} :fire: :desktop: " )
-    if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
+    if [[ ! -z "${ERRORS}" ]]
     then
       echo "${ERRORS}"
+    elif [[ "${arg1}" != 'test' ]]
+    then
       SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','CPU LOAD is over 2');"
     fi
   fi
   if ([[ $( echo "${LOAD_PER_CPU} > 2" | bc ) -gt 0 ]] && [[ $( echo "${LOAD_PER_CPU} <= 4" | bc ) -gt 0 ]]) || [[ "${arg1}" == 'test' ]]
   then
     ERRORS=$( SEND_WARNING ":desktop: CPU LOAD is over 2: ${LOAD_PER_CPU} :desktop: " )
-    if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
+    if [[ ! -z "${ERRORS}" ]]
     then
       echo "${ERRORS}"
+    elif [[ "${arg1}" != 'test' ]]
+    then
       SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','CPU LOAD is over 2');"
     fi
   fi
@@ -569,18 +604,22 @@ CHECK_SWAP () {
   if [[ $( echo "${SWAP_FREE_MB} < 512" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
   then
     ERRORS=$( SEND_ERROR ":desktop: :fire: Swap is under 512 MB: ${SWAP_FREE_MB} :fire: :desktop: " )
-    if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
+    if [[ ! -z "${ERRORS}" ]]
     then
       echo "${ERRORS}"
+    elif [[ "${arg1}" != 'test' ]]
+    then
       SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','Swap is under 512 MB');"
     fi
   fi
   if ([[ $( echo "${SWAP_FREE_MB} >= 512" | bc ) -gt 0 ]] && [[ $( echo "${SWAP_FREE_MB} < 1024" | bc ) -gt 0 ]]) || [[ "${arg1}" == 'test' ]]
   then
     ERRORS=$( SEND_WARNING ":desktop: Swap is under 1024 MB: ${SWAP_FREE_MB} :desktop: " )
-    if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
+    if [[ ! -z "${ERRORS}" ]]
     then
       echo "${ERRORS}"
+    elif [[ "${arg1}" != 'test' ]]
+    then
       SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','Swap is under 1024 MB');"
     fi
   fi
@@ -603,18 +642,22 @@ CHECK_RAM () {
   if [[ $( echo "${MEM_AVAILABLE_MB} < 256" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
   then
     ERRORS=$( SEND_ERROR ":desktop: :fire: Free RAM is under 256 MB: ${MEM_AVAILABLE_MB} :fire: :desktop: " )
-    if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
+    if [[ ! -z "${ERRORS}" ]]
     then
       echo "${ERRORS}"
+    elif [[ "${arg1}" != 'test' ]]
+    then
       SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','Free RAM is under 256 MB');"
     fi
   fi
   if ([[ $( echo "${MEM_AVAILABLE_MB} >= 256" | bc ) -gt 0 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 512" | bc ) -gt 0 ]]) || [[ "${arg1}" == 'test' ]]
   then
     ERRORS=$( SEND_WARNING ":desktop: Free RAM is under 512 MB: ${MEM_AVAILABLE_MB} :desktop: " )
-    if [[ -z "${ERRORS}" ]] && [[ "${arg1}" != 'test' ]]
+    if [[ ! -z "${ERRORS}" ]]
     then
       echo "${ERRORS}"
+    elif [[ "${arg1}" != 'test' ]]
+    then
       SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','Free RAM is under 512 MB');"
     fi
   fi
