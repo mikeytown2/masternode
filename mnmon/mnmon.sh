@@ -23,6 +23,10 @@ then
 fi
 
 SQL_QUERY () {
+  if [[ ! -d /var/multi-masternode-data/mnbot ]]
+  then
+    mkdir -p /var/multi-masternode-data/mnbot
+  fi
   sqlite3 -batch /var/multi-masternode-data/mnbot/mnmon.sqlite3.db "${1}"
 }
 
@@ -42,6 +46,7 @@ SQL_QUERY "CREATE TABLE IF NOT EXISTS events_log (
  time INTEGER NOT NULL,
  name_type TEXT NOT NULL,
  message TEXT NOT NULL,
+ state INTEGER NOT NULL,
  PRIMARY KEY (time, name_type)
 );"
 
@@ -111,7 +116,7 @@ PAYLOAD
   # Do the post.
   curl -H "Content-Type: application/json" \
   -X POST \
-  -d "${_PAYLOAD}" "${URL}" 2>/dev/null
+  -d "${_PAYLOAD}" "${URL}" 2>/dev/null | sed '/^[[:space:]]*$/d'
   sleep 0.3
 }
 
@@ -120,24 +125,41 @@ TELEGRAM_SEND () {
   CHAT_ID="${2}"
   MESSAGE="${3}"
 
+  CONTENT=$( date -u )
+  CONTENT=$( echo -n "${CONTENT} - " ; hostname -i )
+  CONTENT=$( echo -n "${CONTENT} - " ; hostname )
+  if [[ ! -z "${4}" ]]
+  then
+    CONTENT="${4}"
+  fi
+
   URL="https://api.telegram.org/bot$TOKEN/sendMessage"
-  curl -s -X POST "${URL}" -d "chat_id=${CHAT_ID}" -d "text=${MESSAGE}"
+  TELEGRAM_MSG=$( curl -X POST "${URL}" -d "chat_id=${CHAT_ID}" -d "text=${CONTENT}
+${MESSAGE}" 2>/dev/null )
+  IS_OK=$( echo "${TELEGRAM_MSG}" | jq '.ok' )
+  if [[ "${IS_OK}" != 'true' ]]
+  then
+    echo "${TELEGRAM_MSG}" | jq '.'
+  fi
   sleep 0.3
 }
 
 TELEGRAM_SETUP () {
   TOKEN=$( SQL_QUERY "SELECT token FROM telegram_token WHERE type = 'All';" )
-  if [[ -z "${TOKEN}" ]]
+  echo "Message the @botfather with the following text: "
+  echo "/start"
+  echo "/newbot"
+  echo "https://web.telegram.org/#/im?p=@BotFather"
+  echo "Then paste in the token below"
+  echo
+  read -r -e -i "${TOKEN}" -p "Telegram Token: "
+  if [[ ! -z "${REPLY}" ]]
   then
-    echo "@botfather https://telegram.me/botfather with the following text: /newbot"
-    echo "Then paste in the token below"
-    echo
-    read -r
     TOKEN="${REPLY}"
   fi
 
   CHAT_ID=$( SQL_QUERY "SELECT chatid FROM telegram_token WHERE type = 'All';" )
-  if [[ -z "${CHAT_ID}" ]]
+  if [[ -z "${CHAT_ID}" ]] || [[ "${CHAT_ID}" == 'null' ]]
   then
     while :
     do
@@ -401,14 +423,12 @@ then
     PREFIX='Redo'
   fi
   read -p "${PREFIX} Discord Bot webhook URLs (y/n)? " -r
-  echo
   REPLY=${REPLY,,} # tolower
   if [[ "${REPLY}" == y ]]
   then
     GET_DISCORD_WEBHOOKS
   fi
 
-  echo
   PREFIX='Setup'
   CHAT_ID=$( SQL_QUERY "SELECT chatid FROM telegram_token WHERE type = 'All';" )
   if [[ ! -z "${CHAT_ID}" ]]
@@ -446,7 +466,7 @@ GET_LATEST_LOGINS () {
     if [[ -z "${ERRORS}" ]]
     then
       echo "${ERRORS}"
-      SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','ssh_login','${INFO}');"
+      SQL_QUERY "REPLACE INTO events_log (time,name_type,message,state) VALUES ('${UNIX_TIME}','ssh_login','${INFO}','9999');"
     fi
   done <<< "$( grep ' systemd-logind'  /var/log/auth.log | grep 'New' )"
 }
@@ -454,12 +474,13 @@ GET_LATEST_LOGINS
 
 CHECK_DISK () {
   UNIX_TIME=$( date -u +%s )
-  UNIX_TIME=$( echo "${UNIX_TIME}" - 7200 | bc )
-  MESSAGE=$( SQL_QUERY "SELECT message FROM events_log WHERE time > ${UNIX_TIME} AND name_type == 'disk_space';" )
+  MESSAGE=$( SQL_QUERY "SELECT message, state FROM events_log WHERE state < 9999 AND name_type == 'disk_space';" )
   if [[ ! -z "${MESSAGE}" ]] && [[ "${arg1}" != 'test' ]]
   then
     return
   fi
+
+  UNIX_TIME=$( echo "${UNIX_TIME}" - 7200 | bc )
 
   FREEPSPACE_ALL=$( df -P . | tail -1 | awk '{print $4}' )
   FREEPSPACE_BOOT=$( df -P /boot | tail -1 | awk '{print $4}' )
@@ -742,7 +763,6 @@ GET_INFO_ON_ALL_NODES () {
       MNWIN=$( "${USRNAME}" mnwin )
     fi
 
-
     # check balance.
     GETBALANCE=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getbalance" 2>&1 | grep -Eo '[+-]?[0-9]+([.][0-9]+)?' 2>/dev/null )
     if [[ -z "${GETBALANCE}" ]]
@@ -762,18 +782,12 @@ GET_INFO_ON_ALL_NODES () {
       fi
     fi
 
-
-
-
-  #   if [[ $( echo "${GETBALANCE} > 0" | bc -l )
-  #   echo "${GETBALANCE}"
-  #   getstakingstatus | jq '.[]' | grep -c 'false'
-
+    # output info.
     DAEMON_BIN=$( basename "${DAEMON_BIN}" )
     CONF_LOCATION=$( dirname "${CONF_LOCATION}" )
     echo "${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION} ${MASTERNODE} ${MNINFO} ${GETBALANCE} ${STAKING} ${GETCONNECTIONCOUNT} ${GETBLOCKCOUNT} ${UPTIME} ${DAEMON_PID} ${MNWIN}"
   done <<< "${ALL_RUNNING_NODES}"
 }
 
-NODE_INFO=$( GET_INFO_ON_ALL_NODES )
-echo "${NODE_INFO}" | column -t
+# NODE_INFO=$( GET_INFO_ON_ALL_NODES )
+# echo "${NODE_INFO}" | column -t
