@@ -10,6 +10,22 @@ WEBHOOK_USERNAME_DEFAULT='Masternode Monitor'
 WEBHOOK_AVATAR_DEFAULT='https://i.imgur.com/8WHSSa7s.jpg'
 
 arg1="${1}"
+arg2="${2}"
+arg3="${3}"
+
+DEBUG_OUTPUT=0
+if [[ "${arg1}" == 'debug' ]]
+then
+  DEBUG_OUTPUT=1
+fi
+if [[ "${arg2}" == 'debug' ]]
+then
+  DEBUG_OUTPUT=1
+fi
+if [[ "${arg3}" == 'debug' ]]
+then
+  DEBUG_OUTPUT=1
+fi
 
 # Get sqlite.
 if ! [ -x "$(command -v sqlite3 )" ]
@@ -31,15 +47,9 @@ SQL_QUERY () {
 }
 
 # Create tables if they do not exist.
-SQL_QUERY "CREATE TABLE IF NOT EXISTS webhook_urls (
- type TEXT PRIMARY KEY,
- url TEXT NOT NULL
-);"
-
-SQL_QUERY "CREATE TABLE IF NOT EXISTS telegram_token (
- type TEXT PRIMARY KEY,
- token TEXT NOT NULL,
- chatid TEXT NOT NULL
+SQL_QUERY "CREATE TABLE IF NOT EXISTS variables (
+ key TEXT PRIMARY KEY,
+ value TEXT NOT NULL
 );"
 
 SQL_QUERY "CREATE TABLE IF NOT EXISTS events_log (
@@ -196,7 +206,7 @@ ${MESSAGE}"
 }
 
 TELEGRAM_SETUP () {
-  TOKEN=$( SQL_QUERY "SELECT token FROM telegram_token WHERE type = 'All';" )
+  TOKEN=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_token';" )
   echo "Message the @botfather https://web.telegram.org/#/im?p=@BotFather"
   echo "with the following text: "
   echo "/start"
@@ -208,7 +218,7 @@ TELEGRAM_SETUP () {
     TOKEN="${REPLY}"
   fi
 
-  CHAT_ID=$( SQL_QUERY "SELECT chatid FROM telegram_token WHERE type = 'All';" )
+  CHAT_ID=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_chatid';" )
   if [[ -z "${CHAT_ID}" ]] || [[ "${CHAT_ID}" == 'null' ]]
   then
     while :
@@ -238,7 +248,8 @@ TELEGRAM_SETUP () {
       then
         echo "Please message the bot."
       else
-        SQL_QUERY "REPLACE INTO telegram_token (type,token,chatid) VALUES ('All','${TOKEN}','${CHAT_ID}');"
+        SQL_QUERY "REPLACE INTO variables (key,values) VALUES ('telegram_token','${TOKEN}');"
+        SQL_QUERY "REPLACE INTO variables (key,values) VALUES ('telegram_chatid','${CHAT_ID}');"
         break
       fi
     done
@@ -250,9 +261,9 @@ TELEGRAM_SETUP () {
 }
 
 SEND_ERROR () {
-  URL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Error';" )
-  TOKEN=$( SQL_QUERY "SELECT token FROM telegram_token WHERE type = 'All';" )
-  CHAT_ID=$( SQL_QUERY "SELECT chatid FROM telegram_token WHERE type = 'All';" )
+  URL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_error';" )
+  TOKEN=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_token';" )
+  CHAT_ID=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_chatid';" )
 
   DESCRIPTION="${1}"
   if [[ -z "${DESCRIPTION}" ]]
@@ -274,20 +285,29 @@ SEND_ERROR () {
     URL="${6}"
   fi
 
+  SENT=0
   if [[ ! -z "${URL}" ]]
   then
+    SENT=1
     WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${WEBHOOK_COLOR}"
   fi
   if [[ ! -z "${TOKEN}" ]] && [[ ! -z "${CHAT_ID}" ]]
   then
+    SENT=1
     TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${TITLE}" "<code>${DESCRIPTION}</code>"
+  fi
+  if [[ "${SENT}" -eq 0 ]] || [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo "${TITLE}"
+    echo "${DESCRIPTION}"
+    echo "-"
   fi
 }
 
 SEND_WARNING () {
-  URL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Warning';" )
-  TOKEN=$( SQL_QUERY "SELECT token FROM telegram_token WHERE type = 'All';" )
-  CHAT_ID=$( SQL_QUERY "SELECT chatid FROM telegram_token WHERE type = 'All';" )
+  URL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_warning';" )
+  TOKEN=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_token';" )
+  CHAT_ID=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_chatid';" )
 
   DESCRIPTION="${1}"
   if [[ -z "${DESCRIPTION}" ]]
@@ -309,20 +329,29 @@ SEND_WARNING () {
     URL="${6}"
   fi
 
+  SENT=0
   if [[ ! -z "${URL}" ]]
   then
+    SENT=1
     WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${WEBHOOK_COLOR}"
   fi
   if [[ ! -z "${TOKEN}" ]] && [[ ! -z "${CHAT_ID}" ]]
   then
+    SENT=1
     TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${TITLE}" "<pre>${DESCRIPTION}</pre>"
+  fi
+  if [[ "${SENT}" -eq 0 ]] || [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo "${TITLE}"
+    echo "${DESCRIPTION}"
+    echo "-"
   fi
 }
 
 SEND_INFO () {
-  URL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Information';" )
-  TOKEN=$( SQL_QUERY "SELECT token FROM telegram_token WHERE type = 'All';" )
-  CHAT_ID=$( SQL_QUERY "SELECT chatid FROM telegram_token WHERE type = 'All';" )
+  URL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_information';" )
+  TOKEN=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_token';" )
+  CHAT_ID=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_chatid';" )
 
   DESCRIPTION="${1}"
   if [[ -z "${DESCRIPTION}" ]]
@@ -344,20 +373,29 @@ SEND_INFO () {
     URL="${6}"
   fi
 
+  SENT=0
   if [[ ! -z "${URL}" ]]
   then
+    SENT=1
     WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${WEBHOOK_COLOR}"
   fi
   if [[ ! -z "${TOKEN}" ]] && [[ ! -z "${CHAT_ID}" ]]
   then
+    SENT=1
     TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${TITLE}" "<pre>${DESCRIPTION}</pre>"
+  fi
+  if [[ "${SENT}" -eq 0 ]] || [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo "${TITLE}"
+    echo "${DESCRIPTION}"
+    echo "-"
   fi
 }
 
 SEND_SUCCESS () {
-  URL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Success';" )
-  TOKEN=$( SQL_QUERY "SELECT token FROM telegram_token WHERE type = 'All';" )
-  CHAT_ID=$( SQL_QUERY "SELECT chatid FROM telegram_token WHERE type = 'All';" )
+  URL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_success';" )
+  TOKEN=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_token';" )
+  CHAT_ID=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_chatid';" )
 
   DESCRIPTION="${1}"
   if [[ -z "${DESCRIPTION}" ]]
@@ -379,13 +417,22 @@ SEND_SUCCESS () {
     URL="${6}"
   fi
 
+  SENT=0
   if [[ ! -z "${URL}" ]]
   then
+    SENT=1
     WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${WEBHOOK_COLOR}"
   fi
   if [[ ! -z "${TOKEN}" ]] && [[ ! -z "${CHAT_ID}" ]]
   then
+    SENT=1
     TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${TITLE}" "<pre>${DESCRIPTION}</pre>"
+  fi
+  if [[ "${SENT}" -eq 0 ]] || [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo "${TITLE}"
+    echo "${DESCRIPTION}"
+    echo "-"
   fi
 }
 
@@ -395,7 +442,7 @@ WEBHOOK_URL_PROMPT () {
   while :
   do
     echo
-    read -r -e -i "$WEBHOOKURL" -p "${TEXT_A}s WebHook URL: " input
+    read -r -e -i "$WEBHOOKURL" -p "${TEXT_A}s webhook url: " input
     WEBHOOKURL="${input:-$WEBHOOKURL}"
     if [[ ! -z "${WEBHOOKURL}" ]]
     then
@@ -414,11 +461,11 @@ WEBHOOK_URL_PROMPT () {
       fi
     fi
   done
-  SQL_QUERY "REPLACE INTO webhook_urls (type,url) VALUES ('${TEXT_A}','${WEBHOOKURL}');"
+  SQL_QUERY "REPLACE INTO variables (key,value) VALUES (''discord_webhook_url_${TEXT_A}','${WEBHOOKURL}');"
 }
 
 GET_DISCORD_WEBHOOKS () {
-  WEBHOOKURL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Error';" )
+  WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_error';" )
   if [[ -z "${WEBHOOKURL}" ]] || [[ "${REPLY}" == y ]]
   then
     # Get webhook url.
@@ -431,25 +478,25 @@ GET_DISCORD_WEBHOOKS () {
     echo 'You can reuse the same webhook url if you want all alerts and information'
     echo 'pings in the same channel.'
 
-    WEBHOOK_URL_PROMPT "Error" "${WEBHOOKURL}"
+    WEBHOOK_URL_PROMPT "error" "${WEBHOOKURL}"
     SEND_ERROR "Test"
   fi
-  WEBHOOKURL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Warning';" )
+  WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_warning';" )
   if [[ -z "${WEBHOOKURL}" ]] || [[ "${REPLY}" == y ]]
   then
-    WEBHOOK_URL_PROMPT "Warning" "${WEBHOOKURL}"
+    WEBHOOK_URL_PROMPT "warning" "${WEBHOOKURL}"
     SEND_WARNING "Test"
   fi
-  WEBHOOKURL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Information';" )
+  WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_information';" )
   if [[ -z "${WEBHOOKURL}" ]] || [[ "${REPLY}" == y ]]
   then
-    WEBHOOK_URL_PROMPT "Information" "${WEBHOOKURL}"
+    WEBHOOK_URL_PROMPT "information" "${WEBHOOKURL}"
     SEND_INFO "Test"
   fi
-  WEBHOOKURL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Success';" )
+  WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_success';" )
   if [[ -z "${WEBHOOKURL}" ]] || [[ "${REPLY}" == y ]]
   then
-    WEBHOOK_URL_PROMPT "Success" "${WEBHOOKURL}"
+    WEBHOOK_URL_PROMPT "success" "${WEBHOOKURL}"
     SEND_SUCCESS "Test"
   fi
 }
@@ -457,7 +504,7 @@ GET_DISCORD_WEBHOOKS () {
 if [[ "${arg1}" != 'cron' ]]
 then
   PREFIX='Setup'
-  WEBHOOKURL=$( SQL_QUERY "SELECT url FROM webhook_urls WHERE type = 'Error';" )
+  WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_error';" )
   if [[ ! -z "${WEBHOOKURL}" ]]
   then
     PREFIX='Redo'
@@ -470,7 +517,7 @@ then
   fi
 
   PREFIX='Setup'
-  CHAT_ID=$( SQL_QUERY "SELECT chatid FROM telegram_token WHERE type = 'All';" )
+  CHAT_ID=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_chatid';" )
   if [[ ! -z "${CHAT_ID}" ]]
   then
     PREFIX='Redo'
@@ -481,7 +528,6 @@ then
   then
     TELEGRAM_SETUP
   fi
-
 fi
 
 GET_LATEST_LOGINS () {
@@ -491,6 +537,11 @@ GET_LATEST_LOGINS () {
     MESSAGE=$( SQL_QUERY "SELECT message FROM events_log WHERE time == ${UNIX_TIME} AND name_type == 'ssh_login';" )
     if [[ ! -z "${MESSAGE}" ]] && [[ "${arg1}" != 'test' ]]
     then
+      if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+      then
+        echo "Skipping GET_LATEST_LOGINS ${DATE_1} ${DATE_2} ${DATE_3} ${UNIX_TIME} ${MESSAGE}" | awk '{printf "%s ", $0}'
+        echo
+      fi
       continue
     fi
 
@@ -518,6 +569,11 @@ CHECK_DISK () {
   MESSAGE=$( SQL_QUERY "SELECT message, state FROM events_log WHERE state < 9999 AND name_type == 'disk_space';" )
   if [[ ! -z "${MESSAGE}" ]] && [[ "${arg1}" != 'test' ]]
   then
+    if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+    then
+      echo "Skipping CHECK_DISK ${MESSAGE}" | awk '{printf "%s ", $0}'
+      echo
+    fi
     return
   fi
 
@@ -558,6 +614,11 @@ CHECK_CPU_LOAD () {
   MESSAGE=$( SQL_QUERY "SELECT message FROM events_log WHERE time > ${UNIX_TIME} AND name_type == 'cpu_usage';" )
   if [[ ! -z "${MESSAGE}" ]] && [[ "${arg1}" != 'test' ]]
   then
+    if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+    then
+      echo "Skipping CHECK_CPU_LOAD ${UNIX_TIME} ${MESSAGE} " | awk '{printf "%s ", $0}'
+      echo
+    fi
     return
   fi
 
@@ -597,6 +658,11 @@ CHECK_SWAP () {
   MESSAGE=$( SQL_QUERY "SELECT message FROM events_log WHERE time > ${UNIX_TIME} AND name_type == 'swap_free';" )
   if [[ ! -z "${MESSAGE}" ]] && [[ "${arg1}" != 'test' ]]
   then
+    if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+    then
+      echo "Skipping CHECK_SWAP ${UNIX_TIME} ${MESSAGE} " | awk '{printf "%s ", $0}'
+      echo
+    fi
     return
   fi
 
@@ -633,6 +699,11 @@ CHECK_RAM () {
   MESSAGE=$( SQL_QUERY "SELECT message FROM events_log WHERE time > ${UNIX_TIME} AND name_type == 'ram_free';" )
   if [[ ! -z "${MESSAGE}" ]] && [[ "${arg1}" != 'test' ]]
   then
+    if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+    then
+      echo "Skipping CHECK_RAM ${UNIX_TIME} ${MESSAGE} " | awk '{printf "%s ", $0}'
+      echo
+    fi
     return
   fi
 
