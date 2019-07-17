@@ -433,7 +433,7 @@ explorer.exe %userprofile%\AppData\Roaming\EnergiCore
 
 </details>
 
-<details><summary id="fastsync-windows"><strong> Use the snapshot/bootstrap/fast-sync on mac </strong></summary>
+<details><summary id="fastsync-mac"><strong> Use the snapshot/bootstrap/fast-sync on mac </strong></summary>
 
 #### Automatic 
 
