@@ -33,7 +33,7 @@ EXPLORER_URL='http://explorer.millenniumclub.ca:3001/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 # Amount of Collateral needed.
-COLLATERAL=10000
+COLLATERAL=50000
 # Direct Daemon Download if github has no releases.
 #DAEMON_DOWNLOAD='https://millenniumclub.ca/beta/millenniumclubd
 #https://millenniumclub.ca/beta/millenniumclub-cli'
