@@ -45,7 +45,7 @@ MULTI_IP_MODE=1
 
 
 # Tip Address.
-TIPS='GSWw6ub4LmZCRw2QL8DUbz4LTJ9PVdUfDC'
+TIPS='GdGKLZfJ6u3z51CvEScjNGLcRZ39u1CdKz'
 # Dropbox Addnodes.
 DROPBOX_ADDNODES='f74ptl1ya73f72m'
 # Dropbox Bootstrap.
@@ -76,8 +76,8 @@ while [[ ! -f ~/___mn.sh ]] || [[ $( grep -Fxc "# End of masternode setup script
 do
   rm -f ~/___mn.sh
   echo "Downloading Masternode Setup Script."
-  wget -4qo- gist.githack.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O ~/___mn.sh
-  COUNTER=$(( COUNTER + 1 ))
+  wget -4qo- gist.githubusercontent.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O ~/___mn.sh
+  COUNTER=1
   if [[ "${COUNTER}" -gt 3 ]]
   then
     echo
