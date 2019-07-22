@@ -29,7 +29,7 @@ CONF='dogecash.conf'
 # Port.
 DEFAULT_PORT=56740
 # Explorer URL.
-EXPLORER_URL='https://api.dogec.io/'
+EXPLORER_URL='http://explorer.dogec.xyz'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 # Amount of Collateral needed.
