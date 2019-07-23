@@ -52,12 +52,8 @@ MULTI_IP_MODE=0
 TIPS='TW1EvMNptSoTWtYdNZdKTWWzqepYPvpHbk'
 # Dropbox Addnodes.
 DROPBOX_ADDNODES='a37pqfaxmf1kfdv'
-# If set to 1 then use addnodes from dropbox.
-USE_DROPBOX_ADDNODES=0
 # Dropbox Bootstrap.
 DROPBOX_BOOTSTRAP='51ltqsreqz7hw1s'
-# If set to 1 then use bootstrap from dropbox.
-USE_DROPBOX_BOOTSTRAP=1
 # Dropbox blocks and chainstake folders.
 DROPBOX_BLOCKS_N_CHAINS='lefeex41x0agab1'
 
