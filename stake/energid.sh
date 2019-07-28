@@ -881,6 +881,63 @@ _setup_wallet_auto_pw () {
   echo
   echo "staking=0"
   echo
+
+}
+
+_discord_warning () {
+  read -n 1 -s -r -p "Press any key (like enter) to continue"
+  echo
+  echo
+  echo "If you get a Direct Message from anyone who appears to be on the team"
+  echo "odds are it's a scammer."
+  sleep 3
+  echo "The Energi team will only talk to in the energi server,"
+  echo "never via direct private message."
+  sleep 3
+  echo "We will not friend request you."
+  sleep 3
+  echo "None of us run private staking or masternode pools or offer OTC deals."
+  sleep 3
+  read -n 1 -s -r -p "Press any key (like enter) to continue"
+  echo
+  echo "Usernames on discord are not unique."
+  sleep 3
+  echo "This means a DM may appear to be from a team member "
+  echo "(even matching the #1234)!"
+  sleep 3
+  echo "A quick way to check if your talking to a scammer is to "
+  echo "view the profile and check mutual servers,"
+  sleep 4
+  echo "if Energi isn't listed they are 100% a scammer."
+  echo "If they have the the nitro logo, they are a scammer."
+  sleep 4
+  read -n 1 -s -r -p "Press any key (like enter) to continue"
+  echo
+  echo -e "if you get a \e[1;4mDirect Private Message\e[0m from"
+  echo "TommyWorldPower#8217"
+  sleep 2
+  echo "Ryan Lucchese#9615"
+  sleep 2
+  echo "mcarper#0918"
+  sleep 2
+  echo "or any other person on the energi team, please report it to the"
+  echo "#help-desk discord support channel."
+  sleep 3
+  echo "Odds are very high you are talking to a scammer."
+  sleep 3
+  read -n 1 -s -r -p "Press any key (like enter) to continue"
+  echo
+  echo "If the color of the user that you're talking to isn't "
+  echo -e "\e[32m\e[7mgreen\e[0m, \e[36m\e[7mblue\e[0m, \e[33m\e[7myellow\e[0m, or \e[31m\e[7mred\e[0m you're not on the energi server."
+  sleep 4
+  echo "Don't talk to them; they are trying to scam you."
+  sleep 3
+  echo "please report it to the #help-desk discord support channel."
+  sleep 3
+  read -n 1 -s -r -p "Press any key (like enter) to continue"
+  echo
+  echo
+
 }
 
 _restrict_logins
@@ -888,5 +945,6 @@ _check_clock
 _setup_two_factor
 _copy_wallet '' '' 'energid' ''
 _setup_wallet_auto_pw
+_discord_warning
 
 rm -rf "${TEMP_FILENAME1}"

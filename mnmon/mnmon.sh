@@ -53,11 +53,10 @@ SQL_QUERY "CREATE TABLE IF NOT EXISTS variables (
 );"
 
 SQL_QUERY "CREATE TABLE IF NOT EXISTS events_log (
- time INTEGER NOT NULL,
- name_type TEXT NOT NULL,
- message TEXT NOT NULL,
- state INTEGER NOT NULL,
- PRIMARY KEY (time, name_type)
+  name_type TEXT PRIMARY KEY,
+  start_time INTEGER NOT NULL,
+  last_ping_time INTEGER NOT NULL,
+  message TEXT NOT NULL
 );"
 
 INSTALL_MN_MON_SERVICE () {
