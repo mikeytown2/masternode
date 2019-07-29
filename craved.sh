@@ -33,7 +33,7 @@ EXPLORER_URL='https://explorersite.cc/'
 # Amount of Collateral needed.
 COLLATERAL=5000
 # Multiple on single IP.
-MULTI_IP_MODE=0
+MULTI_IP_MODE=1
 
 # Tip Address
 TIPS='VU3k5kEM1KCgFN9bB2CeTbXEDMxtCnQsCp'
