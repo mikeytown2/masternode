@@ -116,4 +116,4 @@ done
 DAEMON_SETUP_THREAD
 # shellcheck source=/root/.bashrc
 . ~/.bashrc
-stty sane
+stty sane 2>/dev/null
