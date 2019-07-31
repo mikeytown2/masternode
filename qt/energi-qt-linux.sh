@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Run this file
-# bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/qt/energi-qt-ubuntu.sh)"
+# bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/qt/energi-qt-linux.sh)"
 
 DATA_DIR="${HOME}/.energicore"
 QT_BIN_NAME='energi-qt'
