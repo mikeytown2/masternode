@@ -33,6 +33,7 @@ wget -4qo- "${BIN_URL}" -O "${TEMP_FOLDER}/linux.tar.gz" --show-progress --progr
 tar -xzf "${TEMP_FOLDER}/linux.tar.gz" -C "${TEMP_FOLDER}"
 find "${TEMP_FOLDER}" -name "${QT_BIN_NAME}" -size +128k -exec cp {} "${HOME}/.local/bin" \;
 rm -rf "${TEMP_FOLDER}"
+chmod +x "${HOME}/.local/bin/${QT_BIN_NAME}"
 
 echo "Downloading the latest snapshot to ${DATA_DIR}"
 mkdir -p "${DATA_DIR}"
@@ -76,3 +77,4 @@ Comment=${SHORTCUT_NAME}
 Exec=${HOME}/.local/bin/${QT_BIN_NAME}
 Icon=${HOME}/Pictures/energi.png
 " > "${HOME}/Desktop/${QT_BIN_NAME}.desktop"
+chmod +x "${HOME}/Desktop/${QT_BIN_NAME}.desktop"
