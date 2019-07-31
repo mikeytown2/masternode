@@ -5,12 +5,15 @@
 
 DATA_DIR="${HOME}/.energicore"
 QT_BIN_NAME='energi-qt'
+SHORTCUT_NAME='Energi'
 API_URL='https://api.github.com/repos/energicryptocurrency/energi/releases/latest'
 SNAPSHOT_HASH='gsaqiry3h1ho3nh'
 
 TEMP_FOLDER=$( mktemp -d )
 sudo mkdir -p "${HOME}/.local/bin"
-BIN_URL=$( wget -4qO- -o- "${API_URL}" | jq -r '.assets[].browser_download_url' | grep -v debug | grep -v '.sig' | grep linux )
+GITHUB_LATEST=$( wget -4qO- -o- "${API_URL}" )
+BIN_URL=$( echo "${GITHUB_LATEST}" | jq -r '.assets[].browser_download_url' | grep -v debug | grep -v '.sig' | grep linux )
+VERSION=$( echo "${GITHUB_LATEST}" | jq -r '.tag_name' )
 
 wget -4qo- "${BIN_URL}" -O "${TEMP_FOLDER}/linux.tar.gz" --show-progress --progress=bar:force 2>&1
 tar -xzf "${TEMP_FOLDER}/linux.tar.gz" -C "${TEMP_FOLDER}"
@@ -48,8 +51,13 @@ wget -4qo- https://assets.coingecko.com/coins/images/5795/large/energi.png  -O "
 
 # Create desktop shortcut.
 mkdir -p "${HOME}/Desktop"
-printf "[Desktop Entry]
+printf "#!/usr/bin/env xdg-open
+[Desktop Entry]
+Version=${VERSION}
 Type=Application
+Terminal=false
+Name=${SHORTCUT_NAME}
+Comment=${SHORTCUT_NAME}
 Exec=${HOME}/.local/bin/${QT_BIN_NAME}
 Icon=${HOME}/.local/bin/energi.png
-" > "${HOME}/Desktop/${QT_BIN_NAME}"
+" > "${HOME}/Desktop/${QT_BIN_NAME}.desktop"
