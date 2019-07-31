@@ -392,7 +392,7 @@ Tools -> Open wallet configuration file.
 If the above doesn't work you can do this:  
 Windows:  
 windows key + r  
-`notepad %appdata%/energicore/energi.conf`  
+`notepad %appdata%\energicore\energi.conf`  
 Copy Paste the above line into the run dialog box.
 
 Mac:  
