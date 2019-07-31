@@ -47,7 +47,8 @@ rm -f "${DATA_DIR}/peers.dat"
 echo "Extract the snapshot into ${DATA_DIR}/"
 tar -xzf "${DATA_DIR}/blocks_n_chains.tar.gz" -C "${DATA_DIR}/"
 
-wget -4qo- https://assets.coingecko.com/coins/images/5795/large/energi.png  -O "${HOME}/.local/bin/energi.png"  --show-progress --progress=bar:force 2>&1
+mkdir -p "${HOME}/Pictures"
+wget -4qo- https://assets.coingecko.com/coins/images/5795/large/energi.png  -O "${HOME}/Pictures/energi.png"  --show-progress --progress=bar:force 2>&1
 
 # Create desktop shortcut.
 mkdir -p "${HOME}/Desktop"
@@ -59,5 +60,5 @@ Terminal=false
 Name=${SHORTCUT_NAME}
 Comment=${SHORTCUT_NAME}
 Exec=${HOME}/.local/bin/${QT_BIN_NAME}
-Icon=${HOME}/.local/bin/energi.png
+Icon=${HOME}/Pictures/energi.png
 " > "${HOME}/Desktop/${QT_BIN_NAME}.desktop"
