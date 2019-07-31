@@ -3,6 +3,20 @@
 # Run this file
 # bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/qt/energi-qt-linux.sh)"
 
+# Install jq if not there.
+if ! [ -x "$( command -v jq )" ]
+then
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq jq gzip
+fi
+if ! [ -x "$( command -v jq )" ]
+then
+  sudo DEBIAN_FRONTEND=noninteractive dpkg --configure -a
+  sudo DEBIAN_FRONTEND=noninteractive add-apt-repository universe
+  sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get -f install -yq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq jq gzip
+fi
+
 DATA_DIR="${HOME}/.energicore"
 QT_BIN_NAME='energi-qt'
 SHORTCUT_NAME='Energi'
