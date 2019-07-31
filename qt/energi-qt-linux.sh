@@ -24,7 +24,7 @@ API_URL='https://api.github.com/repos/energicryptocurrency/energi/releases/lates
 SNAPSHOT_HASH='gsaqiry3h1ho3nh'
 
 TEMP_FOLDER=$( mktemp -d )
-sudo mkdir -p "${HOME}/.local/bin"
+mkdir -p "${HOME}/.local/bin"
 GITHUB_LATEST=$( wget -4qO- -o- "${API_URL}" )
 BIN_URL=$( echo "${GITHUB_LATEST}" | jq -r '.assets[].browser_download_url' | grep -v debug | grep -v '.sig' | grep linux )
 VERSION=$( echo "${GITHUB_LATEST}" | jq -r '.tag_name' )
