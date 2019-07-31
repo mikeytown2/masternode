@@ -44,7 +44,7 @@ rm -f "${DATA_DIR}/mnpayments.dat"
 rm -f "${DATA_DIR}/netfulfilled.dat"
 rm -f "${DATA_DIR}/peers.dat"
 
-echo "Extract the snapshot into ${DATA_DIR}/"
+echo "Extract the snapshot into ${DATA_DIR}/ (give it a minute to complete)"
 tar -xzf "${DATA_DIR}/blocks_n_chains.tar.gz" -C "${DATA_DIR}/"
 
 mkdir -p "${HOME}/Pictures"
