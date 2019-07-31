@@ -12,16 +12,14 @@ TEMP_FOLDER=$( mktemp -d )
 sudo mkdir -p "${HOME}/.local/bin"
 BIN_URL=$( wget -4qO- -o- "${API_URL}" | jq -r '.assets[].browser_download_url' | grep -v debug | grep -v '.sig' | grep linux )
 
-wget -4qo- "${BIN_URL}" -O "${TEMP_FOLDER}/linux.tar.gz"
+wget -4qo- "${BIN_URL}" -O "${TEMP_FOLDER}/linux.tar.gz" --show-progress --progress=bar:force 2>&1
 tar -xzf "${TEMP_FOLDER}/linux.tar.gz" -C "${TEMP_FOLDER}"
-find "${TEMP_FOLDER}" -name "${QT_BIN_NAME}" -size +128k -exec cp {} "${HOME}/.local/bin"
+find "${TEMP_FOLDER}" -name "${QT_BIN_NAME}" -size +128k -exec cp {} "${HOME}/.local/bin" \;
 rm -rf "${TEMP_FOLDER}"
-
-
 
 echo "Downloading the latest snapshot to ${DATA_DIR}"
 mkdir -p "${DATA_DIR}"
-curl -L "https://www.dropbox.com/s/${SNAPSHOT_HASH}/blocks_n_chains.tar.gz?dl=1" -o "${DATA_DIR}/blocks_n_chains.tar.gz"
+wget -4qo- "https://www.dropbox.com/s/${SNAPSHOT_HASH}/blocks_n_chains.tar.gz?dl=1" -o "${DATA_DIR}/blocks_n_chains.tar.gz" --show-progress --progress=bar:force 2>&1
 
 echo "Remove blocks and chains databases."
 rm -rf "${DATA_DIR}/blocks/"
@@ -39,7 +37,6 @@ rm -f "${DATA_DIR}/mnpayments.dat"
 rm -f "${DATA_DIR}/netfulfilled.dat"
 rm -f "${DATA_DIR}/peers.dat"
 
-echo "This will start ${QT_BIN_NAME} automatically when done."
 echo "Extract the snapshot into ${DATA_DIR}/"
 tar -xzf "${DATA_DIR}/blocks_n_chains.tar.gz" -C "${DATA_DIR}/"
 
