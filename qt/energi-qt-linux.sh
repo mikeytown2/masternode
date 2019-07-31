@@ -19,7 +19,11 @@ rm -rf "${TEMP_FOLDER}"
 
 echo "Downloading the latest snapshot to ${DATA_DIR}"
 mkdir -p "${DATA_DIR}"
-wget -4qo- "https://www.dropbox.com/s/${SNAPSHOT_HASH}/blocks_n_chains.tar.gz?dl=1" -o "${DATA_DIR}/blocks_n_chains.tar.gz" --show-progress --progress=bar:force 2>&1
+if [[ -f "${DATA_DIR}/blocks_n_chains.tar.gz" ]]
+then
+  rm "${DATA_DIR}/blocks_n_chains.tar.gz"
+fi
+wget -4qo- "https://www.dropbox.com/s/${SNAPSHOT_HASH}/blocks_n_chains.tar.gz?dl=1" -O "${DATA_DIR}/blocks_n_chains.tar.gz" --show-progress --progress=bar:force 2>&1
 
 echo "Remove blocks and chains databases."
 rm -rf "${DATA_DIR}/blocks/"
