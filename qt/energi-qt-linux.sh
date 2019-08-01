@@ -25,14 +25,16 @@ SNAPSHOT_HASH='gsaqiry3h1ho3nh'
 
 USRNAME_CURRENT=$( whoami )
 sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}"
-sudo mkdir -p "${HOME}/.local/bin"
-sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}/.local/bin"
-sudo mkdir -p "${HOME}/Desktop"
-sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}/Desktop"
-sudo mkdir -p "${HOME}/Pictures"
-sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}/Pictures"
-sudo mkdir -p "${DATA_DIR}"
-sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${DATA_DIR}"
+sudo mkdir -p "${HOME}/.local/bin/"
+sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}/.local/bin/"
+sudo mkdir -p "${HOME}/.local/share/applications/"
+sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}/.local/share/applications/"
+sudo mkdir -p "${HOME}/Desktop/"
+sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}/Desktop/"
+sudo mkdir -p "${HOME}/Pictures/"
+sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}/Pictures/"
+sudo mkdir -p "${DATA_DIR}/"
+sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${DATA_DIR}/"
 TEMP_FOLDER=$( mktemp -d )
 GITHUB_LATEST=$( wget -4qO- -o- "${API_URL}" )
 BIN_URL=$( echo "${GITHUB_LATEST}" | jq -r '.assets[].browser_download_url' | grep -v debug | grep -v '.sig' | grep linux )
