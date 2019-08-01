@@ -83,3 +83,18 @@ Exec=${HOME}/.local/bin/${QT_BIN_NAME}
 Icon=${HOME}/Pictures/energi.png
 " > "${HOME}/Desktop/${QT_BIN_NAME}.desktop"
 sudo chmod +x "${HOME}/Desktop/${QT_BIN_NAME}.desktop"
+
+# Create launcher shortcut.
+printf "#!/usr/bin/env xdg-open
+[Desktop Entry]
+Version=${VERSION}
+Type=Application
+Terminal=false
+Categories=Finance;Office
+Name=${SHORTCUT_NAME}
+Comment=${SHORTCUT_NAME}
+Exec=${HOME}/.local/bin/${QT_BIN_NAME}
+Icon=${HOME}/Pictures/energi.png
+" > "${HOME}/.local/share/applications/${QT_BIN_NAME}.desktop"
+sudo chmod +x "${HOME}/.local/share/applications/${QT_BIN_NAME}.desktop"
+
