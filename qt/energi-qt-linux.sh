@@ -25,9 +25,15 @@ SNAPSHOT_HASH='gsaqiry3h1ho3nh'
 
 USRNAME_CURRENT=$( whoami )
 sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}"
-TEMP_FOLDER=$( mktemp -d )
 sudo mkdir -p "${HOME}/.local/bin"
 sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}/.local/bin"
+sudo mkdir -p "${HOME}/Desktop"
+sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}/Desktop"
+sudo mkdir -p "${HOME}/Pictures"
+sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}/Pictures"
+sudo mkdir -p "${DATA_DIR}"
+sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${DATA_DIR}"
+TEMP_FOLDER=$( mktemp -d )
 GITHUB_LATEST=$( wget -4qO- -o- "${API_URL}" )
 BIN_URL=$( echo "${GITHUB_LATEST}" | jq -r '.assets[].browser_download_url' | grep -v debug | grep -v '.sig' | grep linux )
 VERSION=$( echo "${GITHUB_LATEST}" | jq -r '.tag_name' )
@@ -37,10 +43,8 @@ tar -xzf "${TEMP_FOLDER}/linux.tar.gz" -C "${TEMP_FOLDER}"
 find "${TEMP_FOLDER}" -name "${QT_BIN_NAME}" -size +128k -exec cp {} "${HOME}/.local/bin" \;
 rm -rf "${TEMP_FOLDER}"
 sudo chmod +x "${HOME}/.local/bin/${QT_BIN_NAME}"
-
 echo "Downloading the latest snapshot to ${DATA_DIR}"
-sudo mkdir -p "${DATA_DIR}"
-sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${DATA_DIR}"
+
 if [[ -f "${DATA_DIR}/blocks_n_chains.tar.gz" ]]
 then
   rm "${DATA_DIR}/blocks_n_chains.tar.gz"
@@ -65,14 +69,9 @@ rm -f "${DATA_DIR}/peers.dat"
 
 echo "Extract the snapshot into ${DATA_DIR}/ (give it a minute to complete)"
 tar -xzf "${DATA_DIR}/blocks_n_chains.tar.gz" -C "${DATA_DIR}/"
-
-sudo mkdir -p "${HOME}/Pictures"
-sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}/Pictures"
 wget -4qo- https://assets.coingecko.com/coins/images/5795/large/energi.png  -O "${HOME}/Pictures/energi.png"  --show-progress --progress=bar:force 2>&1
 
 # Create desktop shortcut.
-sudo mkdir -p "${HOME}/Desktop"
-sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}/Desktop"
 printf "#!/usr/bin/env xdg-open
 [Desktop Entry]
 Version=${VERSION}
