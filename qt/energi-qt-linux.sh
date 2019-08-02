@@ -20,11 +20,12 @@ fi
 DATA_DIR="${HOME}/.energicore"
 QT_BIN_NAME='energi-qt'
 SHORTCUT_NAME='Energi'
-API_URL='https://api.github.com/repos/energicryptocurrency/energi/releases/latest'
+API_URL='api.github.com/repos/energicryptocurrency/energi/releases/latest'
 SNAPSHOT_HASH='gsaqiry3h1ho3nh'
 
+echo "Creating folders"
 USRNAME_CURRENT=$( whoami )
-sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}"
+#sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}"
 sudo mkdir -p "${HOME}/.local/bin/"
 sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}/.local/bin/"
 sudo mkdir -p "${HOME}/.local/share/applications/"
@@ -36,42 +37,35 @@ sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${HOME}/Pictures/"
 sudo mkdir -p "${DATA_DIR}/"
 sudo chown -R "${USRNAME_CURRENT}:${USRNAME_CURRENT}" "${DATA_DIR}/"
 TEMP_FOLDER=$( mktemp -d )
-GITHUB_LATEST=$( wget -4qO- -o- "${API_URL}" )
+
+echo "Downloading ${API_URL}"
+GITHUB_LATEST=$( wget --no-check-certificate -4qO- -o- "${API_URL}" )
 BIN_URL=$( echo "${GITHUB_LATEST}" | jq -r '.assets[].browser_download_url' | grep -v debug | grep -v '.sig' | grep linux )
 VERSION=$( echo "${GITHUB_LATEST}" | jq -r '.tag_name' )
 
+echo "Downloading ${BIN_URL}"
 wget -4qo- "${BIN_URL}" -O "${TEMP_FOLDER}/linux.tar.gz" --show-progress --progress=bar:force 2>&1
-tar -xzf "${TEMP_FOLDER}/linux.tar.gz" -C "${TEMP_FOLDER}"
+tar -xzf "${TEMP_FOLDER}/linux.tar.gz" -C "${TEMP_FOLDER}" --warning=no-timestamp
 find "${TEMP_FOLDER}" -name "${QT_BIN_NAME}" -size +128k -exec cp {} "${HOME}/.local/bin" \;
 rm -rf "${TEMP_FOLDER}"
 sudo chmod +x "${HOME}/.local/bin/${QT_BIN_NAME}"
-echo "Downloading the latest snapshot to ${DATA_DIR}"
+echo "Checking ${HOME}/.local/bin/${QT_BIN_NAME}"
+ldd "${HOME}/.local/bin/${QT_BIN_NAME}"
+uname -a
 
-if [[ -f "${DATA_DIR}/blocks_n_chains.tar.gz" ]]
+if [[ ! -d ${DATA_DIR}/blocks ]]
 then
-  rm "${DATA_DIR}/blocks_n_chains.tar.gz"
+  if [[ ! -f "${DATA_DIR}/blocks_n_chains.tar.gz" ]]
+  then
+    echo "Downloading the latest snapshot to ${DATA_DIR}"
+    wget -4qo- "www.dropbox.com/s/${SNAPSHOT_HASH}/blocks_n_chains.tar.gz?dl=1" -O "${DATA_DIR}/blocks_n_chains.tar.gz" --show-progress --progress=bar:force 2>&1
+  fi
+
+  echo "Extract the snapshot into ${DATA_DIR}/ (give it a minute to complete)"
+  tar -xzf "${DATA_DIR}/blocks_n_chains.tar.gz" -C "${DATA_DIR}/" --warning=no-timestamp
 fi
-wget -4qo- "https://www.dropbox.com/s/${SNAPSHOT_HASH}/blocks_n_chains.tar.gz?dl=1" -O "${DATA_DIR}/blocks_n_chains.tar.gz" --show-progress --progress=bar:force 2>&1
 
-echo "Remove blocks and chains databases."
-rm -rf "${DATA_DIR}/blocks/"
-rm -rf "${DATA_DIR}/chainstate/"
-rm -rf "${DATA_DIR}/database/"
-rm -f "${DATA_DIR}/.lock"
-rm -f "${DATA_DIR}/banlist.dat"
-rm -f "${DATA_DIR}/db.log"
-rm -f "${DATA_DIR}/debug.log"
-rm -f "${DATA_DIR}/fee_estimates.dat"
-rm -f "${DATA_DIR}/governance.dat"
-rm -f "${DATA_DIR}/mempool.dat"
-rm -f "${DATA_DIR}/mncache.dat"
-rm -f "${DATA_DIR}/mnpayments.dat"
-rm -f "${DATA_DIR}/netfulfilled.dat"
-rm -f "${DATA_DIR}/peers.dat"
-
-echo "Extract the snapshot into ${DATA_DIR}/ (give it a minute to complete)"
-tar -xzf "${DATA_DIR}/blocks_n_chains.tar.gz" -C "${DATA_DIR}/"
-wget -4qo- https://assets.coingecko.com/coins/images/5795/large/energi.png  -O "${HOME}/Pictures/energi.png"  --show-progress --progress=bar:force 2>&1
+wget -4qo- assets.coingecko.com/coins/images/5795/large/energi.png  -O "${HOME}/Pictures/energi.png"  --show-progress --progress=bar:force 2>&1
 
 # Create desktop shortcut.
 printf "#!/usr/bin/env xdg-open
