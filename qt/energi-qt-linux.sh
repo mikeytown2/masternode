@@ -6,7 +6,7 @@
 # Install jq if not there.
 if ! [ -x "$( command -v jq )" ]
 then
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq jq gzip
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq jq gzip libc-bin
 fi
 if ! [ -x "$( command -v jq )" ]
 then
@@ -14,7 +14,7 @@ then
   sudo DEBIAN_FRONTEND=noninteractive add-apt-repository universe
   sudo DEBIAN_FRONTEND=noninteractive apt-get update -yq
   sudo DEBIAN_FRONTEND=noninteractive apt-get -f install -yq
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq jq gzip
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq jq gzip libc-bin
 fi
 
 DATA_DIR="${HOME}/.energicore"
