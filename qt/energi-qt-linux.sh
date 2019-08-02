@@ -22,6 +22,8 @@ QT_BIN_NAME='energi-qt'
 SHORTCUT_NAME='Energi'
 API_URL='api.github.com/repos/energicryptocurrency/energi/releases/latest'
 SNAPSHOT_HASH='gsaqiry3h1ho3nh'
+ICON_URL='assets.coingecko.com/coins/images/5795/large/energi.png'
+ICON_NAME='energi.png'
 
 echo "Creating folders"
 USRNAME_CURRENT=$( whoami )
@@ -65,10 +67,10 @@ then
   tar -xzf "${DATA_DIR}/blocks_n_chains.tar.gz" -C "${DATA_DIR}/" --warning=no-timestamp
 fi
 
-wget -4qo- assets.coingecko.com/coins/images/5795/large/energi.png  -O "${HOME}/Pictures/energi.png"  --show-progress --progress=bar:force 2>&1
+wget -4qo- "${ICON_URL}" -O "${HOME}/Pictures/${ICON_NAME}"  --show-progress --progress=bar:force 2>&1
 
 # Create desktop shortcut.
-printf "#!/usr/bin/env xdg-open
+echo "#!/usr/bin/env xdg-open
 [Desktop Entry]
 Version=${VERSION}
 Type=Application
@@ -76,12 +78,12 @@ Terminal=false
 Name=${SHORTCUT_NAME}
 Comment=${SHORTCUT_NAME}
 Exec=${HOME}/.local/bin/${QT_BIN_NAME}
-Icon=${HOME}/Pictures/energi.png
+Icon=${HOME}/Pictures/${ICON_NAME}
 " > "${HOME}/Desktop/${QT_BIN_NAME}.desktop"
 sudo chmod +x "${HOME}/Desktop/${QT_BIN_NAME}.desktop"
 
 # Create launcher shortcut.
-printf "#!/usr/bin/env xdg-open
+echo "#!/usr/bin/env xdg-open
 [Desktop Entry]
 Version=${VERSION}
 Type=Application
@@ -90,7 +92,6 @@ Categories=Finance;Office
 Name=${SHORTCUT_NAME}
 Comment=${SHORTCUT_NAME}
 Exec=${HOME}/.local/bin/${QT_BIN_NAME}
-Icon=${HOME}/Pictures/energi.png
+Icon=${HOME}/Pictures/${ICON_NAME}
 " > "${HOME}/.local/share/applications/${QT_BIN_NAME}.desktop"
 sudo chmod +x "${HOME}/.local/share/applications/${QT_BIN_NAME}.desktop"
-
