@@ -1,17 +1,18 @@
 #!/bin/bash
 
-if [[ -f /var/multi-masternode-data/.bashrc ]]
-then
-  # shellcheck disable=SC1091
-  source /var/multi-masternode-data/.bashrc
-fi
-
 WEBHOOK_USERNAME_DEFAULT='Masternode Monitor'
 WEBHOOK_AVATAR_DEFAULT='https://i.imgur.com/8WHSSa7s.jpg'
+
+DAEMON_BIN_LUT="
+energid https://s2.coinmarketcap.com/static/img/coins/128x128/3218.png Energi Monitor
+dogecashd https://s2.coinmarketcap.com/static/img/coins/128x128/3672.png DogeCash Monitor
+"
 
 arg1="${1}"
 arg2="${2}"
 arg3="${3}"
+
+RE='^[0-9]+$'
 
 DEBUG_OUTPUT=0
 if [[ "${arg1}" == 'debug' ]]
@@ -52,11 +53,26 @@ SQL_QUERY "CREATE TABLE IF NOT EXISTS variables (
  value TEXT NOT NULL
 );"
 
-SQL_QUERY "CREATE TABLE IF NOT EXISTS events_log (
-  name_type TEXT PRIMARY KEY,
-  start_time INTEGER NOT NULL,
-  last_ping_time INTEGER NOT NULL,
-  message TEXT NOT NULL
+SQL_QUERY "CREATE TABLE IF NOT EXISTS login_data (
+  time INTEGER,
+  message TEXT,
+  PRIMARY KEY (time, message)
+);"
+
+SQL_QUERY "CREATE TABLE IF NOT EXISTS system_log (
+  name TEXT PRIMARY KEY,
+  start_time INTEGER ,
+  last_ping_time INTEGER ,
+  message TEXT
+);"
+
+SQL_QUERY "CREATE TABLE IF NOT EXISTS node_log (
+  conf_loc TEXT,
+  type TEXT,
+  start_time INTEGER ,
+  last_ping_time INTEGER ,
+  message TEXT,
+  PRIMARY KEY (conf_loc, type)
 );"
 
 INSTALL_MN_MON_SERVICE () {
@@ -133,6 +149,17 @@ PAYLOAD
   OUTPUT=$( curl -H "Content-Type: application/json" -s -X POST "${URL}" -d "${_PAYLOAD}" | sed '/^[[:space:]]*$/d' )
   if [[ ! -z "${OUTPUT}" ]]
   then
+    MS_WAIT=$( echo "${OUTPUT}" | jq -r '.retry_after' 2>/dev/null )
+    if [[ ! -z "${MS_WAIT}" ]]
+    then
+      SECONDS_WAIT=$( printf "%.1f\n" $( echo "scale=3;${MS_WAIT}/1000" | bc -l ) )
+      SECONDS_WAIT=$( echo "${SECONDS_WAIT} + 0.1" | bc -l )
+      sleep "${SECONDS_WAIT}"
+      OUTPUT=$( curl -H "Content-Type: application/json" -s -X POST "${URL}" -d "${_PAYLOAD}" | sed '/^[[:space:]]*$/d' )
+    fi
+  fi
+  if [[ ! -z "${OUTPUT}" ]]
+  then
     echo "Discord Error"
     echo "curl -H Content-Type: application/json -s -X POST ${URL} -d '${_PAYLOAD}'"
     echo "${OUTPUT}" | jq '.'
@@ -140,7 +167,6 @@ PAYLOAD
     echo "${_PAYLOAD}"
     echo "-"
   fi
-  sleep 0.3
 )
 }
 
@@ -163,6 +189,7 @@ TELEGRAM_SEND () {
     sed 's/:moneybag:/\xF0\x9F\x92\xB0/g' | \
     sed 's/:floppy_disk:/\xF0\x9F\x92\xBE/g' | \
     sed 's/:desktop:/\xF0\x9F\x96\xA5/g' | \
+    sed 's/:wrench:/\xF0\x9F\x94\xA7/g' | \
     sed 's/:fire:/\xF0\x9F\x94\xA5/g' )
 
   TITLE=$( echo "${TITLE}" | \
@@ -174,6 +201,7 @@ TELEGRAM_SEND () {
     sed 's/:moneybag:/\xF0\x9F\x92\xB0/g' | \
     sed 's/:floppy_disk:/\xF0\x9F\x92\xBE/g' | \
     sed 's/:desktop:/\xF0\x9F\x96\xA5/g' | \
+    sed 's/:wrench:/\xF0\x9F\x94\xA7/g' | \
     sed 's/:fire:/\xF0\x9F\x94\xA5/g' )
 
   SERVER_INFO=$( date -Ru )
@@ -441,12 +469,12 @@ WEBHOOK_URL_PROMPT () {
   while :
   do
     echo
-    read -r -e -i "$WEBHOOKURL" -p "${TEXT_A}s webhook url: " input
-    WEBHOOKURL="${input:-$WEBHOOKURL}"
+    read -r -e -i "${WEBHOOKURL}" -p "${TEXT_A}s webhook url: " input
+    WEBHOOKURL="${input:-${WEBHOOKURL}}"
     if [[ ! -z "${WEBHOOKURL}" ]]
     then
       TOKEN=$( wget -qO- -o- "${WEBHOOKURL}" | jq -r '.token' )
-      if [[ -z "$TOKEN" ]]
+      if [[ -z "${TOKEN}" ]]
       then
         echo "Given URL is not a webhook."
         echo
@@ -456,11 +484,12 @@ WEBHOOK_URL_PROMPT () {
         echo
         WEBHOOKURL=''
       else
+        echo "${TOKEN}"
         break
       fi
     fi
   done
-  SQL_QUERY "REPLACE INTO variables (key,value) VALUES (''discord_webhook_url_${TEXT_A}','${WEBHOOKURL}');"
+  SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('discord_webhook_url_${TEXT_A}','${WEBHOOKURL}');"
 }
 
 GET_DISCORD_WEBHOOKS () {
@@ -529,16 +558,93 @@ then
   fi
 fi
 
+PROCESS_MESSAGES () {
+  NAME=''
+  MESSAGE_ERROR=''
+  MESSAGE_WARNING=''
+  MESSAGE_INFO=''
+  MESSAGE_SUCCESS=''
+  RECOVERED_MESSAGE_SUCCESS=''
+  RECOVERED_TITLE_SUCCESS=''
+
+  NAME=${1}
+  MESSAGE_ERROR=${2}
+  MESSAGE_WARNING=${3}
+  MESSAGE_INFO=${4}
+  MESSAGE_SUCCESS=${5}
+  RECOVERED_MESSAGE_SUCCESS=${6}
+  RECOVERED_TITLE_SUCCESS=${7}
+
+  # Get past events.
+  UNIX_TIME=$( date -u +%s )
+  MESSAGE_PAST=$( SQL_QUERY "SELECT start_time,last_ping_time,message FROM system_log WHERE name == '${NAME}'; " )
+  START_TIME=$( echo "${MESSAGE_PAST}" | cut -d \| -f1 )
+  if [[ ! ${START_TIME} =~ ${RE} ]]
+  then
+    START_TIME="${UNIX_TIME}"
+  fi
+  LAST_PING_TIME=$( echo "${MESSAGE_PAST}" | cut -d \| -f2 )
+  if [[ ! ${LAST_PING_TIME} =~ ${RE} ]]
+  then
+    LAST_PING_TIME='0'
+  fi
+  MESSAGE_PAST=$( echo "${MESSAGE_PAST}" | cut -d \| -f3 )
+
+  # Send recovery message.
+  if [[ -z "${MESSAGE_ERROR}" ]] && [[ -z "${MESSAGE_WARNING}" ]] && [[ ! -z "${MESSAGE_PAST}" ]] && [[ ! -z "${RECOVERED_MESSAGE_SUCCESS}" ]]
+  then
+#     echo "OLD MSG: ${MESSAGE_PAST}" >/dev/tty
+    ERRORS=$( SEND_SUCCESS "${RECOVERED_MESSAGE_SUCCESS}" ":wrench: ${RECOVERED_TITLE_SUCCESS} :wrench:" )
+    if [[ ! -z "${ERRORS}" ]]
+    then
+      echo "ERROR: ${ERRORS}"
+    else
+      SQL_QUERY "DELETE FROM system_log WHERE name == '${NAME}'; "
+    fi
+  fi
+
+  # Send message out.
+  ERRORS=''
+  MESSAGE=''
+  if [[ ! -z "${MESSAGE_ERROR}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 300 ]]
+  then
+    ERRORS=$( SEND_ERROR "${MESSAGE_ERROR}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    MESSAGE="${MESSAGE_ERROR}"
+  elif [[ ! -z "${MESSAGE_WARNING}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 900 ]]
+  then
+    ERRORS=$( SEND_WARNING "${MESSAGE_WARNING}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    MESSAGE="${MESSAGE_WARNING}"
+  elif [[ ! -z "${MESSAGE_INFO}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 3600 ]]
+  then
+    ERRORS=$( SEND_INFO "${MESSAGE_INFO}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    MESSAGE="${MESSAGE_INFO}"
+  elif [[ ! -z "${MESSAGE_SUCCESS}" ]]
+  then
+    ERRORS=$( SEND_SUCCESS "${MESSAGE_SUCCESS}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    MESSAGE="${MESSAGE_SUCCESS}"
+  fi
+
+  # Write to the database.
+  if [[ ! -z "${ERRORS}" ]]
+  then
+    echo "${ERRORS}" >/dev/tty
+  elif [[ "${arg1}" != 'test' ]] && [[ ! -z "${MESSAGE}" ]]
+  then
+    SQL_QUERY "REPLACE INTO system_log (start_time,last_ping_time,name,message) VALUES ('${START_TIME}','${UNIX_TIME}','${NAME}','${MESSAGE}');"
+  fi
+}
+
 GET_LATEST_LOGINS () {
   while read -r DATE_1 DATE_2 DATE_3 LINE
   do
-    UNIX_TIME=$( date -u --date="${DATE_1} ${DATE_2} ${DATE_3}" +%s )
-    MESSAGE=$( SQL_QUERY "SELECT message FROM events_log WHERE time == ${UNIX_TIME} AND name_type == 'ssh_login';" )
+    UNIX_TIME_LOG=$( date -u --date="${DATE_1} ${DATE_2} ${DATE_3}" +%s )
+    # Logins are one time; not continual issues.
+    MESSAGE=$( SQL_QUERY "SELECT message FROM login_data WHERE time == ${UNIX_TIME_LOG} " )
     if [[ ! -z "${MESSAGE}" ]] && [[ "${arg1}" != 'test' ]]
     then
       if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
       then
-        echo "Skipping GET_LATEST_LOGINS ${DATE_1} ${DATE_2} ${DATE_3} ${UNIX_TIME} ${MESSAGE}" | awk '{printf "%s ", $0}'
+        echo "Skipping GET_LATEST_LOGINS ${DATE_1} ${DATE_2} ${DATE_3} ${UNIX_TIME_LOG} ${MESSAGE}" | awk '{printf "%s ", $0}'
         echo
       fi
       continue
@@ -554,187 +660,153 @@ GET_LATEST_LOGINS () {
     ERRORS=$( SEND_INFO "${INFO}" ":unlock: User logged in" )
     if [[ ! -z "${ERRORS}" ]]
     then
-      echo "${ERRORS}"
+      echo "ERROR: ${ERRORS}"
     elif [[ "${arg1}" != 'test' ]]
     then
-      SQL_QUERY "REPLACE INTO events_log (time,name_type,message,state) VALUES ('${UNIX_TIME}','ssh_login','${INFO}','9999');"
+      SQL_QUERY "INSERT INTO login_data (time,message) VALUES ('${UNIX_TIME_LOG}','${INFO}');"
     fi
   done <<< "$( grep ' systemd-logind'  /var/log/auth.log | grep 'New' )"
 }
 GET_LATEST_LOGINS
 
 CHECK_DISK () {
-  UNIX_TIME=$( date -u +%s )
-  MESSAGE=$( SQL_QUERY "SELECT message, state FROM events_log WHERE state < 9999 AND name_type == 'disk_space';" )
-  if [[ ! -z "${MESSAGE}" ]] && [[ "${arg1}" != 'test' ]]
-  then
-    if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
-    then
-      echo "Skipping CHECK_DISK ${MESSAGE}" | awk '{printf "%s ", $0}'
-      echo
-    fi
-    return
-  fi
-
-  UNIX_TIME=$( echo "${UNIX_TIME}" - 7200 | bc )
+  NAME='disk_space'
+  MESSAGE_ERROR=''
+  MESSAGE_WARNING=''
+  MESSAGE_INFO=''
+  MESSAGE_SUCCESS=''
 
   FREEPSPACE_ALL=$( df -P . | tail -1 | awk '{print $4}' )
   FREEPSPACE_BOOT=$( df -P /boot | tail -1 | awk '{print $4}' )
-  MESSAGE=''
-  if [[ "${FREEPSPACE_ALL}" -lt 1572864 ]] || [[ "${arg1}" == 'test' ]]
+  if [[ "${FREEPSPACE_ALL}" -lt 524288 ]] || [[ "${arg1}" == 'test' ]]
   then
     FREEPSPACE_ALL=$( echo "${FREEPSPACE_ALL} / 1024" | bc )
-    MESSAGE="${MESSAGE} Less than 1.5 GB of free space is left on the drive. ${FREEPSPACE_ALL} MB left."
+    MESSAGE_ERROR="${MESSAGE_ERROR} Less than 512 MB of free space is left on the drive. ${FREEPSPACE_ALL} MB left."
   fi
-  if [[ "${FREEPSPACE_BOOT}" -lt 131072 ]] || [[ "${arg1}" == 'test' ]]
+  if [[ "${FREEPSPACE_BOOT}" -lt 65536 ]] || [[ "${arg1}" == 'test' ]]
   then
     FREEPSPACE_BOOT=$( echo "${FREEPSPACE_BOOT} / 1024" | bc )
-    MESSAGE="${MESSAGE} Less than 128 MB of free space is left in the boot folder. ${FREEPSPACE_BOOT} MB left."
+    MESSAGE_ERROR="${MESSAGE_ERROR} Less than 64 MB of free space is left in the boot folder. ${FREEPSPACE_BOOT} MB left."
   fi
 
-  if [[ ! -z "${MESSAGE}" ]]
+  if [[ -z "${MESSAGE_ERROR}" ]]
   then
-    UNIX_TIME=$( date -u +%s )
-    ERRORS=$( SEND_WARNING ":floppy_disk: ${MESSAGE} :floppy_disk:" )
-    if [[ ! -z "${ERRORS}" ]]
+    if [[ "${FREEPSPACE_ALL}" -lt 1572864 ]] || [[ "${arg1}" == 'test' ]]
     then
-      echo "${ERRORS}"
-    elif [[ "${arg1}" != 'test' ]]
+      FREEPSPACE_ALL=$( echo "${FREEPSPACE_ALL} / 1024" | bc )
+      MESSAGE_WARNING="${MESSAGE_WARNING} Less than 1.5 GB of free space is left on the drive. ${FREEPSPACE_ALL} MB left."
+    fi
+    if [[ "${FREEPSPACE_BOOT}" -lt 131072 ]] || [[ "${arg1}" == 'test' ]]
     then
-      SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','disk_space','${MESSAGE}');"
+      FREEPSPACE_BOOT=$( echo "${FREEPSPACE_BOOT} / 1024" | bc )
+      MESSAGE_WARNING="${MESSAGE_WARNING} Less than 128 MB of free space is left in the boot folder. ${FREEPSPACE_BOOT} MB left."
     fi
   fi
+
+  if [[ ! -z "${MESSAGE_ERROR}" ]]
+  then
+    MESSAGE_ERROR=":floppy_disk: :fire: ${MESSAGE_ERROR} :fire: :floppy_disk:"
+  fi
+  if [[ ! -z "${MESSAGE_WARNING}" ]]
+  then
+    MESSAGE_WARNING=":floppy_disk: ${MESSAGE_WARNING} :floppy_disk:"
+  fi
+
+  RECOVERED_MESSAGE_SUCCESS="Hard drive has ${FREEPSPACE_ALL} MB Free; boot folder has ${FREEPSPACE_BOOT} MB Free."
+  RECOVERED_TITLE_SUCCESS="Low diskspace issue has been resolved."
+  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}"
 }
 CHECK_DISK
 
 CHECK_CPU_LOAD () {
-  UNIX_TIME=$( date -u +%s )
-  UNIX_TIME=$( echo "${UNIX_TIME}" - 7200 | bc )
-  MESSAGE=$( SQL_QUERY "SELECT message FROM events_log WHERE time > ${UNIX_TIME} AND name_type == 'cpu_usage';" )
-  if [[ ! -z "${MESSAGE}" ]] && [[ "${arg1}" != 'test' ]]
-  then
-    if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
-    then
-      echo "Skipping CHECK_CPU_LOAD ${UNIX_TIME} ${MESSAGE} " | awk '{printf "%s ", $0}'
-      echo
-    fi
-    return
-  fi
+  NAME='cpu_usage'
+  MESSAGE_ERROR=''
+  MESSAGE_WARNING=''
+  MESSAGE_INFO=''
+  MESSAGE_SUCCESS=''
 
   LOAD=$( uptime | grep -oE 'load average: [0-9]+([.][0-9]+)?' | grep -oE '[0-9]+([.][0-9]+)?' )
   CPU_COUNT=$( grep -c 'processor' /proc/cpuinfo )
   LOAD_PER_CPU="$( printf "%.3f\n" "$( bc -l <<< "${LOAD} / ${CPU_COUNT}" )" )"
 
-  if [[ $( echo "${LOAD_PER_CPU} > 4" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
+  if [[ "$( echo "${LOAD_PER_CPU} > 4" | bc )" -gt 0 ]] || [[ "${arg1}" == 'test' ]]
   then
-    ERRORS=$( SEND_ERROR ":desktop: :fire:  CPU LOAD is over 4: ${LOAD_PER_CPU} :fire: :desktop: " )
-    if [[ ! -z "${ERRORS}" ]]
-    then
-      echo "${ERRORS}"
-    elif [[ "${arg1}" != 'test' ]]
-    then
-      SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','CPU LOAD is over 2');"
-    fi
-  fi
-  if ([[ $( echo "${LOAD_PER_CPU} > 2" | bc ) -gt 0 ]] && [[ $( echo "${LOAD_PER_CPU} <= 4" | bc ) -gt 0 ]]) || [[ "${arg1}" == 'test' ]]
+    MESSAGE_ERROR=" :desktop: :fire:  CPU LOAD is over 4: ${LOAD_PER_CPU} :fire: :desktop: "
+  elif [[ "$( echo "${LOAD_PER_CPU} > 2" | bc )" -gt 0 ]] || [[ "${arg1}" == 'test' ]]
   then
-    ERRORS=$( SEND_WARNING ":desktop: CPU LOAD is over 2: ${LOAD_PER_CPU} :desktop: " )
-    if [[ ! -z "${ERRORS}" ]]
-    then
-      echo "${ERRORS}"
-    elif [[ "${arg1}" != 'test' ]]
-    then
-      SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','CPU LOAD is over 2');"
-    fi
+    MESSAGE_WARNING=" :desktop: CPU LOAD is over 2: ${LOAD_PER_CPU} :desktop: "
   fi
 
+  RECOVERED_MESSAGE_SUCCESS="Load per CPU is ${LOAD_PER_CPU}."
+  RECOVERED_TITLE_SUCCESS="CPU Load is back to normal."
+  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}"
 }
 CHECK_CPU_LOAD
 
 CHECK_SWAP () {
-  UNIX_TIME=$( date -u +%s )
-  UNIX_TIME=$( echo "${UNIX_TIME}" - 7200 | bc )
-  MESSAGE=$( SQL_QUERY "SELECT message FROM events_log WHERE time > ${UNIX_TIME} AND name_type == 'swap_free';" )
-  if [[ ! -z "${MESSAGE}" ]] && [[ "${arg1}" != 'test' ]]
-  then
-    if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
-    then
-      echo "Skipping CHECK_SWAP ${UNIX_TIME} ${MESSAGE} " | awk '{printf "%s ", $0}'
-      echo
-    fi
-    return
-  fi
+  NAME='swap_free'
+  MESSAGE_ERROR=''
+  MESSAGE_WARNING=''
+  MESSAGE_INFO=''
+  MESSAGE_SUCCESS=''
 
   SWAP_FREE_MB=$( free -wm | grep -i 'Swap:' | awk '{print $4}' )
   if [[ $( echo "${SWAP_FREE_MB} < 512" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
   then
-    ERRORS=$( SEND_ERROR ":desktop: :fire: Swap is under 512 MB: ${SWAP_FREE_MB} :fire: :desktop: " )
-    if [[ ! -z "${ERRORS}" ]]
-    then
-      echo "${ERRORS}"
-    elif [[ "${arg1}" != 'test' ]]
-    then
-      SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','Swap is under 512 MB');"
-    fi
+    MESSAGE_ERROR=":desktop: :fire: Swap is under 512 MB: ${SWAP_FREE_MB} MB :fire: :desktop: "
   fi
   if ([[ $( echo "${SWAP_FREE_MB} >= 512" | bc ) -gt 0 ]] && [[ $( echo "${SWAP_FREE_MB} < 1024" | bc ) -gt 0 ]]) || [[ "${arg1}" == 'test' ]]
   then
-    ERRORS=$( SEND_WARNING ":desktop: Swap is under 1024 MB: ${SWAP_FREE_MB} :desktop: " )
-    if [[ ! -z "${ERRORS}" ]]
-    then
-      echo "${ERRORS}"
-    elif [[ "${arg1}" != 'test' ]]
-    then
-      SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','Swap is under 1024 MB');"
-    fi
+    MESSAGE_WARNING=":desktop: Swap is under 1024 MB: ${SWAP_FREE_MB} MB :desktop: "
   fi
 
+  RECOVERED_MESSAGE_SUCCESS="Free Swap space is ${SWAP_FREE_MB} MB."
+  RECOVERED_TITLE_SUCCESS="Free sawp space is back to normal."
+  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}"
 }
 CHECK_SWAP
 
 CHECK_RAM () {
-  UNIX_TIME=$( date -u +%s )
-  UNIX_TIME=$( echo "${UNIX_TIME}" - 7200 | bc )
-  MESSAGE=$( SQL_QUERY "SELECT message FROM events_log WHERE time > ${UNIX_TIME} AND name_type == 'ram_free';" )
-  if [[ ! -z "${MESSAGE}" ]] && [[ "${arg1}" != 'test' ]]
-  then
-    if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
-    then
-      echo "Skipping CHECK_RAM ${UNIX_TIME} ${MESSAGE} " | awk '{printf "%s ", $0}'
-      echo
-    fi
-    return
-  fi
+  NAME='ram_free'
+  MESSAGE_ERROR=''
+  MESSAGE_WARNING=''
+  MESSAGE_INFO=''
+  MESSAGE_SUCCESS=''
 
   MEM_AVAILABLE=$( sudo cat /proc/meminfo | grep -i 'MemAvailable:\|MemFree:' | awk '{print $2}' | tail -n 1 )
   MEM_AVAILABLE_MB=$( echo "${MEM_AVAILABLE} / 1024" | bc )
 
   if [[ $( echo "${MEM_AVAILABLE_MB} < 256" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
   then
-    ERRORS=$( SEND_ERROR ":desktop: :fire: Free RAM is under 256 MB: ${MEM_AVAILABLE_MB} :fire: :desktop: " )
-    if [[ ! -z "${ERRORS}" ]]
-    then
-      echo "${ERRORS}"
-    elif [[ "${arg1}" != 'test' ]]
-    then
-      SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','Free RAM is under 256 MB');"
-    fi
+    MESSAGE_ERROR=":desktop: :fire: Free RAM is under 256 MB: ${MEM_AVAILABLE_MB} MB :fire: :desktop: "
   fi
   if ([[ $( echo "${MEM_AVAILABLE_MB} >= 256" | bc ) -gt 0 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 512" | bc ) -gt 0 ]]) || [[ "${arg1}" == 'test' ]]
   then
-    ERRORS=$( SEND_WARNING ":desktop: Free RAM is under 512 MB: ${MEM_AVAILABLE_MB} :desktop: " )
-    if [[ ! -z "${ERRORS}" ]]
-    then
-      echo "${ERRORS}"
-    elif [[ "${arg1}" != 'test' ]]
-    then
-      SQL_QUERY "REPLACE INTO events_log (time,name_type,message) VALUES ('${UNIX_TIME}','cpu_usage','Free RAM is under 512 MB');"
-    fi
+    MESSAGE_WARNING=":desktop: Free RAM is under 512 MB: ${MEM_AVAILABLE_MB} MB :desktop: "
   fi
+
+  RECOVERED_MESSAGE_SUCCESS="Free RAM is now at ${MEM_AVAILABLE_MB} MB."
+  RECOVERED_TITLE_SUCCESS="Free RAM is back to normal."
+  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}"
 }
 CHECK_RAM
 
 GET_ALL_NODES () {
+  FILENAME_WITH_FUNCTIONS=''
+  if [[ -r /var/multi-masternode-data/.bashrc ]]
+  then
+    # shellcheck disable=SC1091
+    FILENAME_WITH_FUNCTIONS='/var/multi-masternode-data/.bashrc'
+  elif [[ -r /root/.bashrc ]]
+  then
+    # shellcheck disable=SC1091
+    FILENAME_WITH_FUNCTIONS='/root/.bashrc'
+  elif [[ -r /home/ubuntu/.bashrc ]]
+  then
+    # shellcheck disable=SC1091
+    FILENAME_WITH_FUNCTIONS='/home/ubuntu/.bashrc'
+  fi
+
   CONF_N_USRNAMES=''
   LSLOCKS=$( lslocks -n -o COMMAND,PID,PATH )
   PS_LIST=$( ps --no-headers -axo user:32,pid,command )
@@ -764,13 +836,13 @@ GET_ALL_NODES () {
     CONF_FOLDER=$( dirname "${CONF_LOCATIONS}" )
     CONF_LOCATIONS=$( grep --include=\*.conf -rl "rpc" "${CONF_FOLDER}" )
 
-    if [[ -z "${CONF_LOCATIONS}" ]] && [[ "$( type "${MN_USRNAME}" 2>/dev/null | grep -c '_masternode_dameon_2' )" -gt 0 ]]
+    if [[ -z "${CONF_LOCATIONS}" ]] && [[ "$( grep -c "_masternode_dameon_2 \"${MN_USRNAME}\"" "${FILENAME_WITH_FUNCTIONS}" )" -gt 0 ]]
     then
       CONF_LOCATIONS=$( "${MN_USRNAME}" conf loc )
     fi
 
     HAS_FUNCTION=0
-    if [[ "$( type "${MN_USRNAME}" 2>/dev/null | grep -c '_masternode_dameon_2' )" -gt 0 ]]
+    if [[ "$( grep -c "_masternode_dameon_2 \"${MN_USRNAME}\"" "${FILENAME_WITH_FUNCTIONS}" )" -gt 0 ]]
     then
       HAS_FUNCTION=1
     fi
@@ -797,11 +869,11 @@ GET_ALL_NODES () {
       then
         if [[ -z "${DAEMON_BIN}" ]]
         then
-          DAEMON_BIN=$( "${MN_USRNAME}" daemon loc )
+          DAEMON_BIN=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${MN_USRNAME} daemon loc" )
         fi
         if [[ -z "${CONTROLLER_BIN}" ]]
         then
-          CONTROLLER_BIN=$( "${MN_USRNAME}" cli loc )
+          CONTROLLER_BIN=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${MN_USRNAME} cli loc" )
         fi
       fi
 
@@ -855,7 +927,7 @@ GET_INFO_ON_ALL_NODES () {
       fi
       if [[ $( echo "${MASTERNODE_STATUS}" | grep -ic "method not found" ) -gt 0 ]] && [[ "${HAS_FUNCTION}" -gt 0 ]]
       then
-        MASTERNODE_STATUS=$( "${USRNAME}" mnstatus )
+        MASTERNODE_STATUS=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${USRNAME} mnstatus" )
       fi
 
       if [[ $( echo "${MASTERNODE_STATUS}" | grep -ic " successfully started" ) -eq 1 ]] || [[ $( echo "${MASTERNODE_STATUS}" | grep -ic " started remotely" ) -eq 1 ]]
@@ -870,7 +942,7 @@ GET_INFO_ON_ALL_NODES () {
     then
       if [[ "${HAS_FUNCTION}" -gt 0 ]]
       then
-        MNINFO_OUTPUT=$( "${USRNAME}" mninfo )
+        MNINFO_OUTPUT=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${USRNAME} mninfo" )
         if [[ "${#MNINFO_OUTPUT}" -gt 1 ]]
         then
           MNINFO=1
@@ -885,7 +957,7 @@ GET_INFO_ON_ALL_NODES () {
     MNWIN=''
     if [[ "${MNINFO}" -eq 2 ]] && [[ "${HAS_FUNCTION}" -gt 0 ]]
     then
-      MNWIN=$( "${USRNAME}" mnwin )
+      MNWIN=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${USRNAME} mnwin" )
     fi
 
     # check balance.
@@ -914,5 +986,116 @@ GET_INFO_ON_ALL_NODES () {
   done <<< "${ALL_RUNNING_NODES}"
 }
 
-# NODE_INFO=$( GET_INFO_ON_ALL_NODES )
-# echo "${NODE_INFO}" | column -t
+PROCESS_NODE_MESSAGES () {
+  CONF_LOCATION=''
+  TYPE=''
+  MESSAGE_ERROR=''
+  MESSAGE_WARNING=''
+  MESSAGE_INFO=''
+  MESSAGE_SUCCESS=''
+  RECOVERED_MESSAGE_SUCCESS=''
+  RECOVERED_TITLE_SUCCESS=''
+
+  CONF_LOCATION=${1}
+  TYPE=${2}
+  MESSAGE_ERROR=${3}
+  MESSAGE_WARNING=${4}
+  MESSAGE_INFO=${5}
+  MESSAGE_SUCCESS=${6}
+  RECOVERED_MESSAGE_SUCCESS=${7}
+  RECOVERED_TITLE_SUCCESS=${8}
+  WEBHOOK_USERNAME="${9}"
+  WEBHOOK_AVATAR="${10}"
+
+
+  # Get past events.
+  UNIX_TIME=$( date -u +%s )
+  MESSAGE_PAST=$( SQL_QUERY "SELECT start_time,last_ping_time,message FROM node_log WHERE conf_loc == '${CONF_LOCATION}' AND type == '${TYPE}'; " )
+  START_TIME=$( echo "${MESSAGE_PAST}" | cut -d \| -f1 )
+  if [[ ! ${START_TIME} =~ ${RE} ]]
+  then
+    START_TIME="${UNIX_TIME}"
+  fi
+  LAST_PING_TIME=$( echo "${MESSAGE_PAST}" | cut -d \| -f2 )
+  if [[ ! ${LAST_PING_TIME} =~ ${RE} ]]
+  then
+    LAST_PING_TIME='0'
+  fi
+  MESSAGE_PAST=$( echo "${MESSAGE_PAST}" | cut -d \| -f3 )
+
+  # Send recovery message.
+  if [[ -z "${MESSAGE_ERROR}" ]] && [[ -z "${MESSAGE_WARNING}" ]] && [[ ! -z "${MESSAGE_PAST}" ]] && [[ ! -z "${RECOVERED_MESSAGE_SUCCESS}" ]]
+  then
+#     echo "OLD MSG: ${MESSAGE_PAST}" >/dev/tty
+    ERRORS=$( SEND_SUCCESS "${RECOVERED_MESSAGE_SUCCESS}" ":wrench: ${RECOVERED_TITLE_SUCCESS} :wrench:" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    if [[ ! -z "${ERRORS}" ]]
+    then
+      echo "ERROR: ${ERRORS}"
+    else
+      SQL_QUERY "DELETE FROM node_log WHERE conf_loc == '${CONF_LOCATION}' AND type == '${TYPE}'; "
+    fi
+  fi
+
+  SECONDS_SINCE_PING="$( echo "${UNIX_TIME} - ${LAST_PING_TIME}" | bc -l )"
+
+  # Send message out.
+  ERRORS=''
+  MESSAGE=''
+  if [[ ! -z "${MESSAGE_ERROR}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 300 ]]
+  then
+    ERRORS=$( SEND_ERROR "${MESSAGE_ERROR}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    MESSAGE="${MESSAGE_ERROR}"
+  elif [[ ! -z "${MESSAGE_WARNING}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 900 ]]
+  then
+    ERRORS=$( SEND_WARNING "${MESSAGE_WARNING}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    MESSAGE="${MESSAGE_WARNING}"
+  elif [[ ! -z "${MESSAGE_INFO}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 3600 ]]
+  then
+    ERRORS=$( SEND_INFO "${MESSAGE_INFO}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    MESSAGE="${MESSAGE_INFO}"
+  elif [[ ! -z "${MESSAGE_SUCCESS}" ]]
+  then
+    ERRORS=$( SEND_SUCCESS "${MESSAGE_SUCCESS}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    MESSAGE="${MESSAGE_SUCCESS}"
+  fi
+
+  # Write to the database.
+  if [[ ! -z "${ERRORS}" ]]
+  then
+    echo "${ERRORS}" >/dev/tty
+  elif [[ "${arg1}" != 'test' ]] && [[ ! -z "${MESSAGE}" ]]
+  then
+    SQL_QUERY "REPLACE INTO node_log (start_time,last_ping_time,conf_loc,type,message) VALUES ('${START_TIME}','${UNIX_TIME}','${CONF_LOCATION}','${TYPE}','${MESSAGE}');"
+  fi
+}
+
+REPORT_INFO_ABOUT_NODES () {
+  NODE_INFO=$( GET_INFO_ON_ALL_NODES )
+  NODE_INFO="Username binary Conf-Location MN-Status MN-Info Balance Staking Connection-Count BlockCount Uptime PID MN-Win
+  ${NODE_INFO}"
+  echo "${NODE_INFO}" | column -t
+
+  while read -r USRNAME DAEMON_BIN CONF_LOCATION MASTERNODE MNINFO GETBALANCE STAKING GETCONNECTIONCOUNT GETBLOCKCOUNT UPTIME DAEMON_PID MNWIN
+  do
+    WEBHOOK_AVATAR=''
+    WEBHOOK_USERNAME=''
+    EXTRA_INFO=$( echo "${DAEMON_BIN_LUT}" | grep -E "^${DAEMON_BIN} " )
+    if [[ ! -z "${EXTRA_INFO}" ]]
+    then
+      WEBHOOK_AVATAR=$( echo "${EXTRA_INFO}" | cut -d ' ' -f2 )
+      WEBHOOK_USERNAME=$( echo "${EXTRA_INFO}" | cut -d ' ' -f3- )
+    fi
+
+    if [[ ${MASTERNODE} -eq 1 ]]
+    then
+      if [[ ${MNINFO} -eq 1 ]]
+      then
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" ""  "${USRNAME} masternode should be starting up soon." "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      else
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "${USRNAME} masternode is not currently running." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      fi
+    fi
+
+  done <<< "${NODE_INFO}"
+}
+REPORT_INFO_ABOUT_NODES
