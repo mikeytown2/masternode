@@ -8,6 +8,10 @@ energid https://s2.coinmarketcap.com/static/img/coins/128x128/3218.png Energi Mo
 dogecashd https://s2.coinmarketcap.com/static/img/coins/128x128/3672.png DogeCash Monitor
 "
 
+DAEMON_STAKING_LUT="
+energid 1 2.28 101 3600 0.000001
+"
+
 arg1="${1}"
 arg2="${2}"
 arg3="${3}"
@@ -959,6 +963,10 @@ GET_INFO_ON_ALL_NODES () {
     then
       MNWIN=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${USRNAME} mnwin" )
     fi
+    if [[ -z "${MNWIN}" ]]
+    then
+      MNWIN='0'
+    fi
 
     # check balance.
     GETBALANCE=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getbalance" 2>&1 | grep -Eo '[+-]?[0-9]+([.][0-9]+)?' 2>/dev/null )
@@ -979,10 +987,17 @@ GET_INFO_ON_ALL_NODES () {
       fi
     fi
 
+    # check networkhashps
+    GETNETHASHRATE=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getnetworkhashps" 2>&1 | grep -Eo '[+-]?[0-9]+([.][0-9]+)?' 2>/dev/null )
+    if [[ -z "${GETNETHASHRATE}" ]]
+    then
+      GETNETHASHRATE=0
+    fi
+
     # output info.
     DAEMON_BIN=$( basename "${DAEMON_BIN}" )
     CONF_LOCATION=$( dirname "${CONF_LOCATION}" )
-    echo "${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION} ${MASTERNODE} ${MNINFO} ${GETBALANCE} ${STAKING} ${GETCONNECTIONCOUNT} ${GETBLOCKCOUNT} ${UPTIME} ${DAEMON_PID} ${MNWIN}"
+    echo "${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION} ${MASTERNODE} ${MNINFO} ${GETBALANCE} ${STAKING} ${GETCONNECTIONCOUNT} ${GETBLOCKCOUNT} ${UPTIME} ${DAEMON_PID} ${MNWIN} ${GETNETHASHRATE}"
   done <<< "${ALL_RUNNING_NODES}"
 }
 
@@ -1071,12 +1086,28 @@ PROCESS_NODE_MESSAGES () {
 
 REPORT_INFO_ABOUT_NODES () {
   NODE_INFO=$( GET_INFO_ON_ALL_NODES )
-  NODE_INFO="Username binary Conf-Location MN-Status MN-Info Balance Staking Connection-Count BlockCount Uptime PID MN-Win
+  NODE_INFO="Username binary Conf-Location MN-Status MN-Info Balance Staking Connection-Count BlockCount Uptime PID MN-Win networkhashps
   ${NODE_INFO}"
   echo "${NODE_INFO}" | column -t
 
   while read -r USRNAME DAEMON_BIN CONF_LOCATION MASTERNODE MNINFO GETBALANCE STAKING GETCONNECTIONCOUNT GETBLOCKCOUNT UPTIME DAEMON_PID MNWIN
   do
+    if [[ -z "${USRNAME}" ]]
+    then
+      continue
+    fi
+
+    if [[ -z "${CONF_LOCATION}" ]]
+    then
+      PROCESS_NODE_MESSAGES "${USRNAME}" "not-running" "${USRNAME} is not currently running. No PID." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      continue
+    fi
+
+    if [[ ! ${MASTERNODE} =~ ${RE} ]]
+    then
+      continue
+    fi
+
     WEBHOOK_AVATAR=''
     WEBHOOK_USERNAME=''
     EXTRA_INFO=$( echo "${DAEMON_BIN_LUT}" | grep -E "^${DAEMON_BIN} " )
@@ -1086,13 +1117,61 @@ REPORT_INFO_ABOUT_NODES () {
       WEBHOOK_USERNAME=$( echo "${EXTRA_INFO}" | cut -d ' ' -f3- )
     fi
 
+    # Masternode Status.
     if [[ ${MASTERNODE} -eq 1 ]]
     then
       if [[ ${MNINFO} -eq 1 ]]
       then
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" ""  "${USRNAME} masternode should be starting up soon." "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "${USRNAME} masternode should be starting up soon." "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      elif [[ ${MNINFO} -eq 2 ]]
+      then
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "${USRNAME} masternode list shows the masternode as active bug masternode status doesn't. Hopefully this changes soon." "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       else
         PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "${USRNAME} masternode is not currently running." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      fi
+    elif [[ ${MASTERNODE} -eq 2 ]]
+    then
+      if [[ ${MNINFO} -eq 2 ]]
+      then
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "" "" "${USRNAME} Masternode status and masternode list are good!" "Masternode Running" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      elif [[ ${MNINFO} -eq 0 ]]
+      then
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "" "" "${USRNAME} Masternode status is good!" "Masternode Running" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      fi
+    fi
+
+    if [[ ! -z "${GETBALANCE}" ]] && [[ "$( echo "${GETBALANCE} > 0.0" | bc -l )" -gt 0 ]]
+    then
+#       energid 1 2.28 101 3600 0.000001
+      MIN_STAKE=0
+      STAKE_REWARD=0
+      BLOCKS_WAIT=0
+      SECONDS_WAIT=0
+      NET_HASH_FACTOR=0
+
+      EXTRA_INFO=$( echo "${DAEMON_STAKING_LUT}" | grep -E "^${DAEMON_BIN} " )
+      if [[ ! -z "${EXTRA_INFO}" ]]
+      then
+        MIN_STAKE=$( echo "${EXTRA_INFO}" | cut -d ' ' -f2 )
+        STAKE_REWARD=$( echo "${EXTRA_INFO}" | cut -d ' ' -f3 )
+        BLOCKS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f4 )
+        SECONDS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f5 )
+        NET_HASH_FACTOR=$( echo "${EXTRA_INFO}" | cut -d ' ' -f6 )
+      fi
+
+      if [[ "$( echo "${MIN_STAKE} > ${GETBALANCE}" | bc -l )" -gt 0 ]]
+      then
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_balance" "" "${USRNAME} Balance (${GETBALANCE}) is below the minimum staking threshold (${MIN_STAKE}). ${MIN_STAKE} > ${GETBALANCE}" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      else
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_balance" "" "" "" "" "${USRNAME} Has enough coins to stake now!" "Balance is above the minimum" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+        if [[ "${STAKING}" -eq 0 ]]
+        then
+          PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_status" "" "${USRNAME} Staking status is false" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+        fi
+        if [[ "${STAKING}" -eq 1 ]]
+        then
+          PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_status" "" "" "" "" "${USRNAME} Staking status is now TRUE!" "Staking is enabled" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+        fi
       fi
     fi
 
