@@ -275,14 +275,17 @@ _get_node_info() {
   CONTROLLER_BIN="${4}"
 
   # Install ffsend and jq as well.
-  if [ ! -x "$( command -v snap )" ] || [ ! -x "$( command -v jq )" ]
+  if [ ! -x "$( command -v snap )" ] || [ ! -x "$( command -v jq )" ] || [ ! -x "$( command -v column )" ]
   then
-    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq snap jq
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq snap
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq snapd
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq jq bsdmainutils
   fi
   if [ ! -x "$( command -v ffsend )" ]
   then
     sudo snap install ffsend
   fi
+
 
   # Load in functions.
   stty sane 2>/dev/null
@@ -456,6 +459,11 @@ _copy_wallet() {
     fi
   done
   echo "${DAEMON_BIN}"
+  if [[ -z "${DAEMON_BIN}" ]]
+  then
+    echo "Setup encountered an error; please ask for help."
+    return
+  fi
   sed -i "1iDAEMON_BIN='${DAEMON_BIN}'" "${HOME}/___mn.sh"
   bash "${HOME}/___mn.sh" UPDATE_BASHRC
 
