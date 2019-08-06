@@ -362,19 +362,23 @@ Print this out and keep it in a safe place.
 
 #### Using the mnemonic phrase
 Close the energi wallet
-windows key + r
+windows key + r   
 ```cmd /C del "%userprofile%\AppData\Roaming\EnergiCore\wallet.dat" & pause```
 
-windows key + r
-```"%ProgramFiles%\EnergiCore\energi-qt.exe" --mnemonic="example example example example example example example example example example example example example example example example example example example example example example example example"```
+windows key + r   
+```
+"%ProgramFiles%\EnergiCore\energi-qt.exe" --mnemonic="example example example example example example example example example example example example example example example example example example example example example example example example"
+```
 
 #### Using the hdseed hash
-Close the energi wallet
-windows key + r
+Close the energi wallet   
+windows key + r   
 ```cmd /C del "%userprofile%\AppData\Roaming\EnergiCore\wallet.dat" & pause```
 
-windows key + r
-```"%ProgramFiles%\EnergiCore\energi-qt.exe" --hdseed="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"```
+windows key + r   
+```
+"%ProgramFiles%\EnergiCore\energi-qt.exe" --hdseed="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+```
 
 </details>
 
