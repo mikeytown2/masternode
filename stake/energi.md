@@ -363,7 +363,7 @@ Print this out and keep it in a safe place.
 #### Using the mnemonic phrase
 Close the energi wallet  
 windows key + r   
-```cmd /C del "%userprofile%\AppData\Roaming\EnergiCore\wallet.dat" & pause```
+```cmd /C move /Y "%userprofile%\AppData\Roaming\EnergiCore\wallet.dat" "%userprofile%\AppData\Roaming\EnergiCore\wallet.dat.bak" & pause```
 
 windows key + r   
 ```
@@ -373,7 +373,7 @@ windows key + r
 #### Using the hdseed hash
 Close the energi wallet   
 windows key + r   
-```cmd /C del "%userprofile%\AppData\Roaming\EnergiCore\wallet.dat" & pause```
+```cmd /C move /Y "%userprofile%\AppData\Roaming\EnergiCore\wallet.dat" "%userprofile%\AppData\Roaming\EnergiCore\wallet.dat.bak" & pause```
 
 windows key + r   
 ```
