@@ -361,7 +361,7 @@ Print this out and keep it in a safe place.
 <details><summary id="backup"><strong> How do I restore a wallet backup (windows)? </strong></summary>
 
 #### Using the mnemonic phrase
-Close the energi wallet
+Close the energi wallet  
 windows key + r   
 ```cmd /C del "%userprofile%\AppData\Roaming\EnergiCore\wallet.dat" & pause```
 
