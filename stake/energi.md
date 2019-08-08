@@ -358,6 +358,31 @@ Print this out and keep it in a safe place.
 
 </details>
 
+<details><summary id="backup"><strong> How do I restore a wallet backup (windows)? </strong></summary>
+
+#### Using the mnemonic phrase
+Close the energi wallet  
+windows key + r   
+```cmd /C move /Y "%userprofile%\AppData\Roaming\EnergiCore\wallet.dat" "%userprofile%\AppData\Roaming\EnergiCore\wallet.dat.bak" & pause```
+
+windows key + r   
+```
+"%ProgramFiles%\EnergiCore\energi-qt.exe" --mnemonic="example example example example example example example example example example example example example example example example example example example example example example example example"
+```
+
+#### Using the hdseed hash
+Close the energi wallet   
+windows key + r   
+```cmd /C move /Y "%userprofile%\AppData\Roaming\EnergiCore\wallet.dat" "%userprofile%\AppData\Roaming\EnergiCore\wallet.dat.bak" & pause```
+
+windows key + r   
+```
+"%ProgramFiles%\EnergiCore\energi-qt.exe" --hdseed="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+```
+
+</details>
+
+
 <details><summary id="file-recovery"><strong> How do I recover a deleted wallet.dat </strong></summary>
 
 Download Recuva: https://www.ccleaner.com/recuva/download/standard  
