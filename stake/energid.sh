@@ -178,6 +178,7 @@ _setup_two_factor() {
   echo "This is a time based code"
   echo "When logging into this VPS via password, a 6 digit code would also be required."
   echo "If you loose this code you can still use your wallet on your desktop."
+  echo
 
   # Validate otp.
   REPLY=''

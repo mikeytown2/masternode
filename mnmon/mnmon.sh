@@ -3,13 +3,15 @@
 WEBHOOK_USERNAME_DEFAULT='Masternode Monitor'
 WEBHOOK_AVATAR_DEFAULT='https://i.imgur.com/8WHSSa7s.jpg'
 
+# Daemon_bin_name URL_to_logo Bot_name
 DAEMON_BIN_LUT="
 energid https://s2.coinmarketcap.com/static/img/coins/128x128/3218.png Energi Monitor
 dogecashd https://s2.coinmarketcap.com/static/img/coins/128x128/3672.png DogeCash Monitor
 "
 
-DAEMON_STAKING_LUT="
-energid 1 2.28 101 3600 0.000001
+# Daemon_bin_name minimum_balance_to_stake staking_reward mn_reward confirmations cooloff_seconds networkhashps_multiplier ticker_name
+DAEMON_BALANCE_LUT="
+energid 1 2.28 9.14 101 3600 0.000001 NRG
 "
 
 arg1="${1}"
@@ -279,8 +281,8 @@ TELEGRAM_SETUP () {
       then
         echo "Please message the bot."
       else
-        SQL_QUERY "REPLACE INTO variables (key,values) VALUES ('telegram_token','${TOKEN}');"
-        SQL_QUERY "REPLACE INTO variables (key,values) VALUES ('telegram_chatid','${CHAT_ID}');"
+        SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('telegram_token','${TOKEN}');"
+        SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('telegram_chatid','${CHAT_ID}');"
         break
       fi
     done
@@ -1117,6 +1119,28 @@ REPORT_INFO_ABOUT_NODES () {
       WEBHOOK_USERNAME=$( echo "${EXTRA_INFO}" | cut -d ' ' -f3- )
     fi
 
+    MIN_STAKE=0
+    STAKE_REWARD=0
+    MASTERNODE_REWARD=0
+    BLOCKS_WAIT=0
+    SECONDS_WAIT=0
+    NET_HASH_FACTOR=0
+    TICKER_NAME='COIN'
+    STAKE_REWARD_UPPER=0
+
+    EXTRA_INFO=$( echo "${DAEMON_BALANCE_LUT}" | grep -E "^${DAEMON_BIN} " )
+    if [[ ! -z "${EXTRA_INFO}" ]]
+    then
+      MIN_STAKE=$( echo "${EXTRA_INFO}" | cut -d ' ' -f2 )
+      STAKE_REWARD=$( echo "${EXTRA_INFO}" | cut -d ' ' -f3 )
+      MASTERNODE_REWARD=$( echo "${EXTRA_INFO}" | cut -d ' ' -f4 )
+      BLOCKS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f5 )
+      SECONDS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f6 )
+      NET_HASH_FACTOR=$( echo "${EXTRA_INFO}" | cut -d ' ' -f7 )
+      TICKER_NAME=$( echo "${EXTRA_INFO}" | cut -d ' ' -f8 )
+      STAKE_REWARD_UPPER=$( echo "${STAKE_REWARD} + 0.3" | bc -l )
+    fi
+
     # Masternode Status.
     if [[ ${MASTERNODE} -eq 1 ]]
     then
@@ -1140,25 +1164,40 @@ REPORT_INFO_ABOUT_NODES () {
       fi
     fi
 
+    # Update & report on balance.
+    PAST_BALANCE=$( SQL_QUERY "SELECT value FROM variables WHERE key = '${CONF_LOCATION}:balance';" )
+    if [[ -z "${PAST_BALANCE}" ]]
+    then
+      SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_LOCATION}:balance','${GETBALANCE}');"
+    else
+      BALANCE_DIFF=$( echo "${GETBALANCE} - ${PAST_BALANCE}" | bc -l )
+      if [[ -z "${GETBALANCE}" ]] || [[ "${GETBALANCE}" -eq 0 ]]
+      then
+        SEND_ERROR "${USRNAME} balance is now zero ${TICKER_NAME}!" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      fi
+      if [[ $( echo "${BALANCE_DIFF} < -1" | bc -l ) -gt 0 ]]
+      then
+        SEND_WARNING "${USRNAME} balance has decreased by over 1 ${TICKER_NAME} Difference: ${BALANCE_DIFF}, New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      elif [[ $( echo "${BALANCE_DIFF} < 1" | bc -l ) -gt 0 ]]
+      then
+        SEND_INFO "${USRNAME} Small amout of ${TICKER_NAME} has been transfered Difference: ${BALANCE_DIFF}, New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      elif [[ $( echo "${BALANCE_DIFF} >= 1" | bc -l ) -gt 0 ]]
+      then
+        if [[ "${BALANCE_DIFF}" == "${MASTERNODE_REWARD}" ]]
+        then
+          SEND_SUCCESS "${USRNAME} masternode reward amout of ${BALANCE_DIFF} ${TICKER_NAME}. New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+        elif [[ $( echo "${BALANCE_DIFF} >= ${STAKE_REWARD}" | bc -l ) -gt 0 ]] && [[ $( echo "${BALANCE_DIFF} < ${STAKE_REWARD_UPPER}" | bc -l ) -gt 0 ]]
+        then
+          SEND_SUCCESS "${USRNAME} staking reward amout of ${BALANCE_DIFF} ${TICKER_NAME}. New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+        else
+          SEND_SUCCESS "${USRNAME} Larger amout of ${TICKER_NAME} has been transfered Difference: ${BALANCE_DIFF}, New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+        fi
+      fi
+    fi
+
+    # Report on staking.
     if [[ ! -z "${GETBALANCE}" ]] && [[ "$( echo "${GETBALANCE} > 0.0" | bc -l )" -gt 0 ]]
     then
-#       energid 1 2.28 101 3600 0.000001
-      MIN_STAKE=0
-      STAKE_REWARD=0
-      BLOCKS_WAIT=0
-      SECONDS_WAIT=0
-      NET_HASH_FACTOR=0
-
-      EXTRA_INFO=$( echo "${DAEMON_STAKING_LUT}" | grep -E "^${DAEMON_BIN} " )
-      if [[ ! -z "${EXTRA_INFO}" ]]
-      then
-        MIN_STAKE=$( echo "${EXTRA_INFO}" | cut -d ' ' -f2 )
-        STAKE_REWARD=$( echo "${EXTRA_INFO}" | cut -d ' ' -f3 )
-        BLOCKS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f4 )
-        SECONDS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f5 )
-        NET_HASH_FACTOR=$( echo "${EXTRA_INFO}" | cut -d ' ' -f6 )
-      fi
-
       if [[ "$( echo "${MIN_STAKE} > ${GETBALANCE}" | bc -l )" -gt 0 ]]
       then
         PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_balance" "" "${USRNAME} Balance (${GETBALANCE}) is below the minimum staking threshold (${MIN_STAKE}). ${MIN_STAKE} > ${GETBALANCE}" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
