@@ -88,9 +88,26 @@ SQL_QUERY "CREATE TABLE IF NOT EXISTS node_log (
   PRIMARY KEY (conf_loc, type)
 );"
 
-INSTALL_MN_MON_SERVICE () {
+DISPLAYTIME () {
+  local T=$1
+  local D=$((T/60/60/24))
+  local H=$((T/60/60%24))
+  local M=$((T/60%60))
+  local S=$((T%60))
+  (( $D > 0 )) && printf '%d days ' $D
+  (( $H > 0 )) && printf '%d hours ' $H
+  (( $M > 0 )) && printf '%d minutes ' $M
+  (( $D > 0 || $H > 0 || $M > 0 )) && printf 'and '
+  printf '%d seconds\n' $S
+}
 
-  wget -q4o- https://raw.githubusercontent.com/mikeytown2/masternode/master/mnmon/mnmon.sh -O /var/multi-masternode-data/mnbot/mnmon.sh
+INSTALL_MN_MON_SERVICE () {
+  if [[ -f "${HOME}/masternode/master/stake/otp.php" ]]
+  then
+    cp "${HOME}/masternode/mnmon/mnmon.sh" /var/multi-masternode-data/mnbot/mnmon.sh
+  else
+    wget -q4o- https://raw.githubusercontent.com/mikeytown2/masternode/master/mnmon/mnmon.sh -O /var/multi-masternode-data/mnbot/mnmon.sh
+  fi
 
   cat << SYSTEMD_CONF | sudo tee /etc/systemd/system/mnmon.service >/dev/null
 [Unit]
@@ -658,6 +675,7 @@ then
   then
     INSTALL_MN_MON_SERVICE
     echo "Service Install Done"
+    return 1 2>/dev/null || exit 1
   fi
 
 fi
@@ -1270,16 +1288,28 @@ REPORT_INFO_ABOUT_NODES () {
       SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_LOCATION}:balance','${GETBALANCE}');"
     else
       BALANCE_DIFF=$( echo "${GETBALANCE} - ${PAST_BALANCE}" | bc -l )
-      if [[ $(echo "${BALANCE_DIFF} != 0 " | bc -l ) -gt 0 ]] && ([[ -z "${GETBALANCE}" ]] || [[ $(echo "${GETBALANCE} == 0" | bc -l ) -eq 1 ]])
+
+      # Empty Wallet.
+      if [[ $(echo "${BALANCE_DIFF} != 0 " | bc -l ) -eq 0 ]]
+      then
+        : # Do nothing.
+
+      # Wallet has been drained.
+      elif [[ -z "${GETBALANCE}" ]] || [[ $(echo "${GETBALANCE} == 0" | bc -l ) -eq 1 ]]
       then
         SEND_ERROR "${USRNAME} balance is now zero ${TICKER_NAME}!" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      fi
-      if [[ $( echo "${BALANCE_DIFF} < -1" | bc -l ) -gt 0 ]]
+
+      # Larger amount has been moved off this wallet.
+      elif [[ $( echo "${BALANCE_DIFF} < -1" | bc -l ) -gt 0 ]]
       then
         SEND_WARNING "${USRNAME} balance has decreased by over 1 ${TICKER_NAME} Difference: ${BALANCE_DIFF}, New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      elif [[ $( echo "${BALANCE_DIFF} < 1" | bc -l ) -gt 0 ]] && [[ $(echo "${BALANCE_DIFF} != 0 " | bc -l ) -gt 0 ]]
+
+      # Small amount has been moved.
+      elif [[ $( echo "${BALANCE_DIFF} < 1" | bc -l ) -gt 0 ]]
       then
         SEND_INFO "${USRNAME} Small amout of ${TICKER_NAME} has been transfered Difference: ${BALANCE_DIFF}, New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+
+      # More than 1 Coin has been added.
       elif [[ $( echo "${BALANCE_DIFF} >= 1" | bc -l ) -gt 0 ]]
       then
         if [[ "${BALANCE_DIFF}" == "${MASTERNODE_REWARD}" ]]
@@ -1312,6 +1342,20 @@ REPORT_INFO_ABOUT_NODES () {
         fi
       fi
     fi
+
+    # Report on daemon info.
+    if [[ "${GETCONNECTIONCOUNT}" -lt 2 ]]
+    then
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "Connection Count (${GETCONNECTIONCOUNT}) is very low!" "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+    elif [[ "${GETCONNECTIONCOUNT}" -lt 5 ]]
+    then
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "" "Connection Count (${GETCONNECTIONCOUNT}) is low!" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+    else
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "" "" "" "" "${USRNAME} Connection count has been restored" "Connection Count Normal" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+    fi
+
+    UPTIME_HUMAN=$( DISPLAYTIME "${UPTIME}" )
+    PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "node_info" "" "" "${USRNAME} BlockCount: ${GETBLOCKCOUNT} PID: ${PID} Uptime: ${UPTIME} seconds (${UPTIME_HUMAN})" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
 
   done <<< "${NODE_INFO}"
 }
