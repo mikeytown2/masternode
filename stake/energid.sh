@@ -168,6 +168,11 @@ _setup_two_factor() {
     head -200 /dev/urandom | cksum | tr -d ' ' | cut -c1-8 ;
     head -200 /dev/urandom | cksum | tr -d ' ' | cut -c1-8 ;
     } | sudo tee -a  "${HOME}/.google_authenticator" >/dev/null
+    SECRET=$( sudo head -n 1 "${HOME}/.google_authenticator" 2>/dev/null )
+  fi
+  if [[ -z "${SECRET}" ]]
+  then
+    echo "Google Authenticator install failed."
   fi
 
   if [[ -f "${HOME}/.google_authenticator.temp" ]]
