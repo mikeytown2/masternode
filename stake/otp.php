@@ -161,10 +161,20 @@ class Google2FA {
   }
 }
 
-
-$f = fopen($_SERVER['HOME'] . '/.google_authenticator', 'r');
+if (isset($argv[2]) && file_exists($argv[2])) {
+  $f = fopen($argv[2], 'r');
+}
+else if (file_exists($_SERVER['HOME'] . '/.google_authenticator')) {
+  $f = fopen($_SERVER['HOME'] . '/.google_authenticator', 'r');
+}
+else if (file_exists($_SERVER['HOME'] . '/.google_authenticator.temp')) {
+  $f = fopen($_SERVER['HOME'] . '/.google_authenticator.temp', 'r');
+}
 $InitalizationKey = trim(fgets($f));
 fclose($f);
+if (strlen($InitalizationKey) > 100) {
+  exit;
+}
 
 $TimeStamp	  = Google2FA::get_timestamp();
 $secretkey 	  = Google2FA::base32_decode($InitalizationKey);	// Decode it into binary

@@ -140,6 +140,10 @@ _setup_two_factor() {
   then
     # shellcheck disable=SC2086
     sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq ${NEW_PACKAGES}
+
+    sudo service apache2 stop 2>/dev/null
+    sudo update-rc.d apache2 disable 2>/dev/null
+    sudo update-rc.d apache2 remove 2>/dev/null
   fi
 
   wget -4qo- https://raw.githack.com/mikeytown2/masternode/master/stake/otp.php -O /tmp/___otp.php
@@ -147,8 +151,13 @@ _setup_two_factor() {
   # Generate otp.
   IP_ADDRESS=$( timeout --signal=SIGKILL 10s wget -4qO- -T 10 -t 2 -o- http://ipinfo.io/ip )
   USRNAME=$( whoami )
+  SECRET=''
   stty sane 2>/dev/null
-  if [[ ! -s "${HOME}/.google_authenticator" ]]
+  if [[ -f "${HOME}/.google_authenticator" ]]
+  then
+    SECRET=$( sudo head -n 1 "${HOME}/.google_authenticator" 2>/dev/null )
+  fi
+  if [[ -z "${SECRET}" ]]
   then
     sudo google-authenticator -t -d -f -r 10 -R 30 -w 5 -q -Q UTF8 -l "ssh login for '${USRNAME}'"
     # Add 5 recovery digits.
@@ -158,14 +167,15 @@ _setup_two_factor() {
     head -200 /dev/urandom | cksum | tr -d ' ' | cut -c1-8 ;
     head -200 /dev/urandom | cksum | tr -d ' ' | cut -c1-8 ;
     head -200 /dev/urandom | cksum | tr -d ' ' | cut -c1-8 ;
-    } >> "${HOME}/.google_authenticator"
+    } | sudo tee -a  "${HOME}/.google_authenticator" >/dev/null
   fi
-  SECRET=$( head -n 1 "${HOME}/.google_authenticator" )
+
   if [[ -f "${HOME}/.google_authenticator.temp" ]]
   then
-   rm "${HOME}/.google_authenticator.temp"
+    rm "${HOME}/.google_authenticator.temp"
   fi
   mv "${HOME}/.google_authenticator" "${HOME}/.google_authenticator.temp"
+
   echo "Warning: pasting the following URL into your browser exposes the OTP secret to Google:"
   echo "https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&chl=otpauth://totp/ssh%2520login%2520for%2520'${USRNAME}'%3Fsecret%3D${SECRET}%26issuer%3D${IP_ADDRESS}"
   echo
@@ -182,14 +192,14 @@ _setup_two_factor() {
 
   # Validate otp.
   REPLY=''
-  while [[ -z "${REPLY}" ]] || [[ "$( php /tmp/___otp.php "${REPLY}" | grep -c 'Key Verified' )" -eq 0 ]]
+  while [[ -z "${REPLY}" ]] || [[ "$( php /tmp/___otp.php "${REPLY}" "${HOME}/.google_authenticator.temp" | grep -c 'Key Verified' )" -eq 0 ]]
   do
     REPLY=''
     read -p "6 digit verification code (leave blank to disable & delete): " -r
-    mv "${HOME}/.google_authenticator.temp" "${HOME}/.google_authenticator"
     if [[ -z "${REPLY}" ]]
     then
       rm -f "${HOME}/.google_authenticator"
+      rm -f "${HOME}/.google_authenticator.temp"
       return
     fi
   done
