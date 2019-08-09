@@ -152,10 +152,23 @@ WEBHOOK_SEND () {
   WEBHOOK_COLOR="${6}"
 
   SERVER_INFO=$( date -Ru )
-  # shellcheck disable=SC2028
-  SERVER_INFO=$( echo -n "${SERVER_INFO}\n - " ; hostname -i )
-  # shellcheck disable=SC2028
-  SERVER_INFO=$( echo -n "${SERVER_INFO}\n - " ; hostname )
+
+  SHOW_IP=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'show_ip';" )
+  if [[ "${SHOW_IP}" -gt 0 ]]
+  then
+    # shellcheck disable=SC2028
+    SERVER_INFO=$( echo -n "${SERVER_INFO}\n - " ; hostname -i )
+  fi
+
+  SERVER_ALIAS=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'server_alias';" )
+  if [[ -z "${SERVER_ALIAS}" ]]
+  then
+    # shellcheck disable=SC2028
+    SERVER_INFO=$( echo -n "${SERVER_INFO}\n - " ; hostname )
+  else
+    SERVER_INFO=$( echo -n "${SERVER_INFO}\n - ${SERVER_ALIAS}" )
+  fi
+
   if [[ ! -z "${7}" ]]
   then
     SERVER_INFO="${7}"
@@ -241,8 +254,22 @@ TELEGRAM_SEND () {
     sed 's/:fire:/\xF0\x9F\x94\xA5/g' )
 
   SERVER_INFO=$( date -Ru )
-  SERVER_INFO=$( echo -ne "${SERVER_INFO}\n - " ; hostname -i )
-  SERVER_INFO=$( echo -ne "${SERVER_INFO}\n - " ; hostname )
+
+  SHOW_IP=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'show_ip';" )
+  if [[ "${SHOW_IP}" -gt 0 ]]
+  then
+    # shellcheck disable=SC2028
+    SERVER_INFO=$( echo -ne "${SERVER_INFO}\n - " ; hostname -i )
+  fi
+
+  SERVER_ALIAS=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'server_alias';" )
+  if [[ -z "${SERVER_ALIAS}" ]]
+  then
+    # shellcheck disable=SC2028
+    SERVER_INFO=$( echo -ne "${SERVER_INFO}\n - " ; hostname )
+  else
+    SERVER_INFO=$( echo -ne "${SERVER_INFO}\n - ${SERVER_ALIAS}" )
+  fi
   if [[ ! -z "${5}" ]]
   then
     SERVER_INFO="${5}"
@@ -567,13 +594,28 @@ GET_DISCORD_WEBHOOKS () {
 
 if [[ "${arg1}" != 'cron' ]]
 then
+  SERVER_ALIAS=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'server_alias';" )
+  echo "${SERVER_ALIAS}"
   read -p "Set an alias for this server (y/n)? " -r
   REPLY=${REPLY,,} # tolower
   if [[ "${REPLY}" == y ]]
   then
-    GET_DISCORD_WEBHOOKS
-    echo "Discord Done"
+    read -p "Alias: " -r
+    echo "${REPLY}"
+    SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('server_alias','${REPLY}');"
   fi
+
+  SHOW_IP=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'show_ip';" )
+  echo "${SHOW_IP}"
+  read -p "Display IP in logs (y/n)? " -r
+  REPLY=${REPLY,,} # tolower
+  if [[ "${REPLY}" == y ]]
+  then
+    SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('show_ip','1');"
+  else
+    SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('show_ip','0');"
+  fi
+
 
   PREFIX='Setup'
   WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_error';" )
@@ -1139,7 +1181,7 @@ REPORT_INFO_ABOUT_NODES () {
   NODE_INFO=$( GET_INFO_ON_ALL_NODES )
   NODE_INFO="Username binary Conf-Location MN-Status MN-Info Balance Staking Connection-Count BlockCount Uptime PID MN-Win networkhashps
   ${NODE_INFO}"
-  echo "${NODE_INFO}" | column -t
+#   echo "${NODE_INFO}" | column -t
 
   while read -r USRNAME DAEMON_BIN CONF_LOCATION MASTERNODE MNINFO GETBALANCE STAKING GETCONNECTIONCOUNT GETBLOCKCOUNT UPTIME DAEMON_PID MNWIN
   do
@@ -1217,17 +1259,18 @@ REPORT_INFO_ABOUT_NODES () {
     PAST_BALANCE=$( SQL_QUERY "SELECT value FROM variables WHERE key = '${CONF_LOCATION}:balance';" )
     if [[ -z "${PAST_BALANCE}" ]]
     then
+      PAST_BALANCE=0
       SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_LOCATION}:balance','${GETBALANCE}');"
     else
       BALANCE_DIFF=$( echo "${GETBALANCE} - ${PAST_BALANCE}" | bc -l )
-      if [[ -z "${GETBALANCE}" ]] || [[ "${GETBALANCE}" -eq 0 ]]
+      if [[ $(echo "${BALANCE_DIFF} != 0 " | bc -l ) -gt 0 ]] && ([[ -z "${GETBALANCE}" ]] || [[ $(echo "${GETBALANCE} == 0" | bc -l ) -eq 1 ]])
       then
         SEND_ERROR "${USRNAME} balance is now zero ${TICKER_NAME}!" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       fi
       if [[ $( echo "${BALANCE_DIFF} < -1" | bc -l ) -gt 0 ]]
       then
         SEND_WARNING "${USRNAME} balance has decreased by over 1 ${TICKER_NAME} Difference: ${BALANCE_DIFF}, New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      elif [[ $( echo "${BALANCE_DIFF} < 1" | bc -l ) -gt 0 ]]
+      elif [[ $( echo "${BALANCE_DIFF} < 1" | bc -l ) -gt 0 ]] && [[ $(echo "${BALANCE_DIFF} != 0 " | bc -l ) -gt 0 ]]
       then
         SEND_INFO "${USRNAME} Small amout of ${TICKER_NAME} has been transfered Difference: ${BALANCE_DIFF}, New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       elif [[ $( echo "${BALANCE_DIFF} >= 1" | bc -l ) -gt 0 ]]
