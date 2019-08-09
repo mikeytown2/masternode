@@ -901,7 +901,8 @@ _setup_wallet_auto_pw () {
   echo
   echo
   echo "Start or Restart your desktop wallet after adding the line below to the"
-  echo "desktop wallet's conf file ${CONF_FILE_BASENAME}"
+  echo "desktop wallet's conf file ${CONF_FILE_BASENAME}. You can edit it from "
+  echo "the desktop wallet by going to Tools -> Open Wallet Configuration File"
   echo
   echo "staking=0"
   echo

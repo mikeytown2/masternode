@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Copyright (c) 2019
+# All rights reserved.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+stty sane 2>/dev/null
+
+
+
 WEBHOOK_USERNAME_DEFAULT='Masternode Monitor'
 WEBHOOK_AVATAR_DEFAULT='https://i.imgur.com/8WHSSa7s.jpg'
 
