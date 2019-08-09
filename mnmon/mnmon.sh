@@ -82,7 +82,10 @@ SQL_QUERY "CREATE TABLE IF NOT EXISTS node_log (
 );"
 
 INSTALL_MN_MON_SERVICE () {
-cat << SYSTEMD_CONF | sudo tee /etc/systemd/system/mnmon.service >/dev/null
+
+  wget -q4o- https://raw.githubusercontent.com/mikeytown2/masternode/master/mnmon/mnmon.sh -O /var/multi-masternode-data/mnbot/mnmon.sh
+
+  cat << SYSTEMD_CONF | sudo tee /etc/systemd/system/mnmon.service >/dev/null
 
 [Unit]
 Description=Node Monitor
@@ -105,8 +108,8 @@ WantedBy=multi-user.target
 
 SYSTEMD_CONF
 
-sudo systemctl daemon-reload
-sudo systemctl enable mnmon.service --now
+  sudo systemctl daemon-reload
+  sudo systemctl enable mnmon.service --now
 }
 
 WEBHOOK_SEND () {
