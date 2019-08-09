@@ -82,10 +82,10 @@ SQL_QUERY "CREATE TABLE IF NOT EXISTS node_log (
 );"
 
 INSTALL_MN_MON_SERVICE () {
-cat << SYSTEMD_CONF | sudo tee /etc/systemd/system/mnbot.service >/dev/null
+cat << SYSTEMD_CONF | sudo tee /etc/systemd/system/mnmon.service >/dev/null
 
 [Unit]
-Description=${DAEMON_NAME} ${MASTERNODE_NAME} for user ${USRNAME}
+Description=Node Monitor
 After=syslog.target network.target
 
 [Service]
@@ -94,14 +94,19 @@ Type=oneshot
 Restart=no
 RestartSec=5
 UMask=0027
-ExecStart=/bin/bash /var/multi-masternode-data/mnbot/mnmon.sh cron
-
+ExecStart=/bin/bash -i /var/multi-masternode-data/mnbot/mnmon.sh cron
 
 [Timer]
 OnBootSec=60
 OnUnitActiveSec=60
 
+[Install]
+WantedBy=multi-user.target
+
 SYSTEMD_CONF
+
+sudo systemctl daemon-reload
+sudo systemctl enable mnmon.service --now
 }
 
 WEBHOOK_SEND () {
@@ -562,6 +567,14 @@ then
   then
     TELEGRAM_SETUP
   fi
+
+  read -p "Install as a service (y/n)? " -r
+  REPLY=${REPLY,,} # tolower
+  if [[ "${REPLY}" == y ]]
+  then
+    INSTALL_MN_MON_SERVICE
+  fi
+
 fi
 
 PROCESS_MESSAGES () {
