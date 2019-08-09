@@ -86,7 +86,6 @@ INSTALL_MN_MON_SERVICE () {
   wget -q4o- https://raw.githubusercontent.com/mikeytown2/masternode/master/mnmon/mnmon.sh -O /var/multi-masternode-data/mnbot/mnmon.sh
 
   cat << SYSTEMD_CONF | sudo tee /etc/systemd/system/mnmon.service >/dev/null
-
 [Unit]
 Description=Node Monitor
 After=syslog.target network.target
@@ -99,17 +98,40 @@ RestartSec=5
 UMask=0027
 ExecStart=/bin/bash -i /var/multi-masternode-data/mnbot/mnmon.sh cron
 
+[Install]
+WantedBy=multi-user.target
+SYSTEMD_CONF
+
+  cat << SYSTEMD_CONF | sudo tee /etc/systemd/system/mnmon.timer >/dev/null
+[Unit]
+Description=Run Node Monitor Every Minute
+Requires=mnmon.service
+
 [Timer]
+Unit=mnmon.service
 OnBootSec=60
 OnUnitActiveSec=60
 
 [Install]
-WantedBy=multi-user.target
-
+WantedBy=timers.target
 SYSTEMD_CONF
 
+  cat << SYSTEMD_CONF | sudo tee /etc/systemd/system/mnmon.slice >/dev/null
+[Unit]
+Description=Limited resources Slice
+DefaultDependencies=no
+Before=slices.target
+
+[Slice]
+CPUQuota=50%
+MemoryLimit=1.0G
+SYSTEMD_CONF
+
+  echo "Reload"
   sudo systemctl daemon-reload
+  echo "Enable"
   sudo systemctl enable mnmon.service --now
+  echo "Done"
 }
 
 WEBHOOK_SEND () {
@@ -545,6 +567,14 @@ GET_DISCORD_WEBHOOKS () {
 
 if [[ "${arg1}" != 'cron' ]]
 then
+  read -p "Set an alias for this server (y/n)? " -r
+  REPLY=${REPLY,,} # tolower
+  if [[ "${REPLY}" == y ]]
+  then
+    GET_DISCORD_WEBHOOKS
+    echo "Discord Done"
+  fi
+
   PREFIX='Setup'
   WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_error';" )
   if [[ ! -z "${WEBHOOKURL}" ]]
@@ -556,6 +586,7 @@ then
   if [[ "${REPLY}" == y ]]
   then
     GET_DISCORD_WEBHOOKS
+    echo "Discord Done"
   fi
 
   PREFIX='Setup'
@@ -569,6 +600,7 @@ then
   if [[ "${REPLY}" == y ]]
   then
     TELEGRAM_SETUP
+    echo "Telegram Done"
   fi
 
   read -p "Install as a service (y/n)? " -r
@@ -576,6 +608,7 @@ then
   if [[ "${REPLY}" == y ]]
   then
     INSTALL_MN_MON_SERVICE
+    echo "Service Install Done"
   fi
 
 fi
