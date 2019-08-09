@@ -170,6 +170,9 @@ else if (file_exists($_SERVER['HOME'] . '/.google_authenticator')) {
 else if (file_exists($_SERVER['HOME'] . '/.google_authenticator.temp')) {
   $f = fopen($_SERVER['HOME'] . '/.google_authenticator.temp', 'r');
 }
+if (empty($f)) {
+  exit;
+}
 $InitalizationKey = trim(fgets($f));
 fclose($f);
 if (strlen($InitalizationKey) > 100) {
