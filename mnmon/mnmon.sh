@@ -102,7 +102,7 @@ DISPLAYTIME () {
 }
 
 INSTALL_MN_MON_SERVICE () {
-  if [[ -f "${HOME}/masternode/master/stake/otp.php" ]]
+  if [[ -f "${HOME}/masternode/mnmon/mnmon.sh" ]]
   then
     cp "${HOME}/masternode/mnmon/mnmon.sh" /var/multi-masternode-data/mnbot/mnmon.sh
   else
@@ -154,7 +154,7 @@ SYSTEMD_CONF
   echo "Reload"
   sudo systemctl daemon-reload
   echo "Enable"
-  sudo systemctl enable mnmon.service --now
+  sudo systemctl enable mnmon.timer --now
   echo "Done"
 }
 
@@ -1312,7 +1312,7 @@ REPORT_INFO_ABOUT_NODES () {
       # More than 1 Coin has been added.
       elif [[ $( echo "${BALANCE_DIFF} >= 1" | bc -l ) -gt 0 ]]
       then
-        if [[ "${BALANCE_DIFF}" == "${MASTERNODE_REWARD}" ]]
+        if [[ $( echo "${BALANCE_DIFF} == ${MASTERNODE_REWARD}" | bc -l ) -eq 1 ]]
         then
           SEND_SUCCESS "${USRNAME} ${DAEMON_BIN} masternode reward amout of ${BALANCE_DIFF} ${TICKER_NAME}. New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
         elif [[ $( echo "${BALANCE_DIFF} >= ${STAKE_REWARD}" | bc -l ) -gt 0 ]] && [[ $( echo "${BALANCE_DIFF} < ${STAKE_REWARD_UPPER}" | bc -l ) -gt 0 ]]
@@ -1355,7 +1355,7 @@ REPORT_INFO_ABOUT_NODES () {
     fi
 
     UPTIME_HUMAN=$( DISPLAYTIME "${UPTIME}" )
-    PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "node_info" "" "" "${USRNAME} ${DAEMON_BIN} BlockCount: ${GETBLOCKCOUNT} PID: ${PID} Uptime: ${UPTIME} seconds (${UPTIME_HUMAN})" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+    PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "node_info" "" "" "${USRNAME} ${DAEMON_BIN} BlockCount: ${GETBLOCKCOUNT} PID: ${PID} Uptime: ${UPTIME} seconds (${UPTIME_HUMAN}) " "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
 
   done <<< "${NODE_INFO}"
 }
