@@ -92,11 +92,11 @@ DISPLAYTIME () {
   local H=$((T/60/60%24))
   local M=$((T/60%60))
   local S=$((T%60))
-  (( $D > 0 )) && printf '%d days ' $D
-  (( $H > 0 )) && printf '%d hours ' $H
-  (( $M > 0 )) && printf '%d minutes ' $M
-  (( $D > 0 || $H > 0 || $M > 0 )) && printf 'and '
-  printf '%d seconds\n' $S
+  (( D > 0 )) && printf '%d days ' "${D}"
+  (( H > 0 )) && printf '%d hours ' "${H}"
+  (( M > 0 )) && printf '%d minutes ' "${M}"
+  (( D > 0 || H > 0 || M > 0 )) && printf 'and '
+  printf '%d seconds\n' "${S}"
 }
 
 INSTALL_MN_MON_SERVICE () {
@@ -158,10 +158,10 @@ SYSTEMD_CONF
 
 WEBHOOK_SEND () {
 (
-  URL="${1}"
-  DESCRIPTION="${2}"
-  TITLE="${3}"
-  WEBHOOK_USERNAME="${4}"
+  local URL="${1}"
+  local DESCRIPTION="${2}"
+  local TITLE="${3}"
+  local WEBHOOK_USERNAME="${4}"
   if [[ -z "${WEBHOOK_USERNAME}" ]]
   then
     WEBHOOK_USERNAME="${WEBHOOK_USERNAME_DEFAULT}"
@@ -223,7 +223,7 @@ PAYLOAD
     MS_WAIT=$( echo "${OUTPUT}" | jq -r '.retry_after' 2>/dev/null )
     if [[ ! -z "${MS_WAIT}" ]]
     then
-      SECONDS_WAIT=$( printf "%.1f\n" $( echo "scale=3;${MS_WAIT}/1000" | bc -l ) )
+      SECONDS_WAIT=$( printf "%.1f\n" "$( echo "scale=3;${MS_WAIT}/1000" | bc -l )" )
       SECONDS_WAIT=$( echo "${SECONDS_WAIT} + 0.1" | bc -l )
       sleep "${SECONDS_WAIT}"
       OUTPUT=$( curl -H "Content-Type: application/json" -s -X POST "${URL}" -d "${_PAYLOAD}" | sed '/^[[:space:]]*$/d' )
@@ -1093,6 +1093,13 @@ GET_INFO_ON_ALL_NODES () {
       GETBALANCE=0
     fi
 
+    # check getunconfirmedbalance.
+    GETUNCONFIRMEDBALANCE=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getunconfirmedbalance" 2>&1 | grep -Eo '[+-]?[0-9]+([.][0-9]+)?' 2>/dev/null )
+    if [[ -z "${GETUNCONFIRMEDBALANCE.}" ]]
+    then
+      GETUNCONFIRMEDBALANCE=0
+    fi
+
     # check staking status.
     STAKING=0
     GETSTAKINGSTATUS=''
@@ -1115,7 +1122,7 @@ GET_INFO_ON_ALL_NODES () {
     # output info.
     DAEMON_BIN=$( basename "${DAEMON_BIN}" )
     CONF_LOCATION=$( dirname "${CONF_LOCATION}" )
-    echo "${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION} ${MASTERNODE} ${MNINFO} ${GETBALANCE} ${STAKING} ${GETCONNECTIONCOUNT} ${GETBLOCKCOUNT} ${UPTIME} ${DAEMON_PID} ${MNWIN} ${GETNETHASHRATE}"
+    echo "${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION} ${MASTERNODE} ${MNINFO} ${GETBALANCE} ${GETUNCONFIRMEDBALANCE} ${STAKING} ${GETCONNECTIONCOUNT} ${GETBLOCKCOUNT} ${UPTIME} ${DAEMON_PID} ${GETNETHASHRATE} ${MNWIN}"
   done <<< "${ALL_RUNNING_NODES}"
 }
 
@@ -1188,7 +1195,7 @@ PROCESS_NODE_MESSAGES () {
     echo "${SECONDS_SINCE_PING} ${START_TIME} ${LAST_PING_TIME} ${MESSAGE_PAST}"
     ERRORS=$( SEND_INFO "${MESSAGE_INFO}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
     MESSAGE="${MESSAGE_INFO}"
-  elif [[ ! -z "${MESSAGE_SUCCESS}" ]]
+  elif [[ ! -z "${MESSAGE_SUCCESS}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 7200 ]]
   then
     ERRORS=$( SEND_SUCCESS "${MESSAGE_SUCCESS}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
     MESSAGE="${MESSAGE_SUCCESS}"
@@ -1206,11 +1213,11 @@ PROCESS_NODE_MESSAGES () {
 
 REPORT_INFO_ABOUT_NODES () {
   NODE_INFO=$( GET_INFO_ON_ALL_NODES )
-  NODE_INFO="Username binary Conf-Location MN-Status MN-Info Balance Staking Connection-Count BlockCount Uptime PID MN-Win networkhashps
+  NODE_INFO="Username binary Conf-Location MN-Status MN-Info Balance Unconfirmed-Balance Staking Connection-Count BlockCount Uptime PID networkhashps MN-Win
   ${NODE_INFO}"
 #   echo "${NODE_INFO}" | column -t
 
-  while read -r USRNAME DAEMON_BIN CONF_LOCATION MASTERNODE MNINFO GETBALANCE STAKING GETCONNECTIONCOUNT GETBLOCKCOUNT UPTIME DAEMON_PID MNWIN NETWORKHASHPS
+  while read -r USRNAME DAEMON_BIN CONF_LOCATION MASTERNODE MNINFO GETBALANCE GETUNCONFIRMEDBALANCE STAKING GETCONNECTIONCOUNT GETBLOCKCOUNT UPTIME DAEMON_PID NETWORKHASHPS MNWIN
   do
     if [[ -z "${USRNAME}" ]]
     then
@@ -1241,8 +1248,8 @@ Is not currently running. No PID." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHO
     MIN_STAKE=0
     STAKE_REWARD=0
     MASTERNODE_REWARD=0
-    BLOCKS_WAIT=0
-    SECONDS_WAIT=0
+#     BLOCKS_WAIT=0
+#     SECONDS_WAIT=0
     NET_HASH_FACTOR=0
     TICKER_NAME='COIN'
     STAKE_REWARD_UPPER=0
@@ -1253,8 +1260,8 @@ Is not currently running. No PID." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHO
       MIN_STAKE=$( echo "${EXTRA_INFO}" | cut -d ' ' -f2 )
       STAKE_REWARD=$( echo "${EXTRA_INFO}" | cut -d ' ' -f3 )
       MASTERNODE_REWARD=$( echo "${EXTRA_INFO}" | cut -d ' ' -f4 )
-      BLOCKS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f5 )
-      SECONDS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f6 )
+#       BLOCKS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f5 )
+#       SECONDS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f6 )
       NET_HASH_FACTOR=$( echo "${EXTRA_INFO}" | cut -d ' ' -f7 )
       TICKER_NAME=$( echo "${EXTRA_INFO}" | cut -d ' ' -f8 )
       STAKE_REWARD_UPPER=$( echo "${STAKE_REWARD} + 0.3" | bc -l )
@@ -1297,52 +1304,75 @@ Masternode status is good!" "Masternode Running" "${WEBHOOK_USERNAME}" "${WEBHOO
     else
       SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_LOCATION}:balance','${GETBALANCE}');"
       BALANCE_DIFF=$( echo "${GETBALANCE} - ${PAST_BALANCE}" | bc -l )
+    fi
 
-      # Empty Wallet.
-      if [[ $(echo "${BALANCE_DIFF} != 0 " | bc -l ) -eq 0 ]]
-      then
-        : # Do nothing.
+    # Empty Wallet.
+    if [[ $(echo "${BALANCE_DIFF} != 0 " | bc -l ) -eq 0 ]]
+    then
+      : # Do nothing.
 
-      # Wallet has been drained.
-      elif [[ -z "${GETBALANCE}" ]] || [[ $(echo "${GETBALANCE} == 0" | bc -l ) -eq 1 ]]
-      then
-        SEND_ERROR "__${USRNAME} ${DAEMON_BIN}__
+    # Wallet has been drained.
+    elif [[ -z "${GETBALANCE}" ]] || [[ $(echo "${GETBALANCE} == 0" | bc -l ) -eq 1 ]]
+    then
+      SEND_ERROR "__${USRNAME} ${DAEMON_BIN}__
 Balance is now zero ${TICKER_NAME}!
 Before: ${PAST_BALANCE}
 After: ${GETBALANCE} " "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
 
-      # Larger amount has been moved off this wallet.
-      elif [[ $( echo "${BALANCE_DIFF} < -1" | bc -l ) -gt 0 ]]
-      then
-        SEND_WARNING "__${USRNAME} ${DAEMON_BIN}__
+    # Larger amount has been moved off this wallet.
+    elif [[ $( echo "${BALANCE_DIFF} < -1" | bc -l ) -gt 0 ]]
+    then
+      SEND_WARNING "__${USRNAME} ${DAEMON_BIN}__
 Balance has decreased by over 1 ${TICKER_NAME} Difference: ${BALANCE_DIFF}.
 New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
 
-      # Small amount has been moved.
-      elif [[ $( echo "${BALANCE_DIFF} < 1" | bc -l ) -gt 0 ]]
-      then
-        SEND_INFO "__${USRNAME} ${DAEMON_BIN}__
+    # Small amount has been moved.
+    elif [[ $( echo "${BALANCE_DIFF} < 1" | bc -l ) -gt 0 ]]
+    then
+      SEND_INFO "__${USRNAME} ${DAEMON_BIN}__
 Small amout of ${TICKER_NAME} has been transfered Difference: ${BALANCE_DIFF}.
 New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
 
-      # More than 1 Coin has been added.
-      elif [[ $( echo "${BALANCE_DIFF} >= 1" | bc -l ) -gt 0 ]]
+    # More than 1 Coin has been added.
+    elif [[ $( echo "${BALANCE_DIFF} >= 1" | bc -l ) -gt 0 ]]
+    then
+      if [[ $( echo "${BALANCE_DIFF} == ${MASTERNODE_REWARD}" | bc -l ) -eq 1 ]]
       then
-        if [[ $( echo "${BALANCE_DIFF} == ${MASTERNODE_REWARD}" | bc -l ) -eq 1 ]]
-        then
-          SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
+        SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
 Masternode reward amout of ${BALANCE_DIFF} ${TICKER_NAME}.
 New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-        elif [[ $( echo "${BALANCE_DIFF} >= ${STAKE_REWARD}" | bc -l ) -gt 0 ]] && [[ $( echo "${BALANCE_DIFF} < ${STAKE_REWARD_UPPER}" | bc -l ) -gt 0 ]]
-        then
-          SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
+      elif [[ $( echo "${BALANCE_DIFF} >= ${STAKE_REWARD}" | bc -l ) -gt 0 ]] && [[ $( echo "${BALANCE_DIFF} < ${STAKE_REWARD_UPPER}" | bc -l ) -gt 0 ]]
+      then
+        SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
 Staking reward amout of ${BALANCE_DIFF} ${TICKER_NAME}.
 New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-        else
-          SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
+      else
+        SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
 Larger amout of ${TICKER_NAME} has been transfered Difference: ${BALANCE_DIFF}.
 New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-        fi
+      fi
+    fi
+
+    # There is an Unconfirmed balance.
+    if [[ ! -z "${GETUNCONFIRMEDBALANCE}" ]] && [[ $( echo "${GETUNCONFIRMEDBALANCE} == 0" | bc -l ) -eq 0 ]]
+    then
+      if [[ $( echo "${GETUNCONFIRMEDBALANCE} == ${MASTERNODE_REWARD}" | bc -l ) -eq 1 ]]
+      then
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "unconfirmed_balance:large" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
+Masternode reward amout of ${GETUNCONFIRMEDBALANCE} ${TICKER_NAME}." "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      elif [[ $( echo "${GETUNCONFIRMEDBALANCE} >= ${STAKE_REWARD}" | bc -l ) -gt 0 ]] && [[ $( echo "${GETUNCONFIRMEDBALANCE} < ${STAKE_REWARD_UPPER}" | bc -l ) -gt 0 ]]
+      then
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "unconfirmed_balance:large" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
+Staking reward amout of ${GETUNCONFIRMEDBALANCE} ${TICKER_NAME}." "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      elif [[ $( echo "${GETUNCONFIRMEDBALANCE} < 1" | bc -l ) -eq 1 ]]
+      then
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "unconfirmed_balance:small" "" "" "__${USRNAME} ${DAEMON_BIN}__
+Small amout of ${TICKER_NAME} has been transfered.
+Unconfirmed Balance: ${GETUNCONFIRMEDBALANCE}" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      else
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "unconfirmed_balance:large" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
+Large amout of ${TICKER_NAME} has been transfered.
+Unconfirmed Balance: ${GETUNCONFIRMEDBALANCE}" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       fi
     fi
 
