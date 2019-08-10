@@ -1287,6 +1287,7 @@ REPORT_INFO_ABOUT_NODES () {
       PAST_BALANCE=0
       SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_LOCATION}:balance','${GETBALANCE}');"
     else
+      SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_LOCATION}:balance','${GETBALANCE}');"
       BALANCE_DIFF=$( echo "${GETBALANCE} - ${PAST_BALANCE}" | bc -l )
 
       # Empty Wallet.
