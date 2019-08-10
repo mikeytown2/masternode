@@ -1298,7 +1298,7 @@ REPORT_INFO_ABOUT_NODES () {
       # Wallet has been drained.
       elif [[ -z "${GETBALANCE}" ]] || [[ $(echo "${GETBALANCE} == 0" | bc -l ) -eq 1 ]]
       then
-        SEND_ERROR "${USRNAME} ${DAEMON_BIN} balance is now zero ${TICKER_NAME}!" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+        SEND_ERROR "${USRNAME} ${DAEMON_BIN} balance is now zero ${TICKER_NAME}! Before: ${PAST_BALANCE} After: ${GETBALANCE} " "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
 
       # Larger amount has been moved off this wallet.
       elif [[ $( echo "${BALANCE_DIFF} < -1" | bc -l ) -gt 0 ]]
