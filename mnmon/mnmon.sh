@@ -1219,7 +1219,7 @@ REPORT_INFO_ABOUT_NODES () {
 
     if [[ -z "${CONF_LOCATION}" ]]
     then
-      PROCESS_NODE_MESSAGES "${USRNAME}" "not-running" "**${USRNAME} ${DAEMON_BIN}**
+      PROCESS_NODE_MESSAGES "${USRNAME}" "not-running" "__${USRNAME} ${DAEMON_BIN}__
 Is not currently running. No PID." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       continue
     fi
@@ -1265,25 +1265,25 @@ Is not currently running. No PID." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHO
     then
       if [[ ${MNINFO} -eq 1 ]]
       then
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "**${USRNAME} ${DAEMON_BIN}**
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "__${USRNAME} ${DAEMON_BIN}__
 Masternode should be starting up soon." "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       elif [[ ${MNINFO} -eq 2 ]]
       then
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "**${USRNAME} ${DAEMON_BIN}**
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "__${USRNAME} ${DAEMON_BIN}__
 Masternode list shows the masternode as active bug masternode status doesn't. Hopefully this changes soon." "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       else
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "**${USRNAME} ${DAEMON_BIN}**
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "__${USRNAME} ${DAEMON_BIN}__
 Masternode is not currently running." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       fi
     elif [[ ${MASTERNODE} -eq 2 ]]
     then
       if [[ ${MNINFO} -eq 2 ]]
       then
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "" "" "**${USRNAME} ${DAEMON_BIN}**
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
 Masternode status and masternode list are good!" "Masternode Running" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       elif [[ ${MNINFO} -eq 0 ]]
       then
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "" "" "**${USRNAME} ${DAEMON_BIN}**
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
 Masternode status is good!" "Masternode Running" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       fi
     fi
@@ -1306,7 +1306,7 @@ Masternode status is good!" "Masternode Running" "${WEBHOOK_USERNAME}" "${WEBHOO
       # Wallet has been drained.
       elif [[ -z "${GETBALANCE}" ]] || [[ $(echo "${GETBALANCE} == 0" | bc -l ) -eq 1 ]]
       then
-        SEND_ERROR "**${USRNAME} ${DAEMON_BIN}**
+        SEND_ERROR "__${USRNAME} ${DAEMON_BIN}__
 Balance is now zero ${TICKER_NAME}!
 Before: ${PAST_BALANCE}
 After: ${GETBALANCE} " "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
@@ -1314,14 +1314,14 @@ After: ${GETBALANCE} " "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       # Larger amount has been moved off this wallet.
       elif [[ $( echo "${BALANCE_DIFF} < -1" | bc -l ) -gt 0 ]]
       then
-        SEND_WARNING "**${USRNAME} ${DAEMON_BIN}**
+        SEND_WARNING "__${USRNAME} ${DAEMON_BIN}__
 Balance has decreased by over 1 ${TICKER_NAME} Difference: ${BALANCE_DIFF}.
 New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
 
       # Small amount has been moved.
       elif [[ $( echo "${BALANCE_DIFF} < 1" | bc -l ) -gt 0 ]]
       then
-        SEND_INFO "**${USRNAME} ${DAEMON_BIN}**
+        SEND_INFO "__${USRNAME} ${DAEMON_BIN}__
 Small amout of ${TICKER_NAME} has been transfered Difference: ${BALANCE_DIFF}.
 New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
 
@@ -1330,16 +1330,16 @@ New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       then
         if [[ $( echo "${BALANCE_DIFF} == ${MASTERNODE_REWARD}" | bc -l ) -eq 1 ]]
         then
-          SEND_SUCCESS "**${USRNAME} ${DAEMON_BIN}**
+          SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
 Masternode reward amout of ${BALANCE_DIFF} ${TICKER_NAME}.
 New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
         elif [[ $( echo "${BALANCE_DIFF} >= ${STAKE_REWARD}" | bc -l ) -gt 0 ]] && [[ $( echo "${BALANCE_DIFF} < ${STAKE_REWARD_UPPER}" | bc -l ) -gt 0 ]]
         then
-          SEND_SUCCESS "**${USRNAME} ${DAEMON_BIN}**
+          SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
 Staking reward amout of ${BALANCE_DIFF} ${TICKER_NAME}.
 New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
         else
-          SEND_SUCCESS "**${USRNAME} ${DAEMON_BIN}**
+          SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
 Larger amout of ${TICKER_NAME} has been transfered Difference: ${BALANCE_DIFF}.
 New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
         fi
@@ -1351,20 +1351,20 @@ New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
     then
       if [[ "$( echo "${MIN_STAKE} > ${GETBALANCE}" | bc -l )" -gt 0 ]]
       then
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_balance" "" "**${USRNAME} ${DAEMON_BIN}**
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_balance" "" "__${USRNAME} ${DAEMON_BIN}__
 Balance (${GETBALANCE}) is below the minimum staking threshold (${MIN_STAKE}).
 ${MIN_STAKE} > ${GETBALANCE}" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       else
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_balance" "" "" "" "" "**${USRNAME} ${DAEMON_BIN}**
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_balance" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
 Has enough coins to stake now!" "Balance is above the minimum" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
         if [[ "${STAKING}" -eq 0 ]]
         then
-          PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_status" "" "**${USRNAME} ${DAEMON_BIN}**
+          PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_status" "" "__${USRNAME} ${DAEMON_BIN}__
 Staking status is false" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
         fi
         if [[ "${STAKING}" -eq 1 ]]
         then
-          PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_status" "" "" "" "" "**${USRNAME} ${DAEMON_BIN}**
+          PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_status" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
 Staking status is now TRUE!" "Staking is enabled" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
         fi
       fi
@@ -1373,14 +1373,14 @@ Staking status is now TRUE!" "Staking is enabled" "${WEBHOOK_USERNAME}" "${WEBHO
     # Report on connection count.
     if [[ "${GETCONNECTIONCOUNT}" -lt 2 ]]
     then
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "**${USRNAME} ${DAEMON_BIN}**
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "__${USRNAME} ${DAEMON_BIN}__
 Connection Count (${GETCONNECTIONCOUNT}) is very low!" "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
     elif [[ "${GETCONNECTIONCOUNT}" -lt 5 ]]
     then
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "" "**${USRNAME} ${DAEMON_BIN}**
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "" "__${USRNAME} ${DAEMON_BIN}__
 Connection Count (${GETCONNECTIONCOUNT}) is low!" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
     else
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "" "" "" "" "**${USRNAME} ${DAEMON_BIN}**
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
 Connection count has been restored" "Connection Count Normal" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
     fi
 
@@ -1389,7 +1389,7 @@ Connection count has been restored" "Connection Count Normal" "${WEBHOOK_USERNAM
     then
       :
     else
-      SEND_SUCCESS "**${USRNAME} ${DAEMON_BIN}**
+      SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
 ${MNWIN}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
     fi
 
@@ -1409,7 +1409,7 @@ ${MNWIN}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
         MASTERNODE_TEXT='Enabled'
       fi
     fi
-    PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "node_info" "" "" "**${USRNAME} ${DAEMON_BIN}**
+    PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "node_info" "" "" "__${USRNAME} ${DAEMON_BIN}__
 BlockCount: ${GETBLOCKCOUNT}
 PID: ${DAEMON_PID}
 Uptime: ${UPTIME} seconds (${UPTIME_HUMAN})
