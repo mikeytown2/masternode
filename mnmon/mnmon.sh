@@ -1144,12 +1144,12 @@ PROCESS_NODE_MESSAGES () {
   # Get past events.
   UNIX_TIME=$( date -u +%s )
   MESSAGE_PAST=$( SQL_QUERY "SELECT start_time,last_ping_time,message FROM node_log WHERE conf_loc == '${CONF_LOCATION}' AND type == '${TYPE}'; " )
-  START_TIME=$( echo "${MESSAGE_PAST}" | cut -d \| -f1 )
+  START_TIME=$( echo "${MESSAGE_PAST}" | head -n1 | cut -d \| -f1 )
   if [[ ! ${START_TIME} =~ ${RE} ]]
   then
     START_TIME="${UNIX_TIME}"
   fi
-  LAST_PING_TIME=$( echo "${MESSAGE_PAST}" | cut -d \| -f2 )
+  LAST_PING_TIME=$( echo "${MESSAGE_PAST}" | head -n1 | cut -d \| -f2 )
   if [[ ! ${LAST_PING_TIME} =~ ${RE} ]]
   then
     LAST_PING_TIME='0'
@@ -1171,6 +1171,7 @@ PROCESS_NODE_MESSAGES () {
 
   SECONDS_SINCE_PING="$( echo "${UNIX_TIME} - ${LAST_PING_TIME}" | bc -l )"
 
+
   # Send message out.
   ERRORS=''
   MESSAGE=''
@@ -1184,6 +1185,7 @@ PROCESS_NODE_MESSAGES () {
     MESSAGE="${MESSAGE_WARNING}"
   elif [[ ! -z "${MESSAGE_INFO}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 3600 ]]
   then
+    echo "${SECONDS_SINCE_PING} ${START_TIME} ${LAST_PING_TIME} ${MESSAGE_PAST}"
     ERRORS=$( SEND_INFO "${MESSAGE_INFO}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
     MESSAGE="${MESSAGE_INFO}"
   elif [[ ! -z "${MESSAGE_SUCCESS}" ]]
