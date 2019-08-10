@@ -1384,6 +1384,15 @@ Connection Count (${GETCONNECTIONCOUNT}) is low!" "" "" "" "" "${WEBHOOK_USERNAM
 Connection count has been restored" "Connection Count Normal" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
     fi
 
+    # Report on masternode winner
+    if [[ "${MNWIN}" == 0 ]]
+    then
+      :
+    else
+      SEND_SUCCESS "**${USRNAME} ${DAEMON_BIN}**
+${MNWIN}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+    fi
+
     # Report on daemon info.
     UPTIME_HUMAN=$( DISPLAYTIME "${UPTIME}" )
     STAKING_TEXT='Disabled'
