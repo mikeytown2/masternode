@@ -944,6 +944,11 @@ GET_ALL_NODES () {
       continue
     fi
 
+    if [[ ! -d "${USR_HOME_DIR}" ]]
+    then
+      continue
+    fi
+
     MN_USRNAME=$( basename "${USR_HOME_DIR}" )
 
     DAEMON_BIN=''
@@ -988,13 +993,22 @@ GET_ALL_NODES () {
 
       if [[ "${HAS_FUNCTION}" -gt 0 ]]
       then
+        FUNCTION_PARAMS=$( grep "_masternode_dameon_2 \"${MN_USRNAME}\"" /var/multi-masternode-data/.bashrc )
         if [[ -z "${DAEMON_BIN}" ]]
         then
-          DAEMON_BIN=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${MN_USRNAME} daemon loc" )
+          DAEMON_BIN=$( echo "${FUNCTION_PARAMS}" | awk '{print $5}' | tr -d \" )
+          if [[ -z "${DAEMON_BIN}" ]]
+          then
+            DAEMON_BIN=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${MN_USRNAME} daemon loc" )
+          fi
         fi
         if [[ -z "${CONTROLLER_BIN}" ]]
         then
-          CONTROLLER_BIN=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${MN_USRNAME} cli loc" )
+          CONTROLLER_BIN=$( echo "${FUNCTION_PARAMS}" | awk '{print $3}' | tr -d \" )
+          if [[ -z "${CONTROLLER_BIN}" ]]
+          then
+            CONTROLLER_BIN=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${MN_USRNAME} cli loc" )
+          fi
         fi
       fi
 
@@ -1025,8 +1039,8 @@ GET_INFO_ON_ALL_NODES () {
     # is the daemon running.
     if [[ -z "${DAEMON_PID}" ]]
     then
-      echo "${USRNAME} not-running"
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "node_not_running" "__${USRNAME} ${DAEMON_BIN}__
+      echo "${USRNAME} not running" >/dev/tty
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "node_not_running" "__${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION}__
 This node is not running." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       continue
     fi
@@ -1041,8 +1055,8 @@ This node is not running." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATA
 
     if [[ -z "${GETBLOCKCOUNT}" ]] && [[ -z "${GETCONNECTIONCOUNT}" ]]
     then
-      echo "${USRNAME} is frozen"
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "frozen_node" "__${USRNAME} ${DAEMON_BIN}__
+      echo "${USRNAME} is frozen" >/dev/tty
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "frozen_node" "__${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION}__
 This node is frozen. PID: ${DAEMON_PID}" "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       continue
     fi
@@ -1154,8 +1168,8 @@ PROCESS_NODE_MESSAGES () {
   MESSAGE_SUCCESS=${6}
   RECOVERED_MESSAGE_SUCCESS=${7}
   RECOVERED_TITLE_SUCCESS=${8}
-  WEBHOOK_USERNAME="${9}"
-  WEBHOOK_AVATAR="${10}"
+  WEBHOOK_USERNAME=${9}
+  WEBHOOK_AVATAR=${10}
 
 
   # Get past events.
@@ -1263,6 +1277,7 @@ Is not currently running. No PID." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHO
     NET_HASH_FACTOR=0
     TICKER_NAME='COIN'
     STAKE_REWARD_UPPER=0
+    BLOCKTIME_SECONDS=60
 
     EXTRA_INFO=$( echo "${DAEMON_BALANCE_LUT}" | grep -E "^${DAEMON_BIN} " )
     if [[ ! -z "${EXTRA_INFO}" ]]
@@ -1274,7 +1289,7 @@ Is not currently running. No PID." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHO
 #       SECONDS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f6 )
       NET_HASH_FACTOR=$( echo "${EXTRA_INFO}" | cut -d ' ' -f7 )
       TICKER_NAME=$( echo "${EXTRA_INFO}" | cut -d ' ' -f8 )
-#       BLOCKTIME_SECONDS=$( echo "${EXTRA_INFO}" | cut -d ' ' -f9 )
+      BLOCKTIME_SECONDS=$( echo "${EXTRA_INFO}" | cut -d ' ' -f9 )
       STAKE_REWARD_UPPER=$( echo "${STAKE_REWARD} + 0.3" | bc -l )
     fi
 
@@ -1430,8 +1445,14 @@ Connection count has been restored" "Connection Count Normal" "${WEBHOOK_USERNAM
     then
       :
     else
-      SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
-${MNWIN}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      MN_ADDRESS_WIN=$( echo "${MNWIN}" | cut -d ' ' -f1 )
+      BLOCK_WIN=$( echo "${MNWIN}" | cut -d ' ' -f2 )
+      MN_REWARD_IN_BLOCKS=$( echo "${BLOCK_WIN} - ${GETBLOCKCOUNT}" | bc -l )
+      MN_REWARD_IN_SECONDS=$( echo "${MN_REWARD_IN_BLOCKS} * ${BLOCKTIME_SECONDS}" | bc -l )
+      MN_REWARD_IN_TIME=$( DISPLAYTIME "${MN_REWARD_IN_SECONDS}" )
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "mnwin:${BLOCK_WIN}" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
+Masternode on ${MN_ADDRESS_WIN} will get paid in aproxamently ${MN_REWARD_IN_TIME}.
+On block ${BLOCK_WIN}." "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
     fi
 
     # Report on daemon info.
