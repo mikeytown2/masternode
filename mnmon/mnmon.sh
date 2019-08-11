@@ -1095,7 +1095,7 @@ GET_INFO_ON_ALL_NODES () {
 
     # check getunconfirmedbalance.
     GETUNCONFIRMEDBALANCE=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getunconfirmedbalance" 2>&1 | grep -Eo '[+-]?[0-9]+([.][0-9]+)?' 2>/dev/null )
-    if [[ -z "${GETUNCONFIRMEDBALANCE.}" ]]
+    if [[ -z "${GETUNCONFIRMEDBALANCE}" ]]
     then
       GETUNCONFIRMEDBALANCE=0
     fi
@@ -1192,7 +1192,7 @@ PROCESS_NODE_MESSAGES () {
     MESSAGE="${MESSAGE_WARNING}"
   elif [[ ! -z "${MESSAGE_INFO}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 3600 ]]
   then
-    echo "${SECONDS_SINCE_PING} ${START_TIME} ${LAST_PING_TIME} ${MESSAGE_PAST}"
+#     echo "${SECONDS_SINCE_PING} ${START_TIME} ${LAST_PING_TIME} ${MESSAGE_PAST}"
     ERRORS=$( SEND_INFO "${MESSAGE_INFO}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
     MESSAGE="${MESSAGE_INFO}"
   elif [[ ! -z "${MESSAGE_SUCCESS}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 7200 ]]
