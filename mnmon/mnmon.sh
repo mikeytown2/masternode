@@ -20,9 +20,9 @@ energid https://s2.coinmarketcap.com/static/img/coins/128x128/3218.png Energi Mo
 dogecashd https://s2.coinmarketcap.com/static/img/coins/128x128/3672.png DogeCash Monitor
 "
 
-# Daemon_bin_name minimum_balance_to_stake staking_reward mn_reward confirmations cooloff_seconds networkhashps_multiplier ticker_name
+# Daemon_bin_name minimum_balance_to_stake staking_reward mn_reward confirmations cooloff_seconds networkhashps_multiplier ticker_name blocktime_seconds
 DAEMON_BALANCE_LUT="
-energid 1 2.28 9.14 101 3600 0.000001 NRG
+energid 1 2.28 9.14 101 3600 0.000001 NRG 60
 "
 
 DEBUG_OUTPUT=0
@@ -1026,6 +1026,8 @@ GET_INFO_ON_ALL_NODES () {
     if [[ -z "${DAEMON_PID}" ]]
     then
       echo "${USRNAME} not-running"
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "node_not_running" "__${USRNAME} ${DAEMON_BIN}__
+This node is not running." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       continue
     fi
 
@@ -1034,8 +1036,16 @@ GET_INFO_ON_ALL_NODES () {
     # setup vars.
     CONF_FOLDER=$( dirname "${CONF_LOCATION}" )
 
-    GETCONNECTIONCOUNT=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getconnectioncount" 2>&1 | grep -o '[0-9].*' )
-    GETBLOCKCOUNT=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getblockcount" 2>&1 | grep -o '[0-9].*' )
+    GETBLOCKCOUNT=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getblockcount" 2>&1 | grep -o '[0-9].*' )
+    GETCONNECTIONCOUNT=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getconnectioncount" 2>&1 | grep -o '[0-9].*' )
+
+    if [[ -z "${GETBLOCKCOUNT}" ]] && [[ -z "${GETCONNECTIONCOUNT}" ]]
+    then
+      echo "${USRNAME} is frozen"
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "frozen_node" "__${USRNAME} ${DAEMON_BIN}__
+This node is frozen. PID: ${DAEMON_PID}" "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      continue
+    fi
 
     # is a masternode?
     MASTERNODE=0
@@ -1264,6 +1274,7 @@ Is not currently running. No PID." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHO
 #       SECONDS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f6 )
       NET_HASH_FACTOR=$( echo "${EXTRA_INFO}" | cut -d ' ' -f7 )
       TICKER_NAME=$( echo "${EXTRA_INFO}" | cut -d ' ' -f8 )
+#       BLOCKTIME_SECONDS=$( echo "${EXTRA_INFO}" | cut -d ' ' -f9 )
       STAKE_REWARD_UPPER=$( echo "${STAKE_REWARD} + 0.3" | bc -l )
     fi
 
@@ -1358,11 +1369,11 @@ New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
     then
       if [[ $( echo "${GETUNCONFIRMEDBALANCE} == ${MASTERNODE_REWARD}" | bc -l ) -eq 1 ]]
       then
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "unconfirmed_balance:large" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "unconfirmed_balance:masternode" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
 Masternode reward amout of ${GETUNCONFIRMEDBALANCE} ${TICKER_NAME}." "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       elif [[ $( echo "${GETUNCONFIRMEDBALANCE} >= ${STAKE_REWARD}" | bc -l ) -gt 0 ]] && [[ $( echo "${GETUNCONFIRMEDBALANCE} < ${STAKE_REWARD_UPPER}" | bc -l ) -gt 0 ]]
       then
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "unconfirmed_balance:large" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "unconfirmed_balance:stake" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
 Staking reward amout of ${GETUNCONFIRMEDBALANCE} ${TICKER_NAME}." "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       elif [[ $( echo "${GETUNCONFIRMEDBALANCE} < 1" | bc -l ) -eq 1 ]]
       then
