@@ -60,6 +60,8 @@ MULTI_IP_MODE=3
 DAEMON_CONNECTIONS=4
 # Wait for MNSYNC
 MNSYNC_WAIT_FOR='"AssetName": "MASTERNODE_SYNC_FINISHED"'
+# Deeper Work Queue
+EXTRA_CONFIG='rpcworkqueue=32'
 
 # Sentinel Info.
 SENTINEL_GITHUB='https://github.com/energicryptocurrency/sentinel.git'
