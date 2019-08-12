@@ -18,11 +18,13 @@ WEBHOOK_AVATAR_DEFAULT='https://i.imgur.com/8WHSSa7s.jpg'
 DAEMON_BIN_LUT="
 energid https://s2.coinmarketcap.com/static/img/coins/128x128/3218.png Energi Monitor
 dogecashd https://s2.coinmarketcap.com/static/img/coins/128x128/3672.png DogeCash Monitor
+ungrid http://explorer.unigrid.org/images/logo.png UniGrid Monitor
 "
 
 # Daemon_bin_name minimum_balance_to_stake staking_reward mn_reward confirmations cooloff_seconds networkhashps_multiplier ticker_name blocktime_seconds
 DAEMON_BALANCE_LUT="
 energid 1 2.28 9.14 101 3600 0.000001 NRG 60
+dogecashd 1 2.16 8.64 101 3600 0.000001 DOGEC 60
 "
 
 DEBUG_OUTPUT=0
@@ -1176,7 +1178,6 @@ Has enough coins to stake now!" "Balance is above the minimum" "${WEBHOOK_USERNA
       then
         GETSTAKINGSTATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getstakingstatus" 2>&1 | jq . | grep 'false' | tr -d \" )
         PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_status" "" "__${USRNAME} ${DAEMON_BIN}__
-Staking status is false
 ${GETSTAKINGSTATUS}" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
       fi
       if [[ "${STAKING}" -eq 1 ]]
@@ -1215,8 +1216,9 @@ Staking status is now TRUE!" "Staking is enabled" "${WEBHOOK_USERNAME}" "${WEBHO
     MN_REWARD_IN_SECONDS=$( echo "${MN_REWARD_IN_BLOCKS} * ${BLOCKTIME_SECONDS}" | bc -l )
     MN_REWARD_IN_TIME=$( DISPLAYTIME "${MN_REWARD_IN_SECONDS}" )
     PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "mnwin:${BLOCK_WIN}" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
-Masternode on ${MN_ADDRESS_WIN} will get paid in aproxamently ${MN_REWARD_IN_TIME}.
-On block ${BLOCK_WIN}." "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+Masternode on ${MN_ADDRESS_WIN} will get paid
+on block ${BLOCK_WIN}
+in approximately ${MN_REWARD_IN_TIME}." "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
   fi
 
   # Report on daemon info.
@@ -1329,7 +1331,7 @@ GET_INFO_ON_THIS_NODE () {
   if [[ ! -z "${WALLETINFO}" ]] && [[ $( echo "${WALLETINFO}" | grep -ic 'balance' ) -gt 0 ]]
   then
     GETBALANCE=$( echo "${WALLETINFO}" | jq -r '.balance' )
-    GETTOTALBALANCE=$( echo "${WALLETINFO}" | jq -r '.balance, .unconfirmed_balance, .immature_balance' |  awk '{sum+=$0} END{print sum}' )
+    GETTOTALBALANCE=$( echo "${WALLETINFO}" | jq -r '.balance, .unconfirmed_balance, .immature_balance' | awk '{sum += $0} END {printf "%.8f", sum}' )
   else
     WALLETINFO=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getbalance" 2>&1 )
   fi
