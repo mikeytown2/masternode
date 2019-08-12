@@ -87,7 +87,9 @@ SQL_QUERY "CREATE TABLE IF NOT EXISTS node_log (
 );"
 
 DISPLAYTIME () {
-  local T=$1
+  # Round up the time.
+  local T=0
+  T=$( printf '%.*f\n' 0 "${1}" )
   local D=$((T/60/60/24))
   local H=$((T/60/60%24))
   local M=$((T/60%60))
@@ -708,7 +710,6 @@ PROCESS_MESSAGES () {
   # Send recovery message.
   if [[ -z "${MESSAGE_ERROR}" ]] && [[ -z "${MESSAGE_WARNING}" ]] && [[ ! -z "${MESSAGE_PAST}" ]] && [[ ! -z "${RECOVERED_MESSAGE_SUCCESS}" ]]
   then
-#     echo "OLD MSG: ${MESSAGE_PAST}" >/dev/tty
     ERRORS=$( SEND_SUCCESS "${RECOVERED_MESSAGE_SUCCESS}" ":wrench: ${RECOVERED_TITLE_SUCCESS} :wrench:" )
     if [[ ! -z "${ERRORS}" ]]
     then
@@ -752,6 +753,7 @@ PROCESS_MESSAGES () {
 GET_LATEST_LOGINS () {
   while read -r DATE_1 DATE_2 DATE_3 LINE
   do
+#     echo "GET_LATEST_LOGINS ${LINE}" >/dev/tty
     INFO=$( echo "${LINE}" | grep -oE '\]\: .*' | cut -c 4- )
 
     if [[ -z "${INFO}" ]]
@@ -906,240 +908,6 @@ CHECK_RAM () {
 }
 CHECK_RAM
 
-GET_ALL_NODES () {
-  FILENAME_WITH_FUNCTIONS=''
-  if [[ -r /var/multi-masternode-data/.bashrc ]]
-  then
-    # shellcheck disable=SC1091
-    FILENAME_WITH_FUNCTIONS='/var/multi-masternode-data/.bashrc'
-  elif [[ -r /root/.bashrc ]]
-  then
-    # shellcheck disable=SC1091
-    FILENAME_WITH_FUNCTIONS='/root/.bashrc'
-  elif [[ -r /home/ubuntu/.bashrc ]]
-  then
-    # shellcheck disable=SC1091
-    FILENAME_WITH_FUNCTIONS='/home/ubuntu/.bashrc'
-  fi
-
-  CONF_N_USRNAMES=''
-  LSLOCKS=$( lslocks -n -o COMMAND,PID,PATH )
-  PS_LIST=$( ps --no-headers -axo user:32,pid,command )
-  # shellcheck disable=SC2034
-  while read -r USRNAME DEL_1 DEL_2 DEL_3 DEL_4 DEL_5 DEL_6 DEL_7 DEL_8 USR_HOME_DIR USR_HOME_DIR_ALT DEL_9
-  do
-    if [[ "${USR_HOME_DIR}" == 'X' ]]
-    then
-      USR_HOME_DIR=${USR_HOME_DIR_ALT}
-    fi
-
-    if [[ "${#USR_HOME_DIR}" -lt 3 ]] || [[ ${USR_HOME_DIR} == /var/* ]] || [[ ${USR_HOME_DIR} == '/proc' ]] || [[ ${USR_HOME_DIR} == '/dev' ]] || [[ ${USR_HOME_DIR} == /run/* ]] || [[ ${USR_HOME_DIR} == '/nonexistent' ]]
-    then
-      continue
-    fi
-
-    if [[ ! -d "${USR_HOME_DIR}" ]]
-    then
-      continue
-    fi
-
-    MN_USRNAME=$( basename "${USR_HOME_DIR}" )
-
-    DAEMON_BIN=''
-    CONTROLLER_BIN=''
-
-    CONF_LOCATIONS=$( find "${USR_HOME_DIR}" -name "peers.dat" 2>/dev/null )
-    if [[ -z "${CONF_LOCATIONS}" ]]
-    then
-      continue
-    fi
-    CONF_FOLDER=$( dirname "${CONF_LOCATIONS}" )
-    CONF_LOCATIONS=$( grep --include=\*.conf -rl "rpc" "${CONF_FOLDER}" )
-
-    if [[ -z "${CONF_LOCATIONS}" ]] && [[ "$( grep -c "_masternode_dameon_2 \"${MN_USRNAME}\"" "${FILENAME_WITH_FUNCTIONS}" )" -gt 0 ]]
-    then
-      CONF_LOCATIONS=$( "${MN_USRNAME}" conf loc )
-    fi
-
-    HAS_FUNCTION=0
-    if [[ "$( grep -c "_masternode_dameon_2 \"${MN_USRNAME}\"" "${FILENAME_WITH_FUNCTIONS}" )" -gt 0 ]]
-    then
-      HAS_FUNCTION=1
-    fi
-
-    while read -r CONF_LOCATION
-    do
-      CONF_FOLDER=$( dirname "${CONF_LOCATION}" )
-      DAEMON_BIN=$( echo "${LSLOCKS}" | grep -m 1 "${CONF_FOLDER}" | awk '{print $1}' )
-      CONTROLLER_BIN="${DAEMON_BIN}"
-      TEMP_VAR_PID=$( echo "${LSLOCKS}" | grep -m 1 "${CONF_FOLDER}" | awk '{print $2}' )
-      if [[ ! -z "${TEMP_VAR_PID}" ]]
-      then
-        DAEMON_BIN=$( echo "${PS_LIST}" | cut -c 32- | grep " ${TEMP_VAR_PID} " | awk '{print $2}' )
-        CONTROLLER_BIN="${DAEMON_BIN}"
-        COMMAND_FOLDER=$( dirname "${DAEMON_BIN}" )
-        CONTROLLER_BIN_FOLDER=$( find "${COMMAND_FOLDER}" -executable -type f | grep -v "${DAEMON_BIN}" | grep -i "${DAEMON_BIN::-1}" )
-        if [[ ! -z "${CONTROLLER_BIN_FOLDER}" ]]
-        then
-          CONTROLLER_BIN="${CONTROLLER_BIN_FOLDER}"
-        fi
-      fi
-
-      if [[ "${HAS_FUNCTION}" -gt 0 ]]
-      then
-        FUNCTION_PARAMS=$( grep "_masternode_dameon_2 \"${MN_USRNAME}\"" /var/multi-masternode-data/.bashrc )
-        if [[ -z "${DAEMON_BIN}" ]]
-        then
-          DAEMON_BIN=$( echo "${FUNCTION_PARAMS}" | awk '{print $5}' | tr -d \" )
-          if [[ -z "${DAEMON_BIN}" ]]
-          then
-            DAEMON_BIN=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${MN_USRNAME} daemon loc" )
-          fi
-        fi
-        if [[ -z "${CONTROLLER_BIN}" ]]
-        then
-          CONTROLLER_BIN=$( echo "${FUNCTION_PARAMS}" | awk '{print $3}' | tr -d \" )
-          if [[ -z "${CONTROLLER_BIN}" ]]
-          then
-            CONTROLLER_BIN=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${MN_USRNAME} cli loc" )
-          fi
-        fi
-      fi
-
-      CONF_N_USRNAMES="${CONF_N_USRNAMES}
-${HAS_FUNCTION} ${USRNAME} ${CONTROLLER_BIN} ${DAEMON_BIN} ${CONF_LOCATION} ${TEMP_VAR_PID}"
-    done <<< "${CONF_LOCATIONS}"
-  done <<< "$( cut -d: -f1 /etc/passwd | getent passwd | sed 's/:/ X /g' | sort -h )"
-
-  # Clean up var.
-  CONF_N_USRNAMES=$( echo "${CONF_N_USRNAMES}" | sed '/^[[:space:]]*$/d' )
-  ROOT_ENTRY=$( echo "${CONF_N_USRNAMES}" | grep -E '^root .*' )
-  CONF_N_USRNAMES=$( echo "${CONF_N_USRNAMES}" | sed '/^root .*/d' )
-  CONF_N_USRNAMES="${CONF_N_USRNAMES}
-${ROOT_ENTRY}"
-  CONF_N_USRNAMES=$( echo "${CONF_N_USRNAMES}" | sed '/^[[:space:]]*$/d' )
-
-  echo "${CONF_N_USRNAMES}" | column -t
-}
-
-GET_INFO_ON_ALL_NODES () {
-  ALL_RUNNING_NODES=$( GET_ALL_NODES )
-#   echo "${ALL_RUNNING_NODES}"
-
-  PS_LIST=$( ps --no-headers -axo user:32,pid,etimes,command )
-
-  while read -r HAS_FUNCTION USRNAME CONTROLLER_BIN DAEMON_BIN CONF_LOCATION DAEMON_PID
-  do
-    # is the daemon running.
-    if [[ -z "${DAEMON_PID}" ]]
-    then
-      echo "${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION} -1 This_node_is_not_running."
-      continue
-    fi
-
-    UPTIME=$( echo "${PS_LIST}" | cut -c 32- | grep " ${DAEMON_PID} " | awk '{print $2}' | head -n 1 | awk '{print $1}' | grep -o '[0-9].*' )
-
-    # setup vars.
-    CONF_FOLDER=$( dirname "${CONF_LOCATION}" )
-
-    GETBLOCKCOUNT=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getblockcount" 2>&1 | grep -o '[0-9].*' )
-    GETCONNECTIONCOUNT=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getconnectioncount" 2>&1 | grep -o '[0-9].*' )
-
-    if [[ -z "${GETBLOCKCOUNT}" ]] && [[ -z "${GETCONNECTIONCOUNT}" ]]
-    then
-      echo "${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION} -2 This_node_is_frozen._PID:_${DAEMON_PID}"
-      continue
-    fi
-
-    # is a masternode?
-    MASTERNODE=0
-    if [[ $( grep 'privkey=' "${CONF_LOCATION}" | grep -vE -c '^#' ) -gt 0 ]]
-    then
-      MASTERNODE=1
-      MASTERNODE_STATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" masternode status" 2>&1 )
-      if [[ $( echo "${MASTERNODE_STATUS}" | grep -ic "method not found" ) -gt 0 ]]
-      then
-        MASTERNODE_STATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" masternode debug" 2>&1 )
-      fi
-      if [[ $( echo "${MASTERNODE_STATUS}" | grep -ic "method not found" ) -gt 0 ]] && [[ "${HAS_FUNCTION}" -gt 0 ]]
-      then
-        MASTERNODE_STATUS=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${USRNAME} mnstatus" )
-      fi
-
-      if [[ $( echo "${MASTERNODE_STATUS}" | grep -ic " successfully started" ) -eq 1 ]] || [[ $( echo "${MASTERNODE_STATUS}" | grep -ic " started remotely" ) -eq 1 ]]
-      then
-        MASTERNODE=2
-      fi
-    fi
-
-    # check mninfo.
-    MNINFO=0
-    if [[ "${MASTERNODE}" -ge 2 ]]
-    then
-      if [[ "${HAS_FUNCTION}" -gt 0 ]]
-      then
-        MNINFO_OUTPUT=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${USRNAME} mninfo" )
-        if [[ "${#MNINFO_OUTPUT}" -gt 1 ]]
-        then
-          MNINFO=1
-          if [[ $( echo "${MNINFO_OUTPUT}" | grep -iEc 'status.*ENABLED' ) -gt 0 ]]
-          then
-            MNINFO=2
-          fi
-        fi
-      fi
-    fi
-
-    MNWIN=''
-    if [[ "${MNINFO}" -eq 2 ]] && [[ "${HAS_FUNCTION}" -gt 0 ]]
-    then
-      MNWIN=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${USRNAME} mnwin" )
-    fi
-    if [[ -z "${MNWIN}" ]]
-    then
-      MNWIN='0'
-    fi
-
-    # check balance.
-    GETBALANCE=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getbalance" 2>&1 | grep -Eo '[+-]?[0-9]+([.][0-9]+)?' 2>/dev/null )
-    if [[ -z "${GETBALANCE}" ]]
-    then
-      GETBALANCE=0
-    fi
-
-    # check getunconfirmedbalance.
-    GETUNCONFIRMEDBALANCE=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getunconfirmedbalance" 2>&1 | grep -Eo '[+-]?[0-9]+([.][0-9]+)?' 2>/dev/null )
-    if [[ -z "${GETUNCONFIRMEDBALANCE}" ]]
-    then
-      GETUNCONFIRMEDBALANCE=0
-    fi
-
-    # check staking status.
-    STAKING=0
-    GETSTAKINGSTATUS=''
-    if [[ $( echo "${GETBALANCE} > 0" | bc -l ) -gt 0 ]]
-    then
-      GETSTAKINGSTATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getstakingstatus" 2>&1 )
-      if [[ $( echo "${GETSTAKINGSTATUS}" | grep -c 'false' ) -eq 0 ]]
-      then
-        STAKING=1
-      fi
-    fi
-
-    # check networkhashps
-    GETNETHASHRATE=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getnetworkhashps" 2>&1 | grep -Eo '[+-]?[0-9]+([.][0-9]+)?' 2>/dev/null )
-    if [[ -z "${GETNETHASHRATE}" ]]
-    then
-      GETNETHASHRATE=0
-    fi
-
-    # output info.
-    DAEMON_BIN=$( basename "${DAEMON_BIN}" )
-    CONF_LOCATION=$( dirname "${CONF_LOCATION}" )
-    echo "${USRNAME} ${DAEMON_BIN} ${CONTROLLER_BIN} ${CONF_FOLDER} ${CONF_LOCATION} ${MASTERNODE} ${MNINFO} ${GETBALANCE} ${GETUNCONFIRMEDBALANCE} ${STAKING} ${GETCONNECTIONCOUNT} ${GETBLOCKCOUNT} ${UPTIME} ${DAEMON_PID} ${GETNETHASHRATE} ${MNWIN}"
-  done <<< "${ALL_RUNNING_NODES}"
-}
-
 PROCESS_NODE_MESSAGES () {
   CONF_LOCATION=''
   TYPE=''
@@ -1180,7 +948,6 @@ PROCESS_NODE_MESSAGES () {
   # Send recovery message.
   if [[ -z "${MESSAGE_ERROR}" ]] && [[ -z "${MESSAGE_WARNING}" ]] && [[ ! -z "${MESSAGE_PAST}" ]] && [[ ! -z "${RECOVERED_MESSAGE_SUCCESS}" ]]
   then
-#     echo "OLD MSG: ${MESSAGE_PAST}" >/dev/tty
     ERRORS=$( SEND_SUCCESS "${RECOVERED_MESSAGE_SUCCESS}" ":wrench: ${RECOVERED_TITLE_SUCCESS} :wrench:" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
     if [[ ! -z "${ERRORS}" ]]
     then
@@ -1225,270 +992,482 @@ PROCESS_NODE_MESSAGES () {
   fi
 }
 
-REPORT_INFO_ABOUT_NODES () {
-  NODE_INFO=$( GET_INFO_ON_ALL_NODES )
-  NODE_INFO="Username binary cli-binary Conf-Folder Conf-Location MN-Status MN-Info Balance Unconfirmed-Balance Staking Connection-Count BlockCount Uptime PID networkhashps MN-Win
-  ${NODE_INFO}"
-#   echo "${NODE_INFO}" | column -t
+REPORT_INFO_ABOUT_NODE () {
+  USRNAME=$( echo "${1}" | tr -d \" )
+  DAEMON_BIN=$( echo "${2}" | tr -d \" )
+  CONTROLLER_BIN=$( echo "${3}" | tr -d \" )
+  CONF_FOLDER=$( echo "${4}" | tr -d \" )
+  CONF_LOCATION=$( echo "${5}" | tr -d \" )
+  MASTERNODE=$( echo "${6}" | tr -d \" )
+  MNINFO=$( echo "${7}" | tr -d \" )
+  GETBALANCE=$( echo "${8}" | tr -d \" )
+  GETTOTALBALANCE=$( echo "${9}" | tr -d \" )
+  STAKING=$( echo "${10}" | tr -d \" )
+  GETCONNECTIONCOUNT=$( echo "${11}" | tr -d \" )
+  GETBLOCKCOUNT=$( echo "${12}" | tr -d \" )
+  UPTIME=$( echo "${13}" | tr -d \" )
+  DAEMON_PID=$( echo "${14}" | tr -d \" )
+  NETWORKHASHPS=$( echo "${15}" | tr -d \" )
+  MNWIN=$( echo "${16}" | tr -d \" )
 
-  while read -r USRNAME DAEMON_BIN CONTROLLER_BIN CONF_FOLDER CONF_LOCATION MASTERNODE MNINFO GETBALANCE GETUNCONFIRMEDBALANCE STAKING GETCONNECTIONCOUNT GETBLOCKCOUNT UPTIME DAEMON_PID NETWORKHASHPS MNWIN
-  do
-    if [[ -z "${USRNAME}" ]]
-    then
-      continue
-    fi
+  if [[ -z "${USRNAME}" ]]
+  then
+    return
+  fi
 
-    if [[ ! ${MASTERNODE} =~ ${RE} ]]
-    then
-      continue
-    fi
+  echo "${USRNAME}" >/dev/tty
 
-    WEBHOOK_AVATAR=''
-    WEBHOOK_USERNAME=''
-    EXTRA_INFO=$( echo "${DAEMON_BIN_LUT}" | grep -E "^${DAEMON_BIN} " )
-    if [[ ! -z "${EXTRA_INFO}" ]]
-    then
-      WEBHOOK_AVATAR=$( echo "${EXTRA_INFO}" | cut -d ' ' -f2 )
-      WEBHOOK_USERNAME=$( echo "${EXTRA_INFO}" | cut -d ' ' -f3- )
-    fi
+  if [[ ! ${MASTERNODE} =~ ${RE} ]]
+  then
+    return
+  fi
 
-    if [[ "${MASTERNODE}" == '-1' ]]
-    then
-      MESSAGE=$( echo "${MNINFO}" | tr '_' ' ' )
-      PROCESS_NODE_MESSAGES "${USRNAME}" "not_running" "__${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION}__
-${MESSAGE}" "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      continue
-    fi
+  WEBHOOK_AVATAR=''
+  WEBHOOK_USERNAME=''
+  EXTRA_INFO=$( echo "${DAEMON_BIN_LUT}" | grep -E "^${DAEMON_BIN} " )
+  if [[ ! -z "${EXTRA_INFO}" ]]
+  then
+    WEBHOOK_AVATAR=$( echo "${EXTRA_INFO}" | cut -d ' ' -f2 )
+    WEBHOOK_USERNAME=$( echo "${EXTRA_INFO}" | cut -d ' ' -f3- )
+  fi
 
-    if [[ "${MASTERNODE}" == '-2' ]]
-    then
-      MESSAGE=$( echo "${MNINFO}" | tr '_' ' ' )
-      PROCESS_NODE_MESSAGES "${USRNAME}" "frozen" "__${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION}__
-${MESSAGE}" "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      continue
-    fi
+  if [[ "${MASTERNODE}" == '-1' ]]
+  then
+    PROCESS_NODE_MESSAGES "${USRNAME}" "not_running" "__${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION}__
+${MNINFO}" "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+    return
+  fi
 
-    MIN_STAKE=0
-    STAKE_REWARD=0
-    MASTERNODE_REWARD=0
+  if [[ "${MASTERNODE}" == '-2' ]]
+  then
+    PROCESS_NODE_MESSAGES "${USRNAME}" "frozen" "__${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION}__
+${MNINFO}" "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+    return
+  fi
+
+  MIN_STAKE=0
+  STAKE_REWARD=0
+  MASTERNODE_REWARD=0
 #     BLOCKS_WAIT=0
 #     SECONDS_WAIT=0
-    NET_HASH_FACTOR=0
-    TICKER_NAME='COIN'
-    STAKE_REWARD_UPPER=0
-    BLOCKTIME_SECONDS=60
+  NET_HASH_FACTOR=0
+  TICKER_NAME='COIN'
+  STAKE_REWARD_UPPER=0
+  BLOCKTIME_SECONDS=60
 
-    EXTRA_INFO=$( echo "${DAEMON_BALANCE_LUT}" | grep -E "^${DAEMON_BIN} " )
-    if [[ ! -z "${EXTRA_INFO}" ]]
-    then
-      MIN_STAKE=$( echo "${EXTRA_INFO}" | cut -d ' ' -f2 )
-      STAKE_REWARD=$( echo "${EXTRA_INFO}" | cut -d ' ' -f3 )
-      MASTERNODE_REWARD=$( echo "${EXTRA_INFO}" | cut -d ' ' -f4 )
+  EXTRA_INFO=$( echo "${DAEMON_BALANCE_LUT}" | grep -E "^${DAEMON_BIN} " )
+  if [[ ! -z "${EXTRA_INFO}" ]]
+  then
+    MIN_STAKE=$( echo "${EXTRA_INFO}" | cut -d ' ' -f2 )
+    STAKE_REWARD=$( echo "${EXTRA_INFO}" | cut -d ' ' -f3 )
+    MASTERNODE_REWARD=$( echo "${EXTRA_INFO}" | cut -d ' ' -f4 )
 #       BLOCKS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f5 )
 #       SECONDS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f6 )
-      NET_HASH_FACTOR=$( echo "${EXTRA_INFO}" | cut -d ' ' -f7 )
-      TICKER_NAME=$( echo "${EXTRA_INFO}" | cut -d ' ' -f8 )
-      BLOCKTIME_SECONDS=$( echo "${EXTRA_INFO}" | cut -d ' ' -f9 )
-      STAKE_REWARD_UPPER=$( echo "${STAKE_REWARD} + 0.3" | bc -l )
-    fi
+    NET_HASH_FACTOR=$( echo "${EXTRA_INFO}" | cut -d ' ' -f7 )
+    TICKER_NAME=$( echo "${EXTRA_INFO}" | cut -d ' ' -f8 )
+    BLOCKTIME_SECONDS=$( echo "${EXTRA_INFO}" | cut -d ' ' -f9 )
+    STAKE_REWARD_UPPER=$( echo "${STAKE_REWARD} + 0.3" | bc -l )
+  fi
 
-    # Masternode Status.
-    if [[ ${MASTERNODE} -eq 1 ]]
+  # Masternode Status.
+  if [[ ${MASTERNODE} -eq 1 ]]
+  then
+    if [[ ${MNINFO} -eq 1 ]]
     then
-      if [[ ${MNINFO} -eq 1 ]]
-      then
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "__${USRNAME} ${DAEMON_BIN}__
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "__${USRNAME} ${DAEMON_BIN}__
 Masternode should be starting up soon." "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      elif [[ ${MNINFO} -eq 2 ]]
-      then
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "__${USRNAME} ${DAEMON_BIN}__
+    elif [[ ${MNINFO} -eq 2 ]]
+    then
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "__${USRNAME} ${DAEMON_BIN}__
 Masternode list shows the masternode as active bug masternode status doesn't. Hopefully this changes soon." "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      else
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "__${USRNAME} ${DAEMON_BIN}__
-Masternode is not currently running." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      fi
-    elif [[ ${MASTERNODE} -eq 2 ]]
-    then
-      if [[ ${MNINFO} -eq 2 ]]
-      then
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
-Masternode status and masternode list are good!" "Masternode Running" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      elif [[ ${MNINFO} -eq 0 ]]
-      then
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
-Masternode status is good!" "Masternode Running" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      fi
-    fi
-
-    # Update & report on balance.
-    PAST_BALANCE=$( SQL_QUERY "SELECT value FROM variables WHERE key = '${CONF_LOCATION}:balance';" )
-    if [[ -z "${PAST_BALANCE}" ]]
-    then
-      PAST_BALANCE=0
-      SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_LOCATION}:balance','${GETBALANCE}');"
     else
-      SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_LOCATION}:balance','${GETBALANCE}');"
-      BALANCE_DIFF=$( echo "${GETBALANCE} - ${PAST_BALANCE}" | bc -l )
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "__${USRNAME} ${DAEMON_BIN}__
+Masternode is not currently running." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
     fi
-
-    # Empty Wallet.
-    if [[ $(echo "${BALANCE_DIFF} != 0 " | bc -l ) -eq 0 ]]
+  elif [[ ${MASTERNODE} -eq 2 ]]
+  then
+    if [[ ${MNINFO} -eq 2 ]]
     then
-      : # Do nothing.
-
-    # Wallet has been drained.
-    elif [[ -z "${GETBALANCE}" ]] || [[ $(echo "${GETBALANCE} == 0" | bc -l ) -eq 1 ]]
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
+Masternode status and masternode list are good!" "Masternode Running" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+    elif [[ ${MNINFO} -eq 0 ]]
     then
-      SEND_ERROR "__${USRNAME} ${DAEMON_BIN}__
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
+Masternode status is good!" "Masternode Running" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+    fi
+  fi
+
+  # Update & report on balance.
+  PAST_BALANCE=$( SQL_QUERY "SELECT value FROM variables WHERE key = '${CONF_LOCATION}:balance';" )
+  if [[ -z "${PAST_BALANCE}" ]]
+  then
+    PAST_BALANCE=0
+    SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_LOCATION}:balance','${GETTOTALBALANCE}');"
+  else
+    SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_LOCATION}:balance','${GETTOTALBALANCE}');"
+  fi
+  BALANCE_DIFF=$( echo "${GETTOTALBALANCE} - ${PAST_BALANCE}" | bc -l )
+
+  # Empty Wallet.
+  if [[ $(echo "${BALANCE_DIFF} != 0 " | bc -l ) -eq 0 ]]
+  then
+    : # Do nothing.
+
+  # Wallet has been drained.
+  elif [[ -z "${GETTOTALBALANCE}" ]] || [[ $(echo "${GETTOTALBALANCE} == 0" | bc -l ) -eq 1 ]]
+  then
+    SEND_ERROR "__${USRNAME} ${DAEMON_BIN}__
 Balance is now zero ${TICKER_NAME}!
 Before: ${PAST_BALANCE}
-After: ${GETBALANCE} " "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+After: ${GETTOTALBALANCE} " "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
 
-    # Larger amount has been moved off this wallet.
-    elif [[ $( echo "${BALANCE_DIFF} < -1" | bc -l ) -gt 0 ]]
-    then
-      SEND_WARNING "__${USRNAME} ${DAEMON_BIN}__
+  # Larger amount has been moved off this wallet.
+  elif [[ $( echo "${BALANCE_DIFF} < -1" | bc -l ) -gt 0 ]]
+  then
+    SEND_WARNING "__${USRNAME} ${DAEMON_BIN}__
 Balance has decreased by over 1 ${TICKER_NAME} Difference: ${BALANCE_DIFF}.
-New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+New Balance: ${GETTOTALBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
 
-    # Small amount has been moved.
-    elif [[ $( echo "${BALANCE_DIFF} < 1" | bc -l ) -gt 0 ]]
-    then
-      SEND_INFO "__${USRNAME} ${DAEMON_BIN}__
+  # Small amount has been moved.
+  elif [[ $( echo "${BALANCE_DIFF} < 1" | bc -l ) -gt 0 ]]
+  then
+    SEND_INFO "__${USRNAME} ${DAEMON_BIN}__
 Small amout of ${TICKER_NAME} has been transfered Difference: ${BALANCE_DIFF}.
-New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+New Balance: ${GETTOTALBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
 
-    # More than 1 Coin has been added.
-    elif [[ $( echo "${BALANCE_DIFF} >= 1" | bc -l ) -gt 0 ]]
+  # More than 1 Coin has been added.
+  elif [[ $( echo "${BALANCE_DIFF} >= 1" | bc -l ) -gt 0 ]]
+  then
+    if [[ $( echo "${BALANCE_DIFF} == ${MASTERNODE_REWARD}" | bc -l ) -eq 1 ]]
     then
-      if [[ $( echo "${BALANCE_DIFF} == ${MASTERNODE_REWARD}" | bc -l ) -eq 1 ]]
-      then
-        SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
+      SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
 Masternode reward amout of ${BALANCE_DIFF} ${TICKER_NAME}.
-New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      elif [[ $( echo "${BALANCE_DIFF} >= ${STAKE_REWARD}" | bc -l ) -gt 0 ]] && [[ $( echo "${BALANCE_DIFF} < ${STAKE_REWARD_UPPER}" | bc -l ) -gt 0 ]]
-      then
-        SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
+New Balance: ${GETTOTALBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+    elif [[ $( echo "${BALANCE_DIFF} >= ${STAKE_REWARD}" | bc -l ) -gt 0 ]] && [[ $( echo "${BALANCE_DIFF} < ${STAKE_REWARD_UPPER}" | bc -l ) -gt 0 ]]
+    then
+      SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
 Staking reward amout of ${BALANCE_DIFF} ${TICKER_NAME}.
-New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      else
-        SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
+New Balance: ${GETTOTALBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+    else
+      SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
 Larger amout of ${TICKER_NAME} has been transfered Difference: ${BALANCE_DIFF}.
-New Balance: ${GETBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      fi
+New Balance: ${GETTOTALBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+    fi
+  fi
+
+  # Report on staking.
+  TIME_TO_STAKE=''
+  if [[ ! -z "${GETBALANCE}" ]] && [[ "$( echo "${GETBALANCE} > 0.0" | bc -l )" -gt 0 ]]
+  then
+    COINS_STAKED_TOTAL_NETWORK=$( echo "${NETWORKHASHPS} * ${NET_HASH_FACTOR}" | bc -l )
+    if [[ ! -z "${COINS_STAKED_TOTAL_NETWORK}" ]] && [[ $( echo "${COINS_STAKED_TOTAL_NETWORK} != 0" | bc -l ) -eq 1 ]]
+    then
+      SECONDS_TO_AVERAGE_STAKE=$( echo "${COINS_STAKED_TOTAL_NETWORK} / ${GETBALANCE} * ${BLOCKTIME_SECONDS}" | bc -l )
+      TIME_TO_STAKE=$( DISPLAYTIME "${SECONDS_TO_AVERAGE_STAKE}" )
     fi
 
-    # There is an Unconfirmed balance.
-    if [[ ! -z "${GETUNCONFIRMEDBALANCE}" ]] && [[ $( echo "${GETUNCONFIRMEDBALANCE} == 0" | bc -l ) -eq 0 ]]
+    if [[ "$( echo "${MIN_STAKE} > ${GETBALANCE}" | bc -l )" -gt 0 ]]
     then
-      if [[ $( echo "${GETUNCONFIRMEDBALANCE} == ${MASTERNODE_REWARD}" | bc -l ) -eq 1 ]]
-      then
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "unconfirmed_balance:masternode" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
-Masternode reward amout of ${GETUNCONFIRMEDBALANCE} ${TICKER_NAME}." "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      elif [[ $( echo "${GETUNCONFIRMEDBALANCE} >= ${STAKE_REWARD}" | bc -l ) -gt 0 ]] && [[ $( echo "${GETUNCONFIRMEDBALANCE} < ${STAKE_REWARD_UPPER}" | bc -l ) -gt 0 ]]
-      then
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "unconfirmed_balance:stake" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
-Staking reward amout of ${GETUNCONFIRMEDBALANCE} ${TICKER_NAME}." "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      elif [[ $( echo "${GETUNCONFIRMEDBALANCE} < 1" | bc -l ) -eq 1 ]]
-      then
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "unconfirmed_balance:small" "" "" "__${USRNAME} ${DAEMON_BIN}__
-Small amout of ${TICKER_NAME} has been transfered.
-Unconfirmed Balance: ${GETUNCONFIRMEDBALANCE}" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      else
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "unconfirmed_balance:large" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
-Large amout of ${TICKER_NAME} has been transfered.
-Unconfirmed Balance: ${GETUNCONFIRMEDBALANCE}" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      fi
-    fi
-
-    # Report on staking.
-    TIME_TO_STAKE=''
-    if [[ ! -z "${GETBALANCE}" ]] && [[ "$( echo "${GETBALANCE} > 0.0" | bc -l )" -gt 0 ]]
-    then
-      COINS_STAKED_TOTAL_NETWORK=$( echo "${NETWORKHASHPS} * ${NET_HASH_FACTOR}" | bc -l )
-      if [[ ! -z "${COINS_STAKED_TOTAL_NETWORK}" ]] && [[ "${COINS_STAKED_TOTAL_NETWORK}" != 0 ]]
-      then
-        SECONDS_TO_AVERAGE_STAKE=$( echo "${COINS_STAKED_TOTAL_NETWORK} / ${GETBALANCE} * ${BLOCKTIME_SECONDS}" | bc -l )
-        TIME_TO_STAKE=$( DISPLAYTIME "${SECONDS_TO_AVERAGE_STAKE}" )
-      fi
-
-      if [[ "$( echo "${MIN_STAKE} > ${GETBALANCE}" | bc -l )" -gt 0 ]]
-      then
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_balance" "" "__${USRNAME} ${DAEMON_BIN}__
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_balance" "" "__${USRNAME} ${DAEMON_BIN}__
 Balance (${GETBALANCE}) is below the minimum staking threshold (${MIN_STAKE}).
 ${MIN_STAKE} > ${GETBALANCE}" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      else
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_balance" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
+    else
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_balance" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
 Has enough coins to stake now!" "Balance is above the minimum" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-        if [[ "${STAKING}" -eq 0 ]]
-        then
-          GETSTAKINGSTATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getstakingstatus" 2>&1 | jq . | grep 'false' )
-          PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_status" "" "__${USRNAME} ${DAEMON_BIN}__
+      if [[ "${STAKING}" -eq 0 ]]
+      then
+        GETSTAKINGSTATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getstakingstatus" 2>&1 | jq . | grep 'false' | tr -d \" )
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_status" "" "__${USRNAME} ${DAEMON_BIN}__
 Staking status is false
 ${GETSTAKINGSTATUS}" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-        fi
-        if [[ "${STAKING}" -eq 1 ]]
-        then
-          PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_status" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
+      fi
+      if [[ "${STAKING}" -eq 1 ]]
+      then
+        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_status" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
 Staking status is now TRUE!" "Staking is enabled" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-        fi
       fi
     fi
+  fi
 
-    # Report on connection count.
+  # Report on connection count.
+  if [[ ${GETCONNECTIONCOUNT} =~ ${RE} ]]
+  then
     if [[ "${GETCONNECTIONCOUNT}" -lt 2 ]]
     then
       PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "__${USRNAME} ${DAEMON_BIN}__
-Connection Count (${GETCONNECTIONCOUNT}) is very low!" "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+  Connection Count (${GETCONNECTIONCOUNT}) is very low!" "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
     elif [[ "${GETCONNECTIONCOUNT}" -lt 5 ]]
     then
       PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "" "__${USRNAME} ${DAEMON_BIN}__
-Connection Count (${GETCONNECTIONCOUNT}) is low!" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+  Connection Count (${GETCONNECTIONCOUNT}) is low!" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
     else
       PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
-Connection count has been restored" "Connection Count Normal" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+  Connection count has been restored" "Connection Count Normal" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
     fi
+  fi
 
-    # Report on masternode winner
-    if [[ "${MNWIN}" == 0 ]]
-    then
-      :
-    else
-      MN_ADDRESS_WIN=$( echo "${MNWIN}" | cut -d ' ' -f1 )
-      BLOCK_WIN=$( echo "${MNWIN}" | cut -d ' ' -f2 )
-      MN_REWARD_IN_BLOCKS=$( echo "${BLOCK_WIN} - ${GETBLOCKCOUNT}" | bc -l )
-      MN_REWARD_IN_SECONDS=$( echo "${MN_REWARD_IN_BLOCKS} * ${BLOCKTIME_SECONDS}" | bc -l )
-      MN_REWARD_IN_TIME=$( DISPLAYTIME "${MN_REWARD_IN_SECONDS}" )
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "mnwin:${BLOCK_WIN}" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
+  # Report on masternode winner
+  if [[ "${MNWIN}" == 0 ]]
+  then
+    :
+  else
+    MN_ADDRESS_WIN=$( echo "${MNWIN}" | cut -d ' ' -f1 )
+    BLOCK_WIN=$( echo "${MNWIN}" | cut -d ' ' -f2 )
+    MN_REWARD_IN_BLOCKS=$( echo "${BLOCK_WIN} - ${GETBLOCKCOUNT}" | bc -l )
+    MN_REWARD_IN_SECONDS=$( echo "${MN_REWARD_IN_BLOCKS} * ${BLOCKTIME_SECONDS}" | bc -l )
+    echo 'mn reward in time' >/dev/tty
+    MN_REWARD_IN_TIME=$( DISPLAYTIME "${MN_REWARD_IN_SECONDS}" )
+    PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "mnwin:${BLOCK_WIN}" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
 Masternode on ${MN_ADDRESS_WIN} will get paid in aproxamently ${MN_REWARD_IN_TIME}.
 On block ${BLOCK_WIN}." "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-    fi
+  fi
 
-    # Report on daemon info.
-    UPTIME_HUMAN=$( DISPLAYTIME "${UPTIME}" )
-    STAKING_TEXT='Disabled'
-    if [[ "${STAKING}" -eq 1 ]]
+  # Report on daemon info.
+  UPTIME_HUMAN=$( DISPLAYTIME "${UPTIME}" )
+  STAKING_TEXT='Disabled'
+  if [[ "${STAKING}" -eq 1 ]]
+  then
+    STAKING_TEXT='Enabled'
+  fi
+  MASTERNODE_TEXT='Disabled'
+  if [[ ${MASTERNODE} -eq 2 ]]
+  then
+    MASTERNODE_TEXT='Enabled but not enabled in masternode list'
+    if [[ ${MNINFO} -eq 2 ]]
     then
-      STAKING_TEXT='Enabled'
+      MASTERNODE_TEXT='Enabled'
     fi
-    MASTERNODE_TEXT='Disabled'
-    if [[ ${MASTERNODE} -eq 2 ]]
-    then
-      MASTERNODE_TEXT='Enabled but not enabled in masternode list'
-      if [[ ${MNINFO} -eq 2 ]]
-      then
-        MASTERNODE_TEXT='Enabled'
-      fi
-    fi
-    PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "node_info" "" "" "__${USRNAME} ${DAEMON_BIN}__
+  fi
+  PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "node_info" "" "" "__${USRNAME} ${DAEMON_BIN}__
 BlockCount: ${GETBLOCKCOUNT}
 PID: ${DAEMON_PID}
 Uptime: ${UPTIME} seconds (${UPTIME_HUMAN})
 Staking Status: ${STAKING_TEXT}
 Masternode Status: ${MASTERNODE_TEXT}
 Balance: ${GETBALANCE}
+Total Balance: ${GETTOTALBALANCE}
 Staking Average ETA: ${TIME_TO_STAKE}" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-
-  done <<< "${NODE_INFO}"
 }
-REPORT_INFO_ABOUT_NODES
+
+GET_INFO_ON_THIS_NODE () {
+  HAS_FUNCTION=${1}
+  USRNAME=${2}
+  CONTROLLER_BIN=${3}
+  DAEMON_BIN=${4}
+  CONF_LOCATION=${5}
+  DAEMON_PID=${6}
+  UPTIME=${7}
+
+  GETBALANCE=0
+  GETTOTALBALANCE=0
+  # is the daemon running.
+  if [[ -z "${DAEMON_PID}" ]]
+  then
+    REPORT_INFO_ABOUT_NODE "${USRNAME}" "${DAEMON_BIN}" "${CONF_LOCATION}" "-1" "This node is not running."
+    return
+  fi
+
+  # setup vars.
+  CONF_FOLDER=$( dirname "${CONF_LOCATION}" )
+
+  GETBLOCKCOUNT=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getblockcount" 2>&1 | grep -o '[0-9].*' )
+  GETCONNECTIONCOUNT=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getconnectioncount" 2>&1 | grep -o '[0-9].*' )
+
+  if [[ -z "${GETBLOCKCOUNT}" ]] && [[ -z "${GETCONNECTIONCOUNT}" ]]
+  then
+    REPORT_INFO_ABOUT_NODE "${USRNAME}" "${DAEMON_BIN}" "${CONF_LOCATION}" "-2" "This node is frozen. PID: ${DAEMON_PID}"
+    return
+  fi
+
+  # is a masternode?
+  MASTERNODE=0
+  if [[ $( grep 'privkey=' "${CONF_LOCATION}" | grep -vE -c '^#' ) -gt 0 ]]
+  then
+    MASTERNODE=1
+    MASTERNODE_STATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" masternode status" 2>&1 )
+    if [[ $( echo "${MASTERNODE_STATUS}" | grep -ic "method not found" ) -gt 0 ]]
+    then
+      MASTERNODE_STATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" masternode debug" 2>&1 )
+    fi
+    if [[ $( echo "${MASTERNODE_STATUS}" | grep -ic "method not found" ) -gt 0 ]] && [[ "${HAS_FUNCTION}" -gt 0 ]]
+    then
+      MASTERNODE_STATUS=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${USRNAME} mnstatus" )
+    fi
+
+    if [[ $( echo "${MASTERNODE_STATUS}" | grep -ic " successfully started" ) -eq 1 ]] || [[ $( echo "${MASTERNODE_STATUS}" | grep -ic " started remotely" ) -eq 1 ]]
+    then
+      MASTERNODE=2
+    fi
+  fi
+
+  # check mninfo.
+  MNINFO=0
+  if [[ "${MASTERNODE}" -ge 2 ]]
+  then
+    if [[ "${HAS_FUNCTION}" -gt 0 ]]
+    then
+      MNINFO_OUTPUT=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${USRNAME} mninfo" )
+      if [[ "${#MNINFO_OUTPUT}" -gt 1 ]]
+      then
+        MNINFO=1
+        if [[ $( echo "${MNINFO_OUTPUT}" | grep -iEc 'status.*ENABLED' ) -gt 0 ]]
+        then
+          MNINFO=2
+        fi
+      fi
+    fi
+  fi
+
+  MNWIN=''
+  if [[ "${MNINFO}" -eq 2 ]] && [[ "${HAS_FUNCTION}" -gt 0 ]]
+  then
+    MNWIN=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${USRNAME} mnwin" )
+  fi
+  if [[ -z "${MNWIN}" ]]
+  then
+    MNWIN='0'
+  fi
+
+  WALLETINFO=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getwalletinfo" 2>&1 )
+  if [[ ! -z "${WALLETINFO}" ]]
+  then
+    GETBALANCE=$( echo "${WALLETINFO}" | jq -r '.balance' )
+    GETTOTALBALANCE=$( echo "${WALLETINFO}" | jq -r '.balance, .unconfirmed_balance, .immature_balance' |  awk '{sum+=$0} END{print sum}' )
+  fi
+
+  # check staking status.
+  STAKING=0
+  GETSTAKINGSTATUS=''
+  if [[ $( echo "${GETBALANCE} > 0" | bc -l ) -gt 0 ]]
+  then
+    GETSTAKINGSTATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getstakingstatus" 2>&1 )
+    if [[ $( echo "${GETSTAKINGSTATUS}" | grep -c 'false' ) -eq 0 ]]
+    then
+      STAKING=1
+    fi
+  fi
+
+  # check networkhashps
+  GETNETHASHRATE=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getnetworkhashps" 2>&1 | grep -Eo '[+-]?[0-9]+([.][0-9]+)?' 2>/dev/null )
+  if [[ -z "${GETNETHASHRATE}" ]]
+  then
+    GETNETHASHRATE=0
+  fi
+
+  # output info.
+  DAEMON_BIN=$( basename "${DAEMON_BIN}" )
+  CONF_LOCATION=$( dirname "${CONF_LOCATION}" )
+  REPORT_INFO_ABOUT_NODE "${USRNAME}" "${DAEMON_BIN}" "${CONTROLLER_BIN}" "${CONF_FOLDER}" "${CONF_LOCATION}" "${MASTERNODE}" "${MNINFO}" "${GETBALANCE}" "${GETTOTALBALANCE}" "${STAKING}" "${GETCONNECTIONCOUNT}" "${GETBLOCKCOUNT}" "${UPTIME}" "${DAEMON_PID}" "${GETNETHASHRATE}" "${MNWIN}"
+}
+
+GET_ALL_NODES () {
+  FILENAME_WITH_FUNCTIONS=''
+  if [[ -r /var/multi-masternode-data/.bashrc ]]
+  then
+    # shellcheck disable=SC1091
+    FILENAME_WITH_FUNCTIONS='/var/multi-masternode-data/.bashrc'
+  elif [[ -r /root/.bashrc ]]
+  then
+    # shellcheck disable=SC1091
+    FILENAME_WITH_FUNCTIONS='/root/.bashrc'
+  elif [[ -r /home/ubuntu/.bashrc ]]
+  then
+    # shellcheck disable=SC1091
+    FILENAME_WITH_FUNCTIONS='/home/ubuntu/.bashrc'
+  fi
+
+  LSLOCKS=$( lslocks -n -o COMMAND,PID,PATH )
+  PS_LIST=$( ps --no-headers -axo user:32,pid,etimes,command )
+  # shellcheck disable=SC2034
+  while read -r USRNAME DEL_1 DEL_2 DEL_3 DEL_4 DEL_5 DEL_6 DEL_7 DEL_8 USR_HOME_DIR USR_HOME_DIR_ALT DEL_9
+  do
+#     echo "GET_ALL_NODES ${USRNAME}" >/dev/tty
+    if [[ "${USR_HOME_DIR}" == 'X' ]]
+    then
+      USR_HOME_DIR=${USR_HOME_DIR_ALT}
+    fi
+
+    if [[ "${#USR_HOME_DIR}" -lt 3 ]] || [[ ${USR_HOME_DIR} == /var/* ]] || [[ ${USR_HOME_DIR} == '/proc' ]] || [[ ${USR_HOME_DIR} == '/dev' ]] || [[ ${USR_HOME_DIR} == /run/* ]] || [[ ${USR_HOME_DIR} == '/nonexistent' ]]
+    then
+      continue
+    fi
+
+    if [[ ! -d "${USR_HOME_DIR}" ]]
+    then
+      continue
+    fi
+
+    MN_USRNAME=$( basename "${USR_HOME_DIR}" )
+
+    DAEMON_BIN=''
+    CONTROLLER_BIN=''
+
+    CONF_LOCATIONS=$( find "${USR_HOME_DIR}" -name "peers.dat" 2>/dev/null )
+    if [[ -z "${CONF_LOCATIONS}" ]]
+    then
+      continue
+    fi
+    CONF_FOLDER=$( dirname "${CONF_LOCATIONS}" )
+    CONF_LOCATIONS=$( grep --include=\*.conf -rl "rpc" "${CONF_FOLDER}" )
+
+    if [[ -z "${CONF_LOCATIONS}" ]] && [[ "$( grep -c "_masternode_dameon_2 \"${MN_USRNAME}\"" "${FILENAME_WITH_FUNCTIONS}" )" -gt 0 ]]
+    then
+      CONF_LOCATIONS=$( "${MN_USRNAME}" conf loc )
+    fi
+
+    HAS_FUNCTION=0
+    if [[ "$( grep -c "_masternode_dameon_2 \"${MN_USRNAME}\"" "${FILENAME_WITH_FUNCTIONS}" )" -gt 0 ]]
+    then
+      HAS_FUNCTION=1
+    fi
+
+    while read -r CONF_LOCATION
+    do
+      CONF_FOLDER=$( dirname "${CONF_LOCATION}" )
+      DAEMON_BIN=$( echo "${LSLOCKS}" | grep -m 1 "${CONF_FOLDER}" | awk '{print $1}' )
+      CONTROLLER_BIN="${DAEMON_BIN}"
+      DAEMON_PID=$( echo "${LSLOCKS}" | grep -m 1 "${CONF_FOLDER}" | awk '{print $2}' )
+      if [[ ! -z "${DAEMON_PID}" ]]
+      then
+        DAEMON_BIN=$( echo "${PS_LIST}" | cut -c 32- | grep " ${DAEMON_PID} " | awk '{print $3}' )
+        CONTROLLER_BIN="${DAEMON_BIN}"
+        COMMAND_FOLDER=$( dirname "${DAEMON_BIN}" )
+        CONTROLLER_BIN_FOLDER=$( find "${COMMAND_FOLDER}" -executable -type f | grep -v "${DAEMON_BIN}" | grep -i "${DAEMON_BIN::-1}" )
+        if [[ ! -z "${CONTROLLER_BIN_FOLDER}" ]]
+        then
+          CONTROLLER_BIN="${CONTROLLER_BIN_FOLDER}"
+        fi
+      fi
+
+      if [[ "${HAS_FUNCTION}" -gt 0 ]]
+      then
+        FUNCTION_PARAMS=$( grep "_masternode_dameon_2 \"${MN_USRNAME}\"" /var/multi-masternode-data/.bashrc )
+        if [[ -z "${DAEMON_BIN}" ]]
+        then
+          DAEMON_BIN=$( echo "${FUNCTION_PARAMS}" | awk '{print $5}' | tr -d \" )
+          if [[ -z "${DAEMON_BIN}" ]]
+          then
+            DAEMON_BIN=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${MN_USRNAME} daemon loc" )
+          fi
+        fi
+        if [[ -z "${CONTROLLER_BIN}" ]]
+        then
+          CONTROLLER_BIN=$( echo "${FUNCTION_PARAMS}" | awk '{print $3}' | tr -d \" )
+          if [[ -z "${CONTROLLER_BIN}" ]]
+          then
+            CONTROLLER_BIN=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${MN_USRNAME} cli loc" )
+          fi
+        fi
+      fi
+
+      UPTIME=0
+      if [[ ! -z "${DAEMON_PID}" ]]
+      then
+        UPTIME=$( echo "${PS_LIST}" | cut -c 32- | grep " ${DAEMON_PID} " | awk '{print $2}' | head -n 1 | awk '{print $1}' | grep -o '[0-9].*' )
+      fi
+
+      GET_INFO_ON_THIS_NODE "${HAS_FUNCTION}" "${USRNAME}" "${CONTROLLER_BIN}" "${DAEMON_BIN}" "${CONF_LOCATION}" "${DAEMON_PID}" "${UPTIME}"
+    done <<< "${CONF_LOCATIONS}"
+  done <<< "$( cut -d: -f1 /etc/passwd | getent passwd | sed 's/:/ X /g' | sort -h )"
+}
+GET_ALL_NODES
