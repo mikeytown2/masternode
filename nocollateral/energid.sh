@@ -84,6 +84,8 @@ MINI_MONITOR_MN_STATUS='Masternode successfully started'
 MINI_MONITOR_MN_QUEUE=1
 # Mini Monitor masternode count is a json string.
 MINI_MONITOR_MN_COUNT_JSON=0
+# Deeper Work Queue
+EXTRA_CONFIG='rpcworkqueue=32'
 
 # Log to a file.
 rm -f "${DAEMON_SETUP_LOG}"
