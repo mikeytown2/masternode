@@ -156,7 +156,6 @@ SYSTEMD_CONF
   sudo systemctl daemon-reload
   echo "Enable"
   sudo systemctl enable mnmon.timer --now
-  echo "Done"
 }
 
 WEBHOOK_SEND () {
@@ -620,20 +619,25 @@ GET_DISCORD_WEBHOOKS () {
 
 if [[ "${arg1}" != 'cron' ]]
 then
+  echo
   SERVER_ALIAS=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'server_alias';" )
-  echo "${SERVER_ALIAS}"
-  read -p "Set an alias for this server (y/n)? " -r
-  REPLY=${REPLY,,} # tolower
-  if [[ "${REPLY}" == y ]]
+  if [[ -z "${SERVER_ALIAS}" ]]
   then
-    read -p "Alias: " -r
-    echo "${REPLY}"
-    SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('server_alias','${REPLY}');"
+    SERVER_ALIAS=$( hostname )
   fi
+  read -e -p "Current alias for this server: " -i "${SERVER_ALIAS}" -r
+  SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('server_alias','${REPLY}');"
 
+  echo
+  echo -ne "IP Address: "; hostname -i
   SHOW_IP=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'show_ip';" )
-  echo "${SHOW_IP}"
-  read -p "Display IP in logs (y/n)? " -r
+  if [[ -z "${SHOW_IP}" ]] || [[ "${SHOW_IP}" == '1' ]]
+  then
+    SHOW_IP='y'
+  else
+    SHOW_IP='n'
+  fi
+  read -e -p "Display IP in logs (y/n)? " -i "${SHOW_IP}" -r
   REPLY=${REPLY,,} # tolower
   if [[ "${REPLY}" == y ]]
   then
@@ -642,14 +646,16 @@ then
     SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('show_ip','0');"
   fi
 
-
+  echo
   PREFIX='Setup'
+  REPLY='y'
   WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_error';" )
   if [[ ! -z "${WEBHOOKURL}" ]]
   then
+    REPLY='n'
     PREFIX='Redo'
   fi
-  read -p "${PREFIX} Discord Bot webhook URLs (y/n)? " -r
+  read -e -p "${PREFIX} Discord Bot webhook URLs (y/n)? " -i "${REPLY}" -r
   REPLY=${REPLY,,} # tolower
   if [[ "${REPLY}" == y ]]
   then
@@ -657,13 +663,21 @@ then
     echo "Discord Done"
   fi
 
+  echo
   PREFIX='Setup'
+  REPLY='y'
+  WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_error';" )
   CHAT_ID=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_chatid';" )
+  if [[ ! -z "${WEBHOOKURL}" ]]
+  then
+    REPLY='n'
+  fi
   if [[ ! -z "${CHAT_ID}" ]]
   then
+    REPLY='n'
     PREFIX='Redo'
   fi
-  read -p "${PREFIX} Telegram Bot token (y/n)? " -r
+  read -e -p "${PREFIX} Telegram Bot token (y/n)? " -i "${REPLY}" -r
   REPLY=${REPLY,,} # tolower
   if [[ "${REPLY}" == y ]]
   then
@@ -671,16 +685,13 @@ then
     echo "Telegram Done"
   fi
 
-  read -p "Install as a service (y/n)? " -r
-  REPLY=${REPLY,,} # tolower
-  if [[ "${REPLY}" == y ]]
-  then
-    INSTALL_MN_MON_SERVICE
-    echo "Service Install Done"
-    return 1 2>/dev/null || exit 1
-  fi
+  echo
+  echo "Installing as a systemd service."
+  sleep 1
+  INSTALL_MN_MON_SERVICE
+  echo "Service Install Done"
+  return 1 2>/dev/null || exit 1
 
-  echo "Interactive part done"
 fi
 
 PROCESS_MESSAGES () {
