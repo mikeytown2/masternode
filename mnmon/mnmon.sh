@@ -1136,7 +1136,7 @@ GET_INFO_ON_ALL_NODES () {
     # output info.
     DAEMON_BIN=$( basename "${DAEMON_BIN}" )
     CONF_LOCATION=$( dirname "${CONF_LOCATION}" )
-    echo "${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION} ${MASTERNODE} ${MNINFO} ${GETBALANCE} ${GETUNCONFIRMEDBALANCE} ${STAKING} ${GETCONNECTIONCOUNT} ${GETBLOCKCOUNT} ${UPTIME} ${DAEMON_PID} ${GETNETHASHRATE} ${MNWIN}"
+    echo "${USRNAME} ${DAEMON_BIN} ${CONTROLLER_BIN} ${CONF_FOLDER} ${CONF_LOCATION} ${MASTERNODE} ${MNINFO} ${GETBALANCE} ${GETUNCONFIRMEDBALANCE} ${STAKING} ${GETCONNECTIONCOUNT} ${GETBLOCKCOUNT} ${UPTIME} ${DAEMON_PID} ${GETNETHASHRATE} ${MNWIN}"
   done <<< "${ALL_RUNNING_NODES}"
 }
 
@@ -1227,11 +1227,11 @@ PROCESS_NODE_MESSAGES () {
 
 REPORT_INFO_ABOUT_NODES () {
   NODE_INFO=$( GET_INFO_ON_ALL_NODES )
-  NODE_INFO="Username binary Conf-Location MN-Status MN-Info Balance Unconfirmed-Balance Staking Connection-Count BlockCount Uptime PID networkhashps MN-Win
+  NODE_INFO="Username binary cli-binary Conf-Folder Conf-Location MN-Status MN-Info Balance Unconfirmed-Balance Staking Connection-Count BlockCount Uptime PID networkhashps MN-Win
   ${NODE_INFO}"
 #   echo "${NODE_INFO}" | column -t
 
-  while read -r USRNAME DAEMON_BIN CONF_LOCATION MASTERNODE MNINFO GETBALANCE GETUNCONFIRMEDBALANCE STAKING GETCONNECTIONCOUNT GETBLOCKCOUNT UPTIME DAEMON_PID NETWORKHASHPS MNWIN
+  while read -r USRNAME DAEMON_BIN CONTROLLER_BIN CONF_FOLDER CONF_LOCATION MASTERNODE MNINFO GETBALANCE GETUNCONFIRMEDBALANCE STAKING GETCONNECTIONCOUNT GETBLOCKCOUNT UPTIME DAEMON_PID NETWORKHASHPS MNWIN
   do
     if [[ -z "${USRNAME}" ]]
     then
@@ -1422,8 +1422,10 @@ ${MIN_STAKE} > ${GETBALANCE}" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATA
 Has enough coins to stake now!" "Balance is above the minimum" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
         if [[ "${STAKING}" -eq 0 ]]
         then
+          GETSTAKINGSTATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getstakingstatus" 2>&1 | jq . | grep 'false' )
           PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_status" "" "__${USRNAME} ${DAEMON_BIN}__
-Staking status is false" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+Staking status is false
+${GETSTAKINGSTATUS}" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
         fi
         if [[ "${STAKING}" -eq 1 ]]
         then
