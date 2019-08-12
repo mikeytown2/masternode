@@ -1015,8 +1015,6 @@ REPORT_INFO_ABOUT_NODE () {
     return
   fi
 
-  echo "${USRNAME}" >/dev/tty
-
   if [[ ! ${MASTERNODE} =~ ${RE} ]]
   then
     return
@@ -1215,7 +1213,6 @@ Staking status is now TRUE!" "Staking is enabled" "${WEBHOOK_USERNAME}" "${WEBHO
     BLOCK_WIN=$( echo "${MNWIN}" | cut -d ' ' -f2 )
     MN_REWARD_IN_BLOCKS=$( echo "${BLOCK_WIN} - ${GETBLOCKCOUNT}" | bc -l )
     MN_REWARD_IN_SECONDS=$( echo "${MN_REWARD_IN_BLOCKS} * ${BLOCKTIME_SECONDS}" | bc -l )
-    echo 'mn reward in time' >/dev/tty
     MN_REWARD_IN_TIME=$( DISPLAYTIME "${MN_REWARD_IN_SECONDS}" )
     PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "mnwin:${BLOCK_WIN}" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
 Masternode on ${MN_ADDRESS_WIN} will get paid in aproxamently ${MN_REWARD_IN_TIME}.
@@ -1329,11 +1326,14 @@ GET_INFO_ON_THIS_NODE () {
   fi
 
   WALLETINFO=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getwalletinfo" 2>&1 )
-  if [[ ! -z "${WALLETINFO}" ]]
+  if [[ ! -z "${WALLETINFO}" ]] && [[ $( echo "${WALLETINFO}" | grep -ic 'balance' ) -gt 0 ]]
   then
     GETBALANCE=$( echo "${WALLETINFO}" | jq -r '.balance' )
     GETTOTALBALANCE=$( echo "${WALLETINFO}" | jq -r '.balance, .unconfirmed_balance, .immature_balance' |  awk '{sum+=$0} END{print sum}' )
+  else
+    WALLETINFO=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getbalance" 2>&1 )
   fi
+
 
   # check staking status.
   STAKING=0
