@@ -95,8 +95,7 @@ DISPLAYTIME () {
   (( D > 0 )) && printf '%d days ' "${D}"
   (( H > 0 )) && printf '%d hours ' "${H}"
   (( M > 0 )) && printf '%d minutes ' "${M}"
-  (( D > 0 || H > 0 || M > 0 )) && printf 'and '
-  printf '%d seconds\n' "${S}"
+  (( S > 0 )) && printf '%d seconds ' "${S}"
 }
 
 INSTALL_MN_MON_SERVICE () {
@@ -188,7 +187,8 @@ WEBHOOK_SEND () {
     # shellcheck disable=SC2028
     SERVER_INFO=$( echo -n "${SERVER_INFO}\n - " ; hostname )
   else
-    SERVER_INFO=$( echo -n "${SERVER_INFO}\n - ${SERVER_ALIAS}" )
+    SERVER_INFO=$( echo -n "${SERVER_INFO}
+- ${SERVER_ALIAS}" )
   fi
 
   if [[ ! -z "${7}" ]]
@@ -680,21 +680,15 @@ then
 fi
 
 PROCESS_MESSAGES () {
-  NAME=''
-  MESSAGE_ERROR=''
-  MESSAGE_WARNING=''
-  MESSAGE_INFO=''
-  MESSAGE_SUCCESS=''
-  RECOVERED_MESSAGE_SUCCESS=''
-  RECOVERED_TITLE_SUCCESS=''
-
-  NAME=${1}
-  MESSAGE_ERROR=${2}
-  MESSAGE_WARNING=${3}
-  MESSAGE_INFO=${4}
-  MESSAGE_SUCCESS=${5}
-  RECOVERED_MESSAGE_SUCCESS=${6}
-  RECOVERED_TITLE_SUCCESS=${7}
+  local NAME=${1}
+  local MESSAGE_ERROR=${2}
+  local MESSAGE_WARNING=${3}
+  local MESSAGE_INFO=${4}
+  local MESSAGE_SUCCESS=${5}
+  local RECOVERED_MESSAGE_SUCCESS=${6}
+  local RECOVERED_TITLE_SUCCESS=${7}
+  local WEBHOOK_USERNAME=${8}
+  local WEBHOOK_AVATAR=${9}
 
   # Get past events.
   UNIX_TIME=$( date -u +%s )
@@ -835,7 +829,7 @@ CHECK_DISK () {
 
   RECOVERED_MESSAGE_SUCCESS="Hard drive has ${FREEPSPACE_ALL} MB Free; boot folder has ${FREEPSPACE_BOOT} MB Free."
   RECOVERED_TITLE_SUCCESS="Low diskspace issue has been resolved."
-  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}"
+  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${WEBHOOK_USERNAME_DEFAULT}" "${WEBHOOK_AVATAR_DEFAULT}"
 }
 CHECK_DISK
 
@@ -860,7 +854,7 @@ CHECK_CPU_LOAD () {
 
   RECOVERED_MESSAGE_SUCCESS="Load per CPU is ${LOAD_PER_CPU}."
   RECOVERED_TITLE_SUCCESS="CPU Load is back to normal."
-  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}"
+  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${WEBHOOK_USERNAME_DEFAULT}" "${WEBHOOK_AVATAR_DEFAULT}"
 }
 CHECK_CPU_LOAD
 
@@ -883,7 +877,7 @@ CHECK_SWAP () {
 
   RECOVERED_MESSAGE_SUCCESS="Free Swap space is ${SWAP_FREE_MB} MB."
   RECOVERED_TITLE_SUCCESS="Free sawp space is back to normal."
-  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}"
+  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${WEBHOOK_USERNAME_DEFAULT}" "${WEBHOOK_AVATAR_DEFAULT}"
 }
 CHECK_SWAP
 
@@ -908,7 +902,7 @@ CHECK_RAM () {
 
   RECOVERED_MESSAGE_SUCCESS="Free RAM is now at ${MEM_AVAILABLE_MB} MB."
   RECOVERED_TITLE_SUCCESS="Free RAM is back to normal."
-  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}"
+  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${WEBHOOK_USERNAME_DEFAULT}" "${WEBHOOK_AVATAR_DEFAULT}"
 }
 CHECK_RAM
 
@@ -1039,9 +1033,7 @@ GET_INFO_ON_ALL_NODES () {
     # is the daemon running.
     if [[ -z "${DAEMON_PID}" ]]
     then
-      echo "${USRNAME} not running" >/dev/tty
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "node_not_running" "__${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION}__
-This node is not running." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      echo "${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION} -1 This_node_is_not_running."
       continue
     fi
 
@@ -1055,9 +1047,7 @@ This node is not running." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATA
 
     if [[ -z "${GETBLOCKCOUNT}" ]] && [[ -z "${GETCONNECTIONCOUNT}" ]]
     then
-      echo "${USRNAME} is frozen" >/dev/tty
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "frozen_node" "__${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION}__
-This node is frozen. PID: ${DAEMON_PID}" "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      echo "${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION} -2 This_node_is_frozen._PID:_${DAEMON_PID}"
       continue
     fi
 
@@ -1248,13 +1238,6 @@ REPORT_INFO_ABOUT_NODES () {
       continue
     fi
 
-    if [[ -z "${CONF_LOCATION}" ]]
-    then
-      PROCESS_NODE_MESSAGES "${USRNAME}" "not-running" "__${USRNAME} ${DAEMON_BIN}__
-Is not currently running. No PID." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
-      continue
-    fi
-
     if [[ ! ${MASTERNODE} =~ ${RE} ]]
     then
       continue
@@ -1267,6 +1250,22 @@ Is not currently running. No PID." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHO
     then
       WEBHOOK_AVATAR=$( echo "${EXTRA_INFO}" | cut -d ' ' -f2 )
       WEBHOOK_USERNAME=$( echo "${EXTRA_INFO}" | cut -d ' ' -f3- )
+    fi
+
+    if [[ "${MASTERNODE}" == '-1' ]]
+    then
+      MESSAGE=$( echo "${MNINFO}" | tr '_' ' ' )
+      PROCESS_NODE_MESSAGES "${USRNAME}" "not_running" "__${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION}__
+${MESSAGE}" "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      continue
+    fi
+
+    if [[ "${MASTERNODE}" == '-2' ]]
+    then
+      MESSAGE=$( echo "${MNINFO}" | tr '_' ' ' )
+      PROCESS_NODE_MESSAGES "${USRNAME}" "frozen" "__${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION}__
+${MESSAGE}" "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+      continue
     fi
 
     MIN_STAKE=0
@@ -1403,8 +1402,16 @@ Unconfirmed Balance: ${GETUNCONFIRMEDBALANCE}" "" "" "${WEBHOOK_USERNAME}" "${WE
     fi
 
     # Report on staking.
+    TIME_TO_STAKE=''
     if [[ ! -z "${GETBALANCE}" ]] && [[ "$( echo "${GETBALANCE} > 0.0" | bc -l )" -gt 0 ]]
     then
+      COINS_STAKED_TOTAL_NETWORK=$( echo "${NETWORKHASHPS} * ${NET_HASH_FACTOR}" | bc -l )
+      if [[ ! -z "${COINS_STAKED_TOTAL_NETWORK}" ]] && [[ "${COINS_STAKED_TOTAL_NETWORK}" != 0 ]]
+      then
+        SECONDS_TO_AVERAGE_STAKE=$( echo "${COINS_STAKED_TOTAL_NETWORK} / ${GETBALANCE} * ${BLOCKTIME_SECONDS}" | bc -l )
+        TIME_TO_STAKE=$( DISPLAYTIME "${SECONDS_TO_AVERAGE_STAKE}" )
+      fi
+
       if [[ "$( echo "${MIN_STAKE} > ${GETBALANCE}" | bc -l )" -gt 0 ]]
       then
         PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_balance" "" "__${USRNAME} ${DAEMON_BIN}__
@@ -1477,7 +1484,8 @@ PID: ${DAEMON_PID}
 Uptime: ${UPTIME} seconds (${UPTIME_HUMAN})
 Staking Status: ${STAKING_TEXT}
 Masternode Status: ${MASTERNODE_TEXT}
-Balance: ${GETBALANCE} " "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+Balance: ${GETBALANCE}
+Staking Average ETA: ${TIME_TO_STAKE}" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
 
   done <<< "${NODE_INFO}"
 }
