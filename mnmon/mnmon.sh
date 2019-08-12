@@ -178,20 +178,24 @@ WEBHOOK_SEND () {
   SERVER_INFO=$( date -Ru )
 
   SHOW_IP=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'show_ip';" )
+  IP_ADDRESS=''
   if [[ "${SHOW_IP}" -gt 0 ]]
   then
     # shellcheck disable=SC2028
-    SERVER_INFO=$( echo -n "${SERVER_INFO}\n - " ; hostname -i )
+    IP_ADDRESS=$( hostname -i )
   fi
+  if [[ ! -z "${IP_ADDRESS}" ]]
+  then
+    SERVER_INFO="${SERVER_INFO}
+- ${IP_ADDRESS}"
+  fi
+
 
   SERVER_ALIAS=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'server_alias';" )
   if [[ -z "${SERVER_ALIAS}" ]]
   then
     # shellcheck disable=SC2028
-    SERVER_INFO=$( echo -n "${SERVER_INFO}\n - " ; hostname )
-  else
-    SERVER_INFO=$( echo -n "${SERVER_INFO}
-- ${SERVER_ALIAS}" )
+    SERVER_ALIAS=$( hostname )
   fi
 
   if [[ ! -z "${7}" ]]
@@ -207,7 +211,7 @@ WEBHOOK_SEND () {
   # Build HTTP POST.
   _PAYLOAD=$( cat << PAYLOAD
 {
-  "username": "${WEBHOOK_USERNAME}",
+  "username": "${WEBHOOK_USERNAME} - ${SERVER_ALIAS}",
   "avatar_url": "${WEBHOOK_AVATAR}",
   "content": "**${TITLE}**",
   "embeds": [{
