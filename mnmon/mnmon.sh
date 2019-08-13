@@ -3,6 +3,16 @@
 # Copyright (c) 2019
 # All rights reserved.
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
+: '
+# Run this file
+
+```
+bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/mnmon/mnmon.sh)" ; source ~/.bashrc
+```
+
+'
+
 stty sane 2>/dev/null
 
 arg1="${1}"
@@ -605,25 +615,25 @@ GET_DISCORD_WEBHOOKS () {
     echo 'pings in the same channel.'
 
     WEBHOOK_URL_PROMPT "error" "${WEBHOOKURL}"
-    SEND_ERROR "Test"
+    SEND_ERROR "Test Error"
   fi
   WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_warning';" )
   if [[ -z "${WEBHOOKURL}" ]] || [[ "${REPLY}" == y ]]
   then
     WEBHOOK_URL_PROMPT "warning" "${WEBHOOKURL}"
-    SEND_WARNING "Test"
+    SEND_WARNING "Test Warning"
   fi
   WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_information';" )
   if [[ -z "${WEBHOOKURL}" ]] || [[ "${REPLY}" == y ]]
   then
     WEBHOOK_URL_PROMPT "information" "${WEBHOOKURL}"
-    SEND_INFO "Test"
+    SEND_INFO "Test Info"
   fi
   WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_success';" )
   if [[ -z "${WEBHOOKURL}" ]] || [[ "${REPLY}" == y ]]
   then
     WEBHOOK_URL_PROMPT "success" "${WEBHOOKURL}"
-    SEND_SUCCESS "Test"
+    SEND_SUCCESS "Test Success"
   fi
 }
 
