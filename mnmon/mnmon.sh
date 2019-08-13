@@ -175,13 +175,26 @@ WEBHOOK_SEND () {
   fi
   WEBHOOK_COLOR="${6}"
 
+  # Show Date.
   SERVER_INFO=$( date -Ru )
 
+  # Show Server Alias.
+  SERVER_ALIAS=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'server_alias';" )
+  if [[ -z "${SERVER_ALIAS}" ]]
+  then
+    SERVER_ALIAS=$( hostname )
+  fi
+  if [[ ! -z "${SERVER_ALIAS}" ]]
+  then
+    SERVER_INFO="${SERVER_INFO}
+- ${SERVER_ALIAS}"
+  fi
+
+  # Show IP Address.
   SHOW_IP=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'show_ip';" )
   IP_ADDRESS=''
   if [[ "${SHOW_IP}" -gt 0 ]]
   then
-    # shellcheck disable=SC2028
     IP_ADDRESS=$( hostname -i )
   fi
   if [[ ! -z "${IP_ADDRESS}" ]]
@@ -190,14 +203,7 @@ WEBHOOK_SEND () {
 - ${IP_ADDRESS}"
   fi
 
-
-  SERVER_ALIAS=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'server_alias';" )
-  if [[ -z "${SERVER_ALIAS}" ]]
-  then
-    # shellcheck disable=SC2028
-    SERVER_ALIAS=$( hostname )
-  fi
-
+  # Allow footer Override.
   if [[ ! -z "${7}" ]]
   then
     SERVER_INFO="${7}"
