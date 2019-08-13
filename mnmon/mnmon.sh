@@ -68,7 +68,7 @@ fi
 SQL_QUERY () {
   if [[ ! -d /var/multi-masternode-data/mnbot ]]
   then
-    mkdir -p /var/multi-masternode-data/mnbot
+    sudo mkdir -p /var/multi-masternode-data/mnbot
   fi
   sqlite3 -batch /var/multi-masternode-data/mnbot/mnmon.sqlite3.db "${1}"
 }
