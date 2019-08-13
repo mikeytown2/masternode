@@ -14,6 +14,8 @@ bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/maste
 
 '
 
+# https://imgur.com/a/B8RMhHV
+
 stty sane 2>/dev/null
 
 arg1="${1}"
