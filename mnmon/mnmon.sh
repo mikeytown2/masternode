@@ -18,7 +18,7 @@ WEBHOOK_AVATAR_DEFAULT='https://i.imgur.com/8WHSSa7s.jpg'
 DAEMON_BIN_LUT="
 energid https://s2.coinmarketcap.com/static/img/coins/128x128/3218.png Energi Monitor
 dogecashd https://s2.coinmarketcap.com/static/img/coins/128x128/3672.png DogeCash Monitor
-ungrid http://explorer.unigrid.org/images/logo.png UniGrid Monitor
+unigridd http://explorer.unigrid.org/images/logo.png UniGrid Monitor
 "
 
 # Daemon_bin_name minimum_balance_to_stake staking_reward mn_reward confirmations cooloff_seconds networkhashps_multiplier ticker_name blocktime_seconds
