@@ -4,6 +4,7 @@
 # All rights reserved.
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
+# shellcheck disable=SC2016
 : '
 # Run this file
 
