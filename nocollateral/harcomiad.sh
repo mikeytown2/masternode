@@ -15,7 +15,7 @@ bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/maste
 '
 
 # Github user and project.
-GITHUB_REPO='harcomia/Harcomia-core'
+GITHUB_REPO='harcomia/harcomia'
 # Display Name.
 DAEMON_NAME='Harcomia Core'
 # Coin Ticker.
@@ -29,7 +29,7 @@ CONF='harcomia.conf'
 # Port.
 DEFAULT_PORT=13123
 # Explorer URL.
-EXPLORER_URL='http://46.101.173.6:88/'
+EXPLORER_URL='http://68.183.6.219:88/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 # Amount of Collateral needed.
@@ -45,13 +45,13 @@ MULTI_IP_MODE=1
 
 
 # Tip Address.
-TIPS='HSYbeDjqEsA2DZyMv7BGjDZBpKwJEfKKzc'
+TIPS=''
 # Dropbox Addnodes.
-DROPBOX_ADDNODES='als94hv7dyiqrxv'
+DROPBOX_ADDNODES='b69xl8qf76ter2g'
 # Dropbox Bootstrap.
-DROPBOX_BOOTSTRAP='bia55vqi8tth269'
+DROPBOX_BOOTSTRAP='kz0ddbs2ca91eme'
 # Dropbox blocks and chainstake folders.
-DROPBOX_BLOCKS_N_CHAINS='niic9foorr6rl6s'
+DROPBOX_BLOCKS_N_CHAINS='unqemgzylaixdi3'
 
 ASCII_ART () {
 echo -e "\e[0m"
