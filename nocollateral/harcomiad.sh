@@ -45,7 +45,7 @@ MULTI_IP_MODE=1
 
 
 # Tip Address.
-TIPS=''
+TIPS='hWgM7KBfH67gTYkiayrU9WCu6EfdRaGhZb'
 # Dropbox Addnodes.
 DROPBOX_ADDNODES='b69xl8qf76ter2g'
 # Dropbox Bootstrap.
