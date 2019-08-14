@@ -14,18 +14,17 @@ bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/maste
 
 '
 
+# Simple guide
 # https://imgur.com/a/B8RMhHV
 
+# Define simple variables.
 stty sane 2>/dev/null
-
 arg1="${1}"
 arg2="${2}"
 arg3="${3}"
-
 RE='^[0-9]+$'
-
-WEBHOOK_USERNAME_DEFAULT='Masternode Monitor'
-WEBHOOK_AVATAR_DEFAULT='https://i.imgur.com/8WHSSa7s.jpg'
+DISCORD_WEBHOOK_USERNAME_DEFAULT='Masternode Monitor'
+DISCORD_WEBHOOK_AVATAR_DEFAULT='https://i.imgur.com/8WHSSa7s.jpg'
 
 # Daemon_bin_name URL_to_logo Bot_name
 DAEMON_BIN_LUT="
@@ -40,6 +39,7 @@ energid 1 2.28 9.14 101 3600 0.000001 NRG 60
 dogecashd 1 2.16 8.64 101 3600 0.000001 DOGEC 60
 "
 
+# Debug arg.
 DEBUG_OUTPUT=0
 if [[ "${arg1}" == 'debug' ]]
 then
@@ -65,26 +65,30 @@ then
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq jq
 fi
 
+# Run a sqlite query.
 SQL_QUERY () {
   if [[ ! -d /var/multi-masternode-data/mnbot ]]
   then
     sudo mkdir -p /var/multi-masternode-data/mnbot
   fi
-  sqlite3 -batch /var/multi-masternode-data/mnbot/mnmon.sqlite3.db "${1}"
+  sudo sqlite3 -batch /var/multi-masternode-data/mnbot/mnmon.sqlite3.db "${1}"
 }
 
 # Create tables if they do not exist.
+# Key Value table.
 SQL_QUERY "CREATE TABLE IF NOT EXISTS variables (
  key TEXT PRIMARY KEY,
  value TEXT NOT NULL
 );"
 
+# User login.
 SQL_QUERY "CREATE TABLE IF NOT EXISTS login_data (
   time INTEGER,
   message TEXT,
   PRIMARY KEY (time, message)
 );"
 
+# System logs.
 SQL_QUERY "CREATE TABLE IF NOT EXISTS system_log (
   name TEXT PRIMARY KEY,
   start_time INTEGER ,
@@ -92,6 +96,7 @@ SQL_QUERY "CREATE TABLE IF NOT EXISTS system_log (
   message TEXT
 );"
 
+# Daemon logs.
 SQL_QUERY "CREATE TABLE IF NOT EXISTS node_log (
   conf_loc TEXT,
   type TEXT,
@@ -101,6 +106,7 @@ SQL_QUERY "CREATE TABLE IF NOT EXISTS node_log (
   PRIMARY KEY (conf_loc, type)
 );"
 
+# Convert seconds to days, hours, minutes, seconds.
 DISPLAYTIME () {
   # Round up the time.
   local T=0
@@ -115,12 +121,28 @@ DISPLAYTIME () {
   (( S > 0 )) && printf '%d seconds ' "${S}"
 }
 
+# Create a service that runs every minute.
 INSTALL_MN_MON_SERVICE () {
   if [[ -f "${HOME}/masternode/mnmon/mnmon.sh" ]]
   then
-    cp "${HOME}/masternode/mnmon/mnmon.sh" /var/multi-masternode-data/mnbot/mnmon.sh
+    sudo cp "${HOME}/masternode/mnmon/mnmon.sh" /var/multi-masternode-data/mnbot/mnmon.sh
   else
-    wget -q4o- https://raw.githubusercontent.com/mikeytown2/masternode/master/mnmon/mnmon.sh -O /var/multi-masternode-data/mnbot/mnmon.sh
+    COUNTER=0
+    sudo rm -f /var/multi-masternode-data/mnbot/mnmon.sh
+    while [[ ! -f /var/multi-masternode-data/mnbot/mnmon.sh ]] || [[ $( sudo grep -Fxc "# End of the masternode monitor script." /var/multi-masternode-data/mnbot/mnmon.sh ) -eq 0 ]]
+    do
+      sudo rm -f /var/multi-masternode-data/mnbot/mnmon.sh
+      echo "Downloading Masternode Setup Script."
+      sudo wget -q4o- https://raw.githubusercontent.com/mikeytown2/masternode/master/mnmon/mnmon.sh -O /var/multi-masternode-data/mnbot/mnmon.sh
+      COUNTER=$((COUNTER+1))
+      if [[ "${COUNTER}" -gt 3 ]]
+      then
+        echo
+        echo "Download of masternode monitor script failed."
+        echo
+        exit 1
+      fi
+    done
   fi
 
   cat << SYSTEMD_CONF | sudo tee /etc/systemd/system/mnmon.service >/dev/null
@@ -171,55 +193,59 @@ SYSTEMD_CONF
   sudo systemctl enable mnmon.timer --now
 }
 
-WEBHOOK_SEND () {
+# Send the data to discord via webhook.
+DISCORD_WEBHOOK_SEND () {
 (
+  local SERVER_ALIAS
+  local SHOW_IP
+  local _PAYLOAD
+  local IP_ADDRESS=''
+
   local URL="${1}"
   local DESCRIPTION="${2}"
   local TITLE="${3}"
-  local WEBHOOK_USERNAME="${4}"
-  if [[ -z "${WEBHOOK_USERNAME}" ]]
-  then
-    WEBHOOK_USERNAME="${WEBHOOK_USERNAME_DEFAULT}"
-  fi
-  WEBHOOK_AVATAR="${5}"
-  if [[ -z "${WEBHOOK_AVATAR}" ]]
-  then
-    WEBHOOK_AVATAR="${WEBHOOK_AVATAR_DEFAULT}"
-  fi
-  WEBHOOK_COLOR="${6}"
+  local DISCORD_WEBHOOK_USERNAME="${4}"
+  local DISCORD_WEBHOOK_AVATAR="${5}"
+  local DISCORD_WEBHOOK_COLOR="${6}"
+  local SERVER_INFO="${7}"
 
-  # Show Date.
-  SERVER_INFO=$( date -Ru )
-
-  # Show Server Alias.
-  SERVER_ALIAS=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'server_alias';" )
-  if [[ -z "${SERVER_ALIAS}" ]]
+  # Username to show.
+  if [[ -z "${DISCORD_WEBHOOK_USERNAME}" ]]
   then
-    SERVER_ALIAS=$( hostname )
+    DISCORD_WEBHOOK_USERNAME="${DISCORD_WEBHOOK_USERNAME_DEFAULT}"
   fi
-  if [[ ! -z "${SERVER_ALIAS}" ]]
+  # Avatar to show.
+  if [[ -z "${DISCORD_WEBHOOK_AVATAR}" ]]
   then
-    SERVER_INFO="${SERVER_INFO}
+    DISCORD_WEBHOOK_AVATAR="${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
+  fi
+
+  if [[ -z "${SERVER_INFO}" ]]
+  then
+    SERVER_INFO=$( date -Ru )
+    # Show Server Alias.
+    SERVER_ALIAS=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'server_alias';" )
+    if [[ -z "${SERVER_ALIAS}" ]]
+    then
+      SERVER_ALIAS=$( hostname )
+    fi
+    if [[ ! -z "${SERVER_ALIAS}" ]]
+    then
+      SERVER_INFO="${SERVER_INFO}
 - ${SERVER_ALIAS}"
-  fi
+    fi
 
-  # Show IP Address.
-  SHOW_IP=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'show_ip';" )
-  IP_ADDRESS=''
-  if [[ "${SHOW_IP}" -gt 0 ]]
-  then
-    IP_ADDRESS=$( hostname -i )
-  fi
-  if [[ ! -z "${IP_ADDRESS}" ]]
-  then
-    SERVER_INFO="${SERVER_INFO}
+    # Show IP Address.
+    SHOW_IP=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'show_ip';" )
+    if [[ "${SHOW_IP}" -gt 0 ]]
+    then
+      IP_ADDRESS=$( hostname -i )
+    fi
+    if [[ ! -z "${IP_ADDRESS}" ]]
+    then
+      SERVER_INFO="${SERVER_INFO}
 - ${IP_ADDRESS}"
-  fi
-
-  # Allow footer Override.
-  if [[ ! -z "${7}" ]]
-  then
-    SERVER_INFO="${7}"
+    fi
   fi
 
   # Replace new line with \n
@@ -230,11 +256,11 @@ WEBHOOK_SEND () {
   # Build HTTP POST.
   _PAYLOAD=$( cat << PAYLOAD
 {
-  "username": "${WEBHOOK_USERNAME} - ${SERVER_ALIAS}",
-  "avatar_url": "${WEBHOOK_AVATAR}",
+  "username": "${DISCORD_WEBHOOK_USERNAME} - ${SERVER_ALIAS}",
+  "avatar_url": "${DISCORD_WEBHOOK_AVATAR}",
   "content": "**${TITLE}**",
   "embeds": [{
-    "color": ${WEBHOOK_COLOR},
+    "color": ${DISCORD_WEBHOOK_COLOR},
     "title": "${DESCRIPTION}",
     "description": "${SERVER_INFO}"
   }]
@@ -246,6 +272,7 @@ PAYLOAD
   OUTPUT=$( curl -H "Content-Type: application/json" -s -X POST "${URL}" -d "${_PAYLOAD}" | sed '/^[[:space:]]*$/d' )
   if [[ ! -z "${OUTPUT}" ]]
   then
+    # Wait if we got throttled.
     MS_WAIT=$( echo "${OUTPUT}" | jq -r '.retry_after' 2>/dev/null )
     if [[ ! -z "${MS_WAIT}" ]]
     then
@@ -255,6 +282,7 @@ PAYLOAD
       OUTPUT=$( curl -H "Content-Type: application/json" -s -X POST "${URL}" -d "${_PAYLOAD}" | sed '/^[[:space:]]*$/d' )
     fi
   fi
+  # If only errors get a return value.
   if [[ ! -z "${OUTPUT}" ]]
   then
     echo "Discord Error"
@@ -267,13 +295,86 @@ PAYLOAD
 )
 }
 
+# Get the webhook url and test to make sure it works.
+DISCORD_WEBHOOK_URL_PROMPT () {
+  # Title of this webhook.
+  TEXT_A="${1}"
+  # Url of the existing webhook.
+  DISCORD_WEBHOOK_URL="${2}"
+  while :
+  do
+    echo
+    read -r -e -i "${DISCORD_WEBHOOK_URL}" -p "${TEXT_A}s webhook url: " input
+    DISCORD_WEBHOOK_URL="${input:-${DISCORD_WEBHOOK_URL}}"
+    if [[ ! -z "${DISCORD_WEBHOOK_URL}" ]]
+    then
+      TOKEN=$( wget -qO- -o- "${DISCORD_WEBHOOK_URL}" | jq -r '.token' )
+      if [[ -z "${TOKEN}" ]]
+      then
+        echo "Given URL is not a webhook."
+        echo
+        echo -n 'Get Webhook URL: Your personal server (press plus on left if you do not have one)'
+        echo -n ' -> Right click on your server -> Server Settings -> Webhooks'
+        echo -n ' -> Create Webhook -> Copy webhook url -> save'
+        echo
+        DISCORD_WEBHOOK_URL=''
+      else
+        echo "${TOKEN}"
+        break
+      fi
+    fi
+  done
+  SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('discord_webhook_url_${TEXT_A}','${DISCORD_WEBHOOK_URL}');"
+}
+
+# Prompt for all webhooks that we need.
+GET_DISCORD_WEBHOOKS () {
+  # Get webhook url from discord.
+  echo
+  echo -n 'Get Webhook URL: Your personal server (press plus on left if you do not have one)'
+  echo -n ' -> text channels, general, click gear to "edit channel" -> Left side SELECT Webhooks'
+  echo -n ' -> Create Webhook -> Copy webhook url -> save'
+  echo
+  echo "This webhook will be used for ${TEXT_A} Messages."
+  echo 'You can reuse the same webhook url if you want all alerts and information'
+  echo 'pings in the same channel.'
+
+  # Errors.
+  DISCORD_WEBHOOK_URL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_error';" )
+  DISCORD_WEBHOOK_URL_PROMPT "error" "${DISCORD_WEBHOOK_URL}"
+  SEND_ERROR "Test Error"
+
+  # Warnings.
+  DISCORD_WEBHOOK_URL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_warning';" )
+  DISCORD_WEBHOOK_URL_PROMPT "warning" "${DISCORD_WEBHOOK_URL}"
+  SEND_WARNING "Test Warning"
+
+  # Info.
+  DISCORD_WEBHOOK_URL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_information';" )
+  DISCORD_WEBHOOK_URL_PROMPT "information" "${DISCORD_WEBHOOK_URL}"
+  SEND_INFO "Test Info"
+
+  # Success.
+  DISCORD_WEBHOOK_URL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_success';" )
+  DISCORD_WEBHOOK_URL_PROMPT "success" "${DISCORD_WEBHOOK_URL}"
+  SEND_SUCCESS "Test Success"
+}
+
+# Send the data to telegram via bot.
 TELEGRAM_SEND () {
 (
-  TOKEN="${1}"
-  CHAT_ID="${2}"
-  TITLE="${3}"
-  MESSAGE="${4}"
+  local SERVER_INFO
+  local SHOW_IP
+  local SERVER_ALIAS
+  local _PAYLOAD
 
+  local TOKEN="${1}"
+  local CHAT_ID="${2}"
+  local TITLE="${3}"
+  local MESSAGE="${4}"
+  local SERVER_INFO="${5}"
+
+  # Translate discord emojis to telegram.
   # https://apps.timwhitlock.info/emoji/tables/unicode
   # http://www.unicode.org/emoji/charts/full-emoji-list.html
   # https://onlineutf8tools.com/convert-utf8-to-bytes
@@ -301,26 +402,23 @@ TELEGRAM_SEND () {
     sed 's/:wrench:/\xF0\x9F\x94\xA7/g' | \
     sed 's/:fire:/\xF0\x9F\x94\xA5/g' )
 
-  SERVER_INFO=$( date -Ru )
-
-  SHOW_IP=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'show_ip';" )
-  if [[ "${SHOW_IP}" -gt 0 ]]
+  if [[ -z "${SERVER_INFO}" ]]
   then
-    # shellcheck disable=SC2028
-    SERVER_INFO=$( echo -ne "${SERVER_INFO}\n - " ; hostname -i )
-  fi
-
-  SERVER_ALIAS=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'server_alias';" )
-  if [[ -z "${SERVER_ALIAS}" ]]
-  then
-    # shellcheck disable=SC2028
-    SERVER_INFO=$( echo -ne "${SERVER_INFO}\n - " ; hostname )
-  else
-    SERVER_INFO=$( echo -ne "${SERVER_INFO}\n - ${SERVER_ALIAS}" )
-  fi
-  if [[ ! -z "${5}" ]]
-  then
-    SERVER_INFO="${5}"
+    SERVER_INFO=$( date -Ru )
+    SHOW_IP=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'show_ip';" )
+    if [[ "${SHOW_IP}" -gt 0 ]]
+    then
+      # shellcheck disable=SC2028
+      SERVER_INFO=$( echo -ne "${SERVER_INFO}\n - " ; hostname -i )
+    fi
+    SERVER_ALIAS=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'server_alias';" )
+    if [[ -z "${SERVER_ALIAS}" ]]
+    then
+      # shellcheck disable=SC2028
+      SERVER_INFO=$( echo -ne "${SERVER_INFO}\n - " ; hostname )
+    else
+      SERVER_INFO=$( echo -ne "${SERVER_INFO}\n - ${SERVER_ALIAS}" )
+    fi
   fi
 
   _PAYLOAD="text=<b>${TITLE}</b>
@@ -339,10 +437,12 @@ ${MESSAGE}"
     echo "${_PAYLOAD}"
     echo "-"
   fi
+  # Rate limit this function.
   sleep 0.3
 )
 }
 
+# Install telegram bot.
 TELEGRAM_SETUP () {
   TOKEN=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_token';" )
   echo "Message the @botfather https://web.telegram.org/#/im?p=@BotFather"
@@ -398,6 +498,7 @@ TELEGRAM_SETUP () {
   TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${TITLE}" "<pre>${MESSAGE}</pre>"
 }
 
+# Send an error messsage to discord and telegram.
 SEND_ERROR () {
   URL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_error';" )
   TOKEN=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_token';" )
@@ -413,10 +514,10 @@ SEND_ERROR () {
   then
     TITLE=":exclamation: Error :exclamation:"
   fi
-  WEBHOOK_COLOR="${5}"
-  if [[ -z "${WEBHOOK_COLOR}" ]]
+  DISCORD_WEBHOOK_COLOR="${5}"
+  if [[ -z "${DISCORD_WEBHOOK_COLOR}" ]]
   then
-    WEBHOOK_COLOR=16711680
+    DISCORD_WEBHOOK_COLOR=16711680
   fi
   if [[ ! -z "${6}" ]]
   then
@@ -427,7 +528,7 @@ SEND_ERROR () {
   if [[ ! -z "${URL}" ]]
   then
     SENT=1
-    WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${WEBHOOK_COLOR}"
+    DISCORD_WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${DISCORD_WEBHOOK_COLOR}"
   fi
   if [[ ! -z "${TOKEN}" ]] && [[ ! -z "${CHAT_ID}" ]]
   then
@@ -457,10 +558,10 @@ SEND_WARNING () {
   then
     TITLE=":warning: Warning :warning:"
   fi
-  WEBHOOK_COLOR="${5}"
-  if [[ -z "${WEBHOOK_COLOR}" ]]
+  DISCORD_WEBHOOK_COLOR="${5}"
+  if [[ -z "${DISCORD_WEBHOOK_COLOR}" ]]
   then
-    WEBHOOK_COLOR=16776960
+    DISCORD_WEBHOOK_COLOR=16776960
   fi
   if [[ ! -z "${6}" ]]
   then
@@ -471,7 +572,7 @@ SEND_WARNING () {
   if [[ ! -z "${URL}" ]]
   then
     SENT=1
-    WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${WEBHOOK_COLOR}"
+    DISCORD_WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${DISCORD_WEBHOOK_COLOR}"
   fi
   if [[ ! -z "${TOKEN}" ]] && [[ ! -z "${CHAT_ID}" ]]
   then
@@ -501,10 +602,10 @@ SEND_INFO () {
   then
     TITLE=":blue_book: Information :blue_book:"
   fi
-  WEBHOOK_COLOR="${5}"
-  if [[ -z "${WEBHOOK_COLOR}" ]]
+  DISCORD_WEBHOOK_COLOR="${5}"
+  if [[ -z "${DISCORD_WEBHOOK_COLOR}" ]]
   then
-    WEBHOOK_COLOR=65535
+    DISCORD_WEBHOOK_COLOR=65535
   fi
   if [[ ! -z "${6}" ]]
   then
@@ -515,7 +616,7 @@ SEND_INFO () {
   if [[ ! -z "${URL}" ]]
   then
     SENT=1
-    WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${WEBHOOK_COLOR}"
+    DISCORD_WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${DISCORD_WEBHOOK_COLOR}"
   fi
   if [[ ! -z "${TOKEN}" ]] && [[ ! -z "${CHAT_ID}" ]]
   then
@@ -545,10 +646,10 @@ SEND_SUCCESS () {
   then
     TITLE=":moneybag: Success :money_mouth:"
   fi
-  WEBHOOK_COLOR="${5}"
-  if [[ -z "${WEBHOOK_COLOR}" ]]
+  DISCORD_WEBHOOK_COLOR="${5}"
+  if [[ -z "${DISCORD_WEBHOOK_COLOR}" ]]
   then
-    WEBHOOK_COLOR=65535
+    DISCORD_WEBHOOK_COLOR=65535
   fi
   if [[ ! -z "${6}" ]]
   then
@@ -559,7 +660,7 @@ SEND_SUCCESS () {
   if [[ ! -z "${URL}" ]]
   then
     SENT=1
-    WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${WEBHOOK_COLOR}"
+    DISCORD_WEBHOOK_SEND "${URL}" "${DESCRIPTION}" "${TITLE}" "${3}" "${4}" "${DISCORD_WEBHOOK_COLOR}"
   fi
   if [[ ! -z "${TOKEN}" ]] && [[ ! -z "${CHAT_ID}" ]]
   then
@@ -574,149 +675,6 @@ SEND_SUCCESS () {
   fi
 }
 
-WEBHOOK_URL_PROMPT () {
-  TEXT_A="${1}"
-  WEBHOOKURL="${2}"
-  while :
-  do
-    echo
-    read -r -e -i "${WEBHOOKURL}" -p "${TEXT_A}s webhook url: " input
-    WEBHOOKURL="${input:-${WEBHOOKURL}}"
-    if [[ ! -z "${WEBHOOKURL}" ]]
-    then
-      TOKEN=$( wget -qO- -o- "${WEBHOOKURL}" | jq -r '.token' )
-      if [[ -z "${TOKEN}" ]]
-      then
-        echo "Given URL is not a webhook."
-        echo
-        echo -n 'Get Webhook URL: Your personal server (press plus on left if you do not have one)'
-        echo -n ' -> Right click on your server -> Server Settings -> Webhooks'
-        echo -n ' -> Create Webhook -> Copy webhook url -> save'
-        echo
-        WEBHOOKURL=''
-      else
-        echo "${TOKEN}"
-        break
-      fi
-    fi
-  done
-  SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('discord_webhook_url_${TEXT_A}','${WEBHOOKURL}');"
-}
-
-GET_DISCORD_WEBHOOKS () {
-  WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_error';" )
-  if [[ -z "${WEBHOOKURL}" ]] || [[ "${REPLY}" == y ]]
-  then
-    # Get webhook url.
-    echo
-    echo -n 'Get Webhook URL: Your personal server (press plus on left if you do not have one)'
-    echo -n ' -> text channels, general, click gear to "edit channel" -> Left side SELECT Webhooks'
-    echo -n ' -> Create Webhook -> Copy webhook url -> save'
-    echo
-    echo "This webhook will be used for ${TEXT_A} Messages."
-    echo 'You can reuse the same webhook url if you want all alerts and information'
-    echo 'pings in the same channel.'
-
-    WEBHOOK_URL_PROMPT "error" "${WEBHOOKURL}"
-    SEND_ERROR "Test Error"
-  fi
-  WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_warning';" )
-  if [[ -z "${WEBHOOKURL}" ]] || [[ "${REPLY}" == y ]]
-  then
-    WEBHOOK_URL_PROMPT "warning" "${WEBHOOKURL}"
-    SEND_WARNING "Test Warning"
-  fi
-  WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_information';" )
-  if [[ -z "${WEBHOOKURL}" ]] || [[ "${REPLY}" == y ]]
-  then
-    WEBHOOK_URL_PROMPT "information" "${WEBHOOKURL}"
-    SEND_INFO "Test Info"
-  fi
-  WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_success';" )
-  if [[ -z "${WEBHOOKURL}" ]] || [[ "${REPLY}" == y ]]
-  then
-    WEBHOOK_URL_PROMPT "success" "${WEBHOOKURL}"
-    SEND_SUCCESS "Test Success"
-  fi
-}
-
-if [[ "${arg1}" != 'cron' ]]
-then
-  echo
-  SERVER_ALIAS=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'server_alias';" )
-  if [[ -z "${SERVER_ALIAS}" ]]
-  then
-    SERVER_ALIAS=$( hostname )
-  fi
-  read -e -p "Current alias for this server: " -i "${SERVER_ALIAS}" -r
-  SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('server_alias','${REPLY}');"
-
-  echo
-  echo -ne "IP Address: "; hostname -i
-  SHOW_IP=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'show_ip';" )
-  if [[ -z "${SHOW_IP}" ]] || [[ "${SHOW_IP}" == '1' ]]
-  then
-    SHOW_IP='y'
-  else
-    SHOW_IP='n'
-  fi
-  read -e -p "Display IP in logs (y/n)? " -i "${SHOW_IP}" -r
-  REPLY=${REPLY,,} # tolower
-  if [[ "${REPLY}" == y ]]
-  then
-    SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('show_ip','1');"
-  else
-    SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('show_ip','0');"
-  fi
-
-  echo
-  PREFIX='Setup'
-  REPLY='y'
-  WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_error';" )
-  if [[ ! -z "${WEBHOOKURL}" ]]
-  then
-    REPLY='n'
-    PREFIX='Redo'
-  fi
-  read -e -p "${PREFIX} Discord Bot webhook URLs (y/n)? " -i "${REPLY}" -r
-  REPLY=${REPLY,,} # tolower
-  if [[ "${REPLY}" == y ]]
-  then
-    GET_DISCORD_WEBHOOKS
-    echo "Discord Done"
-  fi
-
-  echo
-  PREFIX='Setup'
-  REPLY='y'
-  WEBHOOKURL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_error';" )
-  CHAT_ID=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_chatid';" )
-  if [[ ! -z "${WEBHOOKURL}" ]]
-  then
-    REPLY='n'
-  fi
-  if [[ ! -z "${CHAT_ID}" ]]
-  then
-    REPLY='n'
-    PREFIX='Redo'
-  fi
-  read -e -p "${PREFIX} Telegram Bot token (y/n)? " -i "${REPLY}" -r
-  REPLY=${REPLY,,} # tolower
-  if [[ "${REPLY}" == y ]]
-  then
-    TELEGRAM_SETUP
-    echo "Telegram Done"
-  fi
-
-  echo
-  echo "Installing as a systemd service."
-  sleep 1
-  INSTALL_MN_MON_SERVICE
-  echo "Service Install Done"
-  return 1 2>/dev/null || exit 1
-
-fi
-
 PROCESS_MESSAGES () {
   local NAME=${1}
   local MESSAGE_ERROR=${2}
@@ -725,8 +683,8 @@ PROCESS_MESSAGES () {
   local MESSAGE_SUCCESS=${5}
   local RECOVERED_MESSAGE_SUCCESS=${6}
   local RECOVERED_TITLE_SUCCESS=${7}
-  local WEBHOOK_USERNAME=${8}
-  local WEBHOOK_AVATAR=${9}
+  local DISCORD_WEBHOOK_USERNAME=${8}
+  local DISCORD_WEBHOOK_AVATAR=${9}
 
   # Get past events.
   UNIX_TIME=$( date -u +%s )
@@ -760,19 +718,19 @@ PROCESS_MESSAGES () {
   MESSAGE=''
   if [[ ! -z "${MESSAGE_ERROR}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 300 ]]
   then
-    ERRORS=$( SEND_ERROR "${MESSAGE_ERROR}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    ERRORS=$( SEND_ERROR "${MESSAGE_ERROR}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
     MESSAGE="${MESSAGE_ERROR}"
   elif [[ ! -z "${MESSAGE_WARNING}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 900 ]]
   then
-    ERRORS=$( SEND_WARNING "${MESSAGE_WARNING}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    ERRORS=$( SEND_WARNING "${MESSAGE_WARNING}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
     MESSAGE="${MESSAGE_WARNING}"
   elif [[ ! -z "${MESSAGE_INFO}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 3600 ]]
   then
-    ERRORS=$( SEND_INFO "${MESSAGE_INFO}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    ERRORS=$( SEND_INFO "${MESSAGE_INFO}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
     MESSAGE="${MESSAGE_INFO}"
   elif [[ ! -z "${MESSAGE_SUCCESS}" ]]
   then
-    ERRORS=$( SEND_SUCCESS "${MESSAGE_SUCCESS}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    ERRORS=$( SEND_SUCCESS "${MESSAGE_SUCCESS}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
     MESSAGE="${MESSAGE_SUCCESS}"
   fi
 
@@ -820,7 +778,6 @@ GET_LATEST_LOGINS () {
     fi
   done <<< "$( grep -B 20 ' systemd-logind' /var/log/auth.log | grep -B 20 'New' | grep -C10 'sshd' | grep port | grep -v 'CRON\|preauth\|Invalid user\|user unknown\|Failed[[:space:]]password\|authentication[[:space:]]failure\|refused[[:space:]]connect\|ignoring[[:space:]]max\|not[[:space:]]receive[[:space:]]identification\|[[:space:]]sudo\|[[:space:]]su\|Bad[[:space:]]protocol' )"
 }
-GET_LATEST_LOGINS
 
 CHECK_DISK () {
   NAME='disk_space'
@@ -867,9 +824,8 @@ CHECK_DISK () {
 
   RECOVERED_MESSAGE_SUCCESS="Hard drive has ${FREEPSPACE_ALL} MB Free; boot folder has ${FREEPSPACE_BOOT} MB Free."
   RECOVERED_TITLE_SUCCESS="Low diskspace issue has been resolved."
-  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${WEBHOOK_USERNAME_DEFAULT}" "${WEBHOOK_AVATAR_DEFAULT}"
+  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${DISCORD_WEBHOOK_USERNAME_DEFAULT}" "${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
 }
-CHECK_DISK
 
 CHECK_CPU_LOAD () {
   NAME='cpu_usage'
@@ -892,9 +848,8 @@ CHECK_CPU_LOAD () {
 
   RECOVERED_MESSAGE_SUCCESS="Load per CPU is ${LOAD_PER_CPU}."
   RECOVERED_TITLE_SUCCESS="CPU Load is back to normal."
-  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${WEBHOOK_USERNAME_DEFAULT}" "${WEBHOOK_AVATAR_DEFAULT}"
+  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${DISCORD_WEBHOOK_USERNAME_DEFAULT}" "${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
 }
-CHECK_CPU_LOAD
 
 CHECK_SWAP () {
   NAME='swap_free'
@@ -915,9 +870,8 @@ CHECK_SWAP () {
 
   RECOVERED_MESSAGE_SUCCESS="Free Swap space is ${SWAP_FREE_MB} MB."
   RECOVERED_TITLE_SUCCESS="Free sawp space is back to normal."
-  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${WEBHOOK_USERNAME_DEFAULT}" "${WEBHOOK_AVATAR_DEFAULT}"
+  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${DISCORD_WEBHOOK_USERNAME_DEFAULT}" "${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
 }
-CHECK_SWAP
 
 CHECK_RAM () {
   NAME='ram_free'
@@ -940,9 +894,8 @@ CHECK_RAM () {
 
   RECOVERED_MESSAGE_SUCCESS="Free RAM is now at ${MEM_AVAILABLE_MB} MB."
   RECOVERED_TITLE_SUCCESS="Free RAM is back to normal."
-  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${WEBHOOK_USERNAME_DEFAULT}" "${WEBHOOK_AVATAR_DEFAULT}"
+  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${DISCORD_WEBHOOK_USERNAME_DEFAULT}" "${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
 }
-CHECK_RAM
 
 PROCESS_NODE_MESSAGES () {
   CONF_LOCATION=''
@@ -962,8 +915,8 @@ PROCESS_NODE_MESSAGES () {
   MESSAGE_SUCCESS=${6}
   RECOVERED_MESSAGE_SUCCESS=${7}
   RECOVERED_TITLE_SUCCESS=${8}
-  WEBHOOK_USERNAME=${9}
-  WEBHOOK_AVATAR=${10}
+  DISCORD_WEBHOOK_USERNAME=${9}
+  DISCORD_WEBHOOK_AVATAR=${10}
 
 
   # Get past events.
@@ -984,7 +937,7 @@ PROCESS_NODE_MESSAGES () {
   # Send recovery message.
   if [[ -z "${MESSAGE_ERROR}" ]] && [[ -z "${MESSAGE_WARNING}" ]] && [[ ! -z "${MESSAGE_PAST}" ]] && [[ ! -z "${RECOVERED_MESSAGE_SUCCESS}" ]]
   then
-    ERRORS=$( SEND_SUCCESS "${RECOVERED_MESSAGE_SUCCESS}" ":wrench: ${RECOVERED_TITLE_SUCCESS} :wrench:" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    ERRORS=$( SEND_SUCCESS "${RECOVERED_MESSAGE_SUCCESS}" ":wrench: ${RECOVERED_TITLE_SUCCESS} :wrench:" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
     if [[ ! -z "${ERRORS}" ]]
     then
       echo "ERROR: ${ERRORS}"
@@ -1001,20 +954,20 @@ PROCESS_NODE_MESSAGES () {
   MESSAGE=''
   if [[ ! -z "${MESSAGE_ERROR}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 300 ]]
   then
-    ERRORS=$( SEND_ERROR "${MESSAGE_ERROR}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    ERRORS=$( SEND_ERROR "${MESSAGE_ERROR}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
     MESSAGE="${MESSAGE_ERROR}"
   elif [[ ! -z "${MESSAGE_WARNING}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 900 ]]
   then
-    ERRORS=$( SEND_WARNING "${MESSAGE_WARNING}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    ERRORS=$( SEND_WARNING "${MESSAGE_WARNING}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
     MESSAGE="${MESSAGE_WARNING}"
   elif [[ ! -z "${MESSAGE_INFO}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 3600 ]]
   then
 #     echo "${SECONDS_SINCE_PING} ${START_TIME} ${LAST_PING_TIME} ${MESSAGE_PAST}"
-    ERRORS=$( SEND_INFO "${MESSAGE_INFO}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    ERRORS=$( SEND_INFO "${MESSAGE_INFO}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
     MESSAGE="${MESSAGE_INFO}"
   elif [[ ! -z "${MESSAGE_SUCCESS}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 7200 ]]
   then
-    ERRORS=$( SEND_SUCCESS "${MESSAGE_SUCCESS}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}" )
+    ERRORS=$( SEND_SUCCESS "${MESSAGE_SUCCESS}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
     MESSAGE="${MESSAGE_SUCCESS}"
   fi
 
@@ -1056,26 +1009,26 @@ REPORT_INFO_ABOUT_NODE () {
     return
   fi
 
-  WEBHOOK_AVATAR=''
-  WEBHOOK_USERNAME=''
+  DISCORD_WEBHOOK_AVATAR=''
+  DISCORD_WEBHOOK_USERNAME=''
   EXTRA_INFO=$( echo "${DAEMON_BIN_LUT}" | grep -E "^${DAEMON_BIN} " )
   if [[ ! -z "${EXTRA_INFO}" ]]
   then
-    WEBHOOK_AVATAR=$( echo "${EXTRA_INFO}" | cut -d ' ' -f2 )
-    WEBHOOK_USERNAME=$( echo "${EXTRA_INFO}" | cut -d ' ' -f3- )
+    DISCORD_WEBHOOK_AVATAR=$( echo "${EXTRA_INFO}" | cut -d ' ' -f2 )
+    DISCORD_WEBHOOK_USERNAME=$( echo "${EXTRA_INFO}" | cut -d ' ' -f3- )
   fi
 
   if [[ "${MASTERNODE}" == '-1' ]]
   then
     PROCESS_NODE_MESSAGES "${USRNAME}" "not_running" "__${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION}__
-${MNINFO}" "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+${MNINFO}" "" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     return
   fi
 
   if [[ "${MASTERNODE}" == '-2' ]]
   then
     PROCESS_NODE_MESSAGES "${USRNAME}" "frozen" "__${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION}__
-${MNINFO}" "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+${MNINFO}" "" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     return
   fi
 
@@ -1109,25 +1062,25 @@ ${MNINFO}" "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
     if [[ ${MNINFO} -eq 1 ]]
     then
       PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "__${USRNAME} ${DAEMON_BIN}__
-Masternode should be starting up soon." "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+Masternode should be starting up soon." "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     elif [[ ${MNINFO} -eq 2 ]]
     then
       PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "__${USRNAME} ${DAEMON_BIN}__
-Masternode list shows the masternode as active bug masternode status doesn't. Hopefully this changes soon." "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+Masternode list shows the masternode as active bug masternode status doesn't. Hopefully this changes soon." "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     else
       PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "__${USRNAME} ${DAEMON_BIN}__
-Masternode is not currently running." "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+Masternode is not currently running." "" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     fi
   elif [[ ${MASTERNODE} -eq 2 ]]
   then
     if [[ ${MNINFO} -eq 2 ]]
     then
       PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
-Masternode status and masternode list are good!" "Masternode Running" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+Masternode status and masternode list are good!" "Masternode Running" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     elif [[ ${MNINFO} -eq 0 ]]
     then
       PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
-Masternode status is good!" "Masternode Running" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+Masternode status is good!" "Masternode Running" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     fi
   fi
 
@@ -1153,21 +1106,21 @@ Masternode status is good!" "Masternode Running" "${WEBHOOK_USERNAME}" "${WEBHOO
     SEND_ERROR "__${USRNAME} ${DAEMON_BIN}__
 Balance is now zero ${TICKER_NAME}!
 Before: ${PAST_BALANCE}
-After: ${GETTOTALBALANCE} " "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+After: ${GETTOTALBALANCE} " "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
 
   # Larger amount has been moved off this wallet.
   elif [[ $( echo "${BALANCE_DIFF} < -1" | bc -l ) -gt 0 ]]
   then
     SEND_WARNING "__${USRNAME} ${DAEMON_BIN}__
 Balance has decreased by over 1 ${TICKER_NAME} Difference: ${BALANCE_DIFF}.
-New Balance: ${GETTOTALBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+New Balance: ${GETTOTALBALANCE}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
 
   # Small amount has been moved.
   elif [[ $( echo "${BALANCE_DIFF} < 1" | bc -l ) -gt 0 ]]
   then
     SEND_INFO "__${USRNAME} ${DAEMON_BIN}__
 Small amout of ${TICKER_NAME} has been transfered Difference: ${BALANCE_DIFF}.
-New Balance: ${GETTOTALBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+New Balance: ${GETTOTALBALANCE}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
 
   # More than 1 Coin has been added.
   elif [[ $( echo "${BALANCE_DIFF} >= 1" | bc -l ) -gt 0 ]]
@@ -1176,16 +1129,16 @@ New Balance: ${GETTOTALBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
     then
       SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
 Masternode reward amout of ${BALANCE_DIFF} ${TICKER_NAME}.
-New Balance: ${GETTOTALBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+New Balance: ${GETTOTALBALANCE}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     elif [[ $( echo "${BALANCE_DIFF} >= ${STAKE_REWARD}" | bc -l ) -gt 0 ]] && [[ $( echo "${BALANCE_DIFF} < ${STAKE_REWARD_UPPER}" | bc -l ) -gt 0 ]]
     then
       SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
 Staking reward amout of ${BALANCE_DIFF} ${TICKER_NAME}.
-New Balance: ${GETTOTALBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+New Balance: ${GETTOTALBALANCE}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     else
       SEND_SUCCESS "__${USRNAME} ${DAEMON_BIN}__
 Larger amout of ${TICKER_NAME} has been transfered Difference: ${BALANCE_DIFF}.
-New Balance: ${GETTOTALBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+New Balance: ${GETTOTALBALANCE}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     fi
   fi
 
@@ -1204,20 +1157,20 @@ New Balance: ${GETTOTALBALANCE}" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
     then
       PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_balance" "" "__${USRNAME} ${DAEMON_BIN}__
 Balance (${GETBALANCE}) is below the minimum staking threshold (${MIN_STAKE}).
-${GETBALANCE} < ${MIN_STAKE} " "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+${GETBALANCE} < ${MIN_STAKE} " "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     else
       PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_balance" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
-Has enough coins to stake now!" "Balance is above the minimum" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+Has enough coins to stake now!" "Balance is above the minimum" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
       if [[ "${STAKING}" -eq 0 ]]
       then
         GETSTAKINGSTATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getstakingstatus" 2>&1 | jq . | grep 'false' | tr -d \" )
         PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_status" "" "__${USRNAME} ${DAEMON_BIN}__
-${GETSTAKINGSTATUS}" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+${GETSTAKINGSTATUS}" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
       fi
       if [[ "${STAKING}" -eq 1 ]]
       then
         PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_status" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
-Staking status is now TRUE!" "Staking is enabled" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+Staking status is now TRUE!" "Staking is enabled" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
       fi
     fi
   fi
@@ -1228,14 +1181,14 @@ Staking status is now TRUE!" "Staking is enabled" "${WEBHOOK_USERNAME}" "${WEBHO
     if [[ "${GETCONNECTIONCOUNT}" -lt 2 ]]
     then
       PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "__${USRNAME} ${DAEMON_BIN}__
-  Connection Count (${GETCONNECTIONCOUNT}) is very low!" "" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+  Connection Count (${GETCONNECTIONCOUNT}) is very low!" "" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     elif [[ "${GETCONNECTIONCOUNT}" -lt 5 ]]
     then
       PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "" "__${USRNAME} ${DAEMON_BIN}__
-  Connection Count (${GETCONNECTIONCOUNT}) is low!" "" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+  Connection Count (${GETCONNECTIONCOUNT}) is low!" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     else
       PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
-  Connection count has been restored" "Connection Count Normal" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+  Connection count has been restored" "Connection Count Normal" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     fi
   fi
 
@@ -1252,7 +1205,7 @@ Staking status is now TRUE!" "Staking is enabled" "${WEBHOOK_USERNAME}" "${WEBHO
     PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "mnwin:${BLOCK_WIN}" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
 Masternode on ${MN_ADDRESS_WIN} will get paid
 on block ${BLOCK_WIN}
-in approximately ${MN_REWARD_IN_TIME}." "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+in approximately ${MN_REWARD_IN_TIME}." "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
   fi
 
   # Report on daemon info.
@@ -1279,7 +1232,7 @@ Staking Status: ${STAKING_TEXT}
 Masternode Status: ${MASTERNODE_TEXT}
 Balance: ${GETBALANCE}
 Total Balance: ${GETTOTALBALANCE}
-Staking Average ETA: ${TIME_TO_STAKE}" "" "" "" "${WEBHOOK_USERNAME}" "${WEBHOOK_AVATAR}"
+Staking Average ETA: ${TIME_TO_STAKE}" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
 }
 
 GET_INFO_ON_THIS_NODE () {
@@ -1468,7 +1421,7 @@ GET_ALL_NODES () {
         DAEMON_BIN=$( echo "${PS_LIST}" | cut -c 32- | grep " ${DAEMON_PID} " | awk '{print $3}' )
         CONTROLLER_BIN="${DAEMON_BIN}"
         COMMAND_FOLDER=$( dirname "${DAEMON_BIN}" )
-        CONTROLLER_BIN_FOLDER=$( find "${COMMAND_FOLDER}" -executable -type f | grep -v "${DAEMON_BIN}" | grep -i "${DAEMON_BIN::-1}" )
+        CONTROLLER_BIN_FOLDER=$( find "${COMMAND_FOLDER}" -executable -type f | grep -Ei "${DAEMON_BIN::-1}-cli$" )
         if [[ ! -z "${CONTROLLER_BIN_FOLDER}" ]]
         then
           CONTROLLER_BIN="${CONTROLLER_BIN_FOLDER}"
@@ -1506,4 +1459,93 @@ GET_ALL_NODES () {
     done <<< "${CONF_LOCATIONS}"
   done <<< "$( cut -d: -f1 /etc/passwd | getent passwd | sed 's/:/ X /g' | sort -h )"
 }
-GET_ALL_NODES
+
+NOT_CRON_WORKFLOW () {
+  echo
+  SERVER_ALIAS=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'server_alias';" )
+  if [[ -z "${SERVER_ALIAS}" ]]
+  then
+    SERVER_ALIAS=$( hostname )
+  fi
+  read -e -p "Current alias for this server: " -i "${SERVER_ALIAS}" -r
+  SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('server_alias','${REPLY}');"
+
+  echo
+  echo -ne "IP Address: "; hostname -i
+  SHOW_IP=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'show_ip';" )
+  if [[ -z "${SHOW_IP}" ]] || [[ "${SHOW_IP}" == '1' ]]
+  then
+    SHOW_IP='y'
+  else
+    SHOW_IP='n'
+  fi
+  read -e -p "Display IP in logs (y/n)? " -i "${SHOW_IP}" -r
+  REPLY=${REPLY,,} # tolower
+  if [[ "${REPLY}" == y ]]
+  then
+    SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('show_ip','1');"
+  else
+    SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('show_ip','0');"
+  fi
+
+  echo
+  PREFIX='Setup'
+  REPLY='y'
+  DISCORD_WEBHOOK_URL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_error';" )
+  if [[ ! -z "${DISCORD_WEBHOOK_URL}" ]]
+  then
+    REPLY='n'
+    PREFIX='Redo'
+  fi
+  read -e -p "${PREFIX} Discord Bot webhook URLs (y/n)? " -i "${REPLY}" -r
+  REPLY=${REPLY,,} # tolower
+  if [[ "${REPLY}" == y ]]
+  then
+    GET_DISCORD_WEBHOOKS
+    echo "Discord Done"
+  fi
+
+  echo
+  PREFIX='Setup'
+  REPLY='y'
+  DISCORD_WEBHOOK_URL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_error';" )
+  CHAT_ID=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_chatid';" )
+  if [[ ! -z "${DISCORD_WEBHOOK_URL}" ]]
+  then
+    REPLY='n'
+  fi
+  if [[ ! -z "${CHAT_ID}" ]]
+  then
+    REPLY='n'
+    PREFIX='Redo'
+  fi
+  read -e -p "${PREFIX} Telegram Bot token (y/n)? " -i "${REPLY}" -r
+  REPLY=${REPLY,,} # tolower
+  if [[ "${REPLY}" == y ]]
+  then
+    TELEGRAM_SETUP
+    echo "Telegram Done"
+  fi
+
+  echo
+  echo "Installing as a systemd service."
+  sleep 1
+  INSTALL_MN_MON_SERVICE
+  echo "Service Install Done"
+  return 1 2>/dev/null || exit 1
+}
+
+# Main
+if [[ "${arg1}" != 'cron' ]]
+then
+  NOT_CRON_WORKFLOW
+else
+  GET_LATEST_LOGINS
+  CHECK_DISK
+  CHECK_CPU_LOAD
+  CHECK_SWAP
+  CHECK_RAM
+  GET_ALL_NODES
+fi
+
+# End of the masternode monitor script.
