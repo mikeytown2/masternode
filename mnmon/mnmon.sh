@@ -1012,7 +1012,7 @@ ${MESSAGE}"
     then
       SQL_QUERY "INSERT INTO login_data (time,message) VALUES ('${UNIX_TIME_LOG}','${INFO}');"
     fi
-  done <<< "$( grep -B 20 ' systemd-logind' /var/log/auth.log | grep -B 20 'New' | grep -C10 'sshd' | grep port | grep -v 'CRON\|preauth\|Invalid user\|user unknown\|Failed[[:space:]]password\|authentication[[:space:]]failure\|refused[[:space:]]connect\|ignoring[[:space:]]max\|not[[:space:]]receive[[:space:]]identification\|[[:space:]]sudo\|[[:space:]]su\|Bad[[:space:]]protocol' )"
+  done <<< "$( grep -B 20 ' systemd-logind' /var/log/auth.log | grep -B 20 'New' | grep -C10 'sshd' | grep port | grep -v 'CRON\|preauth\|Invalid user\|user unknown\|major versions differ\|Failed[[:space:]]password\|authentication[[:space:]]failure\|refused[[:space:]]connect\|ignoring[[:space:]]max\|not[[:space:]]receive[[:space:]]identification\|[[:space:]]sudo\|[[:space:]]su\|Bad[[:space:]]protocol' )"
 }
 
  CHECK_DISK () {
