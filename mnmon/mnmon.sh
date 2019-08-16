@@ -869,7 +869,7 @@ ${MESSAGE}"
   if [[ ! -z "${ERRORS}" ]]
   then
     echo "${ERRORS}" >/dev/tty
-  elif [[ "${TEST_OUTPUT}" -eq 1 ]] && [[ ! -z "${MESSAGE}" ]]
+  elif [[ "${TEST_OUTPUT}" -eq 0 ]] && [[ ! -z "${MESSAGE}" ]]
   then
     SQL_QUERY "REPLACE INTO system_log (start_time,last_ping_time,name,message) VALUES ('${START_TIME}','${UNIX_TIME}','${NAME}','${MESSAGE}');"
   fi
@@ -973,7 +973,7 @@ ${MESSAGE}"
   if [[ ! -z "${ERRORS}" ]]
   then
     echo "${ERRORS}" >/dev/tty
-  elif [[ "${TEST_OUTPUT}" -eq 1 ]] && [[ ! -z "${MESSAGE}" ]]
+  elif [[ "${TEST_OUTPUT}" -eq 0 ]] && [[ ! -z "${MESSAGE}" ]]
   then
     SQL_QUERY "REPLACE INTO node_log (start_time,last_ping_time,conf_loc,type,message) VALUES ('${START_TIME}','${UNIX_TIME}','${CONF_LOCATION}','${TYPE}','${MESSAGE}');"
   fi
@@ -1006,7 +1006,7 @@ ${MESSAGE}"
     if [[ ! -z "${ERRORS}" ]]
     then
       echo "ERROR: ${ERRORS}"
-    elif [[ "${TEST_OUTPUT}" -eq 1 ]]
+    elif [[ "${TEST_OUTPUT}" -eq 0 ]]
     then
       SQL_QUERY "INSERT INTO login_data (time,message) VALUES ('${UNIX_TIME_LOG}','${INFO}');"
     fi
