@@ -30,7 +30,7 @@ DISCORD_WEBHOOK_AVATAR_DEFAULT='https://i.imgur.com/8WHSSa7s.jpg'
 DAEMON_BIN_LUT="
 energid https://s2.coinmarketcap.com/static/img/coins/128x128/3218.png Energi Monitor
 dogecashd https://s2.coinmarketcap.com/static/img/coins/128x128/3672.png DogeCash Monitor
-unigridd http://explorer.unigrid.org/images/logo.png UniGrid Monitor
+unigridd https://assets.coingecko.com/coins/images/8937/large/unigrid-logo-round.png UniGrid Monitor
 "
 
 # Daemon_bin_name minimum_balance_to_stake staking_reward mn_reward confirmations cooloff_seconds networkhashps_multiplier ticker_name blocktime_seconds
@@ -38,6 +38,8 @@ DAEMON_BALANCE_LUT="
 energid 1 2.28 9.14 101 3600 0.000001 NRG 60
 dogecashd 1 2.16 8.64 101 3600 0.000001 DOGEC 60
 "
+
+DISCORD_TITLE_LIMIT=266
 
 # Debug arg.
 DEBUG_OUTPUT=0
@@ -249,9 +251,51 @@ DISCORD_WEBHOOK_SEND () {
   fi
 
   # Replace new line with \n
-  DESCRIPTION=$( echo "${DESCRIPTION}" | awk '{printf "%s\\n", $0}' )
+#   DESCRIPTION=$( echo "${DESCRIPTION}" | awk '{printf "%s\\n", $0}' )
   SERVER_INFO=$( echo "${SERVER_INFO}" | awk '{printf "%s\\n", $0}' )
-  TITLE=$( echo "${TITLE}" | awk '{printf "%s\\n", $0}' )
+  TITLE=$( echo "${TITLE}" | tr '\n' ' ' )
+
+  ALT_DESC=''
+  while read -r LINE
+  do
+    CURRENT_CHAR_COUNT=$( echo "${ALT_DESC}" | tail -n 1 | wc -c )
+    # shellcheck disable=SC2028
+    NEW_LINE_CHAR_COUNT=$( echo "${LINE}\n " | wc -c )
+    NEW_TOTAL=$(( CURRENT_CHAR_COUNT + NEW_LINE_CHAR_COUNT ))
+    if [[ "${NEW_TOTAL}" -lt "${DISCORD_TITLE_LIMIT}" ]]
+    then
+      ALT_DESC="${ALT_DESC}${LINE}\n"
+    else
+      ALT_DESC="${ALT_DESC}
+${LINE}\n"
+    fi
+  done <<< "${DESCRIPTION}"
+
+  # Split up the description into mutiple embeds.
+  LINE_COUNT=$( echo "${ALT_DESC}" | wc -l )
+  COUNTER=0
+  EMBEDS='['
+  while read -r LINE
+  do
+    COUNTER=$(( COUNTER + 1 ))
+    if [[ ! -z "${LINE}" ]]
+    then
+      EMBEDS="${EMBEDS}{
+      \"color\": ${DISCORD_WEBHOOK_COLOR},
+      \"title\": \"${LINE}\""
+    fi
+    if [[ "${COUNTER}" -lt "${LINE_COUNT}" ]]
+    then
+      EMBEDS="${EMBEDS}
+      },
+"
+    else
+      EMBEDS="${EMBEDS},
+      \"description\": \"${SERVER_INFO}\"
+      }"
+    fi
+  done <<< "${ALT_DESC}"
+  EMBEDS="${EMBEDS}]"
 
   # Build HTTP POST.
   _PAYLOAD=$( cat << PAYLOAD
@@ -259,11 +303,7 @@ DISCORD_WEBHOOK_SEND () {
   "username": "${DISCORD_WEBHOOK_USERNAME} - ${SERVER_ALIAS}",
   "avatar_url": "${DISCORD_WEBHOOK_AVATAR}",
   "content": "**${TITLE}**",
-  "embeds": [{
-    "color": ${DISCORD_WEBHOOK_COLOR},
-    "title": "${DESCRIPTION}",
-    "description": "${SERVER_INFO}"
-  }]
+  "embeds": ${EMBEDS}
 }
 PAYLOAD
 )
@@ -286,7 +326,9 @@ PAYLOAD
   if [[ ! -z "${OUTPUT}" ]]
   then
     echo "Discord Error"
-    echo "curl -H Content-Type: application/json -s -X POST ${URL} -d '${_PAYLOAD}'"
+    _PAYLOAD=$( echo "${_PAYLOAD}" | tr -d \' )
+    echo "curl -H \"Content-Type: application/json\" -v ${URL} -d '${_PAYLOAD}'"
+    echo "Output:"
     echo "${OUTPUT}" | jq '.'
     echo "Payload:"
     echo "${_PAYLOAD}"
@@ -537,9 +579,9 @@ SEND_ERROR () {
   fi
   if [[ "${SENT}" -eq 0 ]] || [[ "${DEBUG_OUTPUT}" -eq 1 ]]
   then
-    echo "${TITLE}"
-    echo "${DESCRIPTION}"
-    echo "-"
+    echo "${TITLE}" >/dev/tty
+    echo "${DESCRIPTION}" >/dev/tty
+    echo "-" >/dev/tty
   fi
 }
 
@@ -581,9 +623,9 @@ SEND_WARNING () {
   fi
   if [[ "${SENT}" -eq 0 ]] || [[ "${DEBUG_OUTPUT}" -eq 1 ]]
   then
-    echo "${TITLE}"
-    echo "${DESCRIPTION}"
-    echo "-"
+    echo "${TITLE}" >/dev/tty
+    echo "${DESCRIPTION}" >/dev/tty
+    echo "-" >/dev/tty
   fi
 }
 
@@ -625,9 +667,9 @@ SEND_INFO () {
   fi
   if [[ "${SENT}" -eq 0 ]] || [[ "${DEBUG_OUTPUT}" -eq 1 ]]
   then
-    echo "${TITLE}"
-    echo "${DESCRIPTION}"
-    echo "-"
+    echo "${TITLE}" >/dev/tty
+    echo "${DESCRIPTION}" >/dev/tty
+    echo "-" >/dev/tty
   fi
 }
 
@@ -669,13 +711,15 @@ SEND_SUCCESS () {
   fi
   if [[ "${SENT}" -eq 0 ]] || [[ "${DEBUG_OUTPUT}" -eq 1 ]]
   then
-    echo "${TITLE}"
-    echo "${DESCRIPTION}"
-    echo "-"
+    echo "${TITLE}" >/dev/tty
+    echo "${DESCRIPTION}">/dev/tty
+    echo "-" >/dev/tty
   fi
 }
 
 PROCESS_MESSAGES () {
+  local ERRORS=''
+  local MESSAGE=''
   local NAME=${1}
   local MESSAGE_ERROR=${2}
   local MESSAGE_WARNING=${3}
@@ -685,6 +729,7 @@ PROCESS_MESSAGES () {
   local RECOVERED_TITLE_SUCCESS=${7}
   local DISCORD_WEBHOOK_USERNAME=${8}
   local DISCORD_WEBHOOK_AVATAR=${9}
+
 
   # Get past events.
   UNIX_TIME=$( date -u +%s )
@@ -700,6 +745,7 @@ PROCESS_MESSAGES () {
     LAST_PING_TIME='0'
   fi
   MESSAGE_PAST=$( echo "${MESSAGE_PAST}" | cut -d \| -f3 )
+  SECONDS_SINCE_PING="$( echo "${UNIX_TIME} - ${LAST_PING_TIME}" | bc -l )"
 
   # Send recovery message.
   if [[ -z "${MESSAGE_ERROR}" ]] && [[ -z "${MESSAGE_WARNING}" ]] && [[ ! -z "${MESSAGE_PAST}" ]] && [[ ! -z "${RECOVERED_MESSAGE_SUCCESS}" ]]
@@ -734,6 +780,19 @@ PROCESS_MESSAGES () {
     MESSAGE="${MESSAGE_SUCCESS}"
   fi
 
+  if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo "node_log conf ${CONF_LOCATION} type ${TYPE}"
+    echo "Last ping: ${SECONDS_SINCE_PING}"
+    echo "Error: ${MESSAGE_ERROR}"
+    echo "Warning: ${MESSAGE_WARNING}"
+    echo "Info: ${MESSAGE_INFO}"
+    echo "Success: ${MESSAGE_SUCCESS}"
+    echo "Message: ${MESSAGE}"
+    echo "Errors: ${ERRORS}"
+    echo
+  fi
+
   # Write to the database.
   if [[ ! -z "${ERRORS}" ]]
   then
@@ -741,6 +800,92 @@ PROCESS_MESSAGES () {
   elif [[ "${arg1}" != 'test' ]] && [[ ! -z "${MESSAGE}" ]]
   then
     SQL_QUERY "REPLACE INTO system_log (start_time,last_ping_time,name,message) VALUES ('${START_TIME}','${UNIX_TIME}','${NAME}','${MESSAGE}');"
+  fi
+}
+
+PROCESS_NODE_MESSAGES () {
+  local ERRORS=''
+  local MESSAGE=''
+  local CONF_LOCATION=${1}
+  local TYPE=${2}
+  local MESSAGE_ERROR=${3}
+  local MESSAGE_WARNING=${4}
+  local MESSAGE_INFO=${5}
+  local MESSAGE_SUCCESS=${6}
+  local RECOVERED_MESSAGE_SUCCESS=${7}
+  local RECOVERED_TITLE_SUCCESS=${8}
+  local DISCORD_WEBHOOK_USERNAME=${9}
+  local DISCORD_WEBHOOK_AVATAR=${10}
+
+  # Get past events.
+  UNIX_TIME=$( date -u +%s )
+  MESSAGE_PAST=$( SQL_QUERY "SELECT start_time,last_ping_time,message FROM node_log WHERE conf_loc == '${CONF_LOCATION}' AND type == '${TYPE}'; " )
+  START_TIME=$( echo "${MESSAGE_PAST}" | head -n1 | cut -d \| -f1 )
+  if [[ ! ${START_TIME} =~ ${RE} ]]
+  then
+    START_TIME="${UNIX_TIME}"
+  fi
+  LAST_PING_TIME=$( echo "${MESSAGE_PAST}" | head -n1 | cut -d \| -f2 )
+  if [[ ! ${LAST_PING_TIME} =~ ${RE} ]]
+  then
+    LAST_PING_TIME='0'
+  fi
+  MESSAGE_PAST=$( echo "${MESSAGE_PAST}" | cut -d \| -f3 )
+  SECONDS_SINCE_PING="$( echo "${UNIX_TIME} - ${LAST_PING_TIME}" | bc -l )"
+
+  # Send recovery message.
+  if [[ -z "${MESSAGE_ERROR}" ]] && [[ -z "${MESSAGE_WARNING}" ]] && [[ ! -z "${MESSAGE_PAST}" ]] && [[ ! -z "${RECOVERED_MESSAGE_SUCCESS}" ]]
+  then
+    ERRORS=$( SEND_SUCCESS "${RECOVERED_MESSAGE_SUCCESS}" ":wrench: ${RECOVERED_TITLE_SUCCESS} :wrench:" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
+    if [[ ! -z "${ERRORS}" ]]
+    then
+      echo "ERROR: ${ERRORS}"
+    else
+      SQL_QUERY "DELETE FROM node_log WHERE conf_loc == '${CONF_LOCATION}' AND type == '${TYPE}'; "
+    fi
+  fi
+
+  # Send message out.
+  ERRORS=''
+  MESSAGE=''
+  if [[ ! -z "${MESSAGE_ERROR}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 300 ]]
+  then
+    ERRORS=$( SEND_ERROR "${MESSAGE_ERROR}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
+    MESSAGE="${MESSAGE_ERROR}"
+  elif [[ ! -z "${MESSAGE_WARNING}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 900 ]]
+  then
+    ERRORS=$( SEND_WARNING "${MESSAGE_WARNING}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
+    MESSAGE="${MESSAGE_WARNING}"
+  elif [[ ! -z "${MESSAGE_INFO}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 3600 ]]
+  then
+    ERRORS=$( SEND_INFO "${MESSAGE_INFO}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
+    MESSAGE="${MESSAGE_INFO}"
+  elif [[ ! -z "${MESSAGE_SUCCESS}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 7200 ]]
+  then
+    ERRORS=$( SEND_SUCCESS "${MESSAGE_SUCCESS}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
+    MESSAGE="${MESSAGE_SUCCESS}"
+  fi
+
+  if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo "node_log conf ${CONF_LOCATION} type ${TYPE}"
+    echo "Last ping: ${SECONDS_SINCE_PING}"
+    echo "Error: ${MESSAGE_ERROR}"
+    echo "Warning: ${MESSAGE_WARNING}"
+    echo "Info: ${MESSAGE_INFO}"
+    echo "Success: ${MESSAGE_SUCCESS}"
+    echo "Message: ${MESSAGE}"
+    echo "Errors: ${ERRORS}"
+    echo
+  fi
+
+  # Write to the database.
+  if [[ ! -z "${ERRORS}" ]]
+  then
+    echo "${ERRORS}" >/dev/tty
+  elif [[ "${arg1}" != 'test' ]] && [[ ! -z "${MESSAGE}" ]]
+  then
+    SQL_QUERY "REPLACE INTO node_log (start_time,last_ping_time,conf_loc,type,message) VALUES ('${START_TIME}','${UNIX_TIME}','${CONF_LOCATION}','${TYPE}','${MESSAGE}');"
   fi
 }
 
@@ -822,6 +967,13 @@ CHECK_DISK () {
     MESSAGE_WARNING=":floppy_disk: ${MESSAGE_WARNING} :floppy_disk:"
   fi
 
+  if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo "Freespace all: ${FREEPSPACE_ALL}"
+    echo "Freespace boot: ${FREEPSPACE_BOOT}"
+    echo
+  fi
+
   RECOVERED_MESSAGE_SUCCESS="Hard drive has ${FREEPSPACE_ALL} MB Free; boot folder has ${FREEPSPACE_BOOT} MB Free."
   RECOVERED_TITLE_SUCCESS="Low diskspace issue has been resolved."
   PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${DISCORD_WEBHOOK_USERNAME_DEFAULT}" "${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
@@ -838,12 +990,20 @@ CHECK_CPU_LOAD () {
   CPU_COUNT=$( grep -c 'processor' /proc/cpuinfo )
   LOAD_PER_CPU="$( printf "%.3f\n" "$( bc -l <<< "${LOAD} / ${CPU_COUNT}" )" )"
 
-  if [[ "$( echo "${LOAD_PER_CPU} > 4" | bc )" -gt 0 ]] || [[ "${arg1}" == 'test' ]]
+  if [[ "$( echo "${LOAD_PER_CPU} >= 4" | bc -l )" -gt 0 ]] || [[ "${arg1}" == 'test' ]]
   then
     MESSAGE_ERROR=" :desktop: :fire:  CPU LOAD is over 4: ${LOAD_PER_CPU} :fire: :desktop: "
-  elif [[ "$( echo "${LOAD_PER_CPU} > 2" | bc )" -gt 0 ]] || [[ "${arg1}" == 'test' ]]
+  elif [[ "$( echo "${LOAD_PER_CPU} > 2" | bc -l )" -gt 0 ]] || [[ "${arg1}" == 'test' ]]
   then
     MESSAGE_WARNING=" :desktop: CPU LOAD is over 2: ${LOAD_PER_CPU} :desktop: "
+  fi
+
+  if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo "Load: ${LOAD}"
+    echo "CPU Count: ${CPU_COUNT}"
+    echo "Load per CPU: ${LOAD_PER_CPU}"
+    echo
   fi
 
   RECOVERED_MESSAGE_SUCCESS="Load per CPU is ${LOAD_PER_CPU}."
@@ -866,6 +1026,12 @@ CHECK_SWAP () {
   if ([[ $( echo "${SWAP_FREE_MB} >= 512" | bc ) -gt 0 ]] && [[ $( echo "${SWAP_FREE_MB} < 1024" | bc ) -gt 0 ]]) || [[ "${arg1}" == 'test' ]]
   then
     MESSAGE_WARNING=":desktop: Swap is under 1024 MB: ${SWAP_FREE_MB} MB :desktop: "
+  fi
+
+  if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo "Swap Free MB: ${SWAP_FREE_MB}"
+    echo
   fi
 
   RECOVERED_MESSAGE_SUCCESS="Free Swap space is ${SWAP_FREE_MB} MB."
@@ -892,93 +1058,15 @@ CHECK_RAM () {
     MESSAGE_WARNING=":desktop: Free RAM is under 512 MB: ${MEM_AVAILABLE_MB} MB :desktop: "
   fi
 
+  if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo "Ram Free MB: ${MEM_AVAILABLE_MB}"
+    echo
+  fi
+
   RECOVERED_MESSAGE_SUCCESS="Free RAM is now at ${MEM_AVAILABLE_MB} MB."
   RECOVERED_TITLE_SUCCESS="Free RAM is back to normal."
   PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${DISCORD_WEBHOOK_USERNAME_DEFAULT}" "${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
-}
-
-PROCESS_NODE_MESSAGES () {
-  CONF_LOCATION=''
-  TYPE=''
-  MESSAGE_ERROR=''
-  MESSAGE_WARNING=''
-  MESSAGE_INFO=''
-  MESSAGE_SUCCESS=''
-  RECOVERED_MESSAGE_SUCCESS=''
-  RECOVERED_TITLE_SUCCESS=''
-
-  CONF_LOCATION=${1}
-  TYPE=${2}
-  MESSAGE_ERROR=${3}
-  MESSAGE_WARNING=${4}
-  MESSAGE_INFO=${5}
-  MESSAGE_SUCCESS=${6}
-  RECOVERED_MESSAGE_SUCCESS=${7}
-  RECOVERED_TITLE_SUCCESS=${8}
-  DISCORD_WEBHOOK_USERNAME=${9}
-  DISCORD_WEBHOOK_AVATAR=${10}
-
-
-  # Get past events.
-  UNIX_TIME=$( date -u +%s )
-  MESSAGE_PAST=$( SQL_QUERY "SELECT start_time,last_ping_time,message FROM node_log WHERE conf_loc == '${CONF_LOCATION}' AND type == '${TYPE}'; " )
-  START_TIME=$( echo "${MESSAGE_PAST}" | head -n1 | cut -d \| -f1 )
-  if [[ ! ${START_TIME} =~ ${RE} ]]
-  then
-    START_TIME="${UNIX_TIME}"
-  fi
-  LAST_PING_TIME=$( echo "${MESSAGE_PAST}" | head -n1 | cut -d \| -f2 )
-  if [[ ! ${LAST_PING_TIME} =~ ${RE} ]]
-  then
-    LAST_PING_TIME='0'
-  fi
-  MESSAGE_PAST=$( echo "${MESSAGE_PAST}" | cut -d \| -f3 )
-
-  # Send recovery message.
-  if [[ -z "${MESSAGE_ERROR}" ]] && [[ -z "${MESSAGE_WARNING}" ]] && [[ ! -z "${MESSAGE_PAST}" ]] && [[ ! -z "${RECOVERED_MESSAGE_SUCCESS}" ]]
-  then
-    ERRORS=$( SEND_SUCCESS "${RECOVERED_MESSAGE_SUCCESS}" ":wrench: ${RECOVERED_TITLE_SUCCESS} :wrench:" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
-    if [[ ! -z "${ERRORS}" ]]
-    then
-      echo "ERROR: ${ERRORS}"
-    else
-      SQL_QUERY "DELETE FROM node_log WHERE conf_loc == '${CONF_LOCATION}' AND type == '${TYPE}'; "
-    fi
-  fi
-
-  SECONDS_SINCE_PING="$( echo "${UNIX_TIME} - ${LAST_PING_TIME}" | bc -l )"
-
-
-  # Send message out.
-  ERRORS=''
-  MESSAGE=''
-  if [[ ! -z "${MESSAGE_ERROR}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 300 ]]
-  then
-    ERRORS=$( SEND_ERROR "${MESSAGE_ERROR}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
-    MESSAGE="${MESSAGE_ERROR}"
-  elif [[ ! -z "${MESSAGE_WARNING}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 900 ]]
-  then
-    ERRORS=$( SEND_WARNING "${MESSAGE_WARNING}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
-    MESSAGE="${MESSAGE_WARNING}"
-  elif [[ ! -z "${MESSAGE_INFO}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 3600 ]]
-  then
-#     echo "${SECONDS_SINCE_PING} ${START_TIME} ${LAST_PING_TIME} ${MESSAGE_PAST}"
-    ERRORS=$( SEND_INFO "${MESSAGE_INFO}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
-    MESSAGE="${MESSAGE_INFO}"
-  elif [[ ! -z "${MESSAGE_SUCCESS}" ]] && [[ "${SECONDS_SINCE_PING}" -gt 7200 ]]
-  then
-    ERRORS=$( SEND_SUCCESS "${MESSAGE_SUCCESS}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}" )
-    MESSAGE="${MESSAGE_SUCCESS}"
-  fi
-
-  # Write to the database.
-  if [[ ! -z "${ERRORS}" ]]
-  then
-    echo "${ERRORS}" >/dev/tty
-  elif [[ "${arg1}" != 'test' ]] && [[ ! -z "${MESSAGE}" ]]
-  then
-    SQL_QUERY "REPLACE INTO node_log (start_time,last_ping_time,conf_loc,type,message) VALUES ('${START_TIME}','${UNIX_TIME}','${CONF_LOCATION}','${TYPE}','${MESSAGE}');"
-  fi
 }
 
 REPORT_INFO_ABOUT_NODE () {
@@ -1254,7 +1342,11 @@ Uptime: ${UPTIME} seconds (${UPTIME_HUMAN})"
   then
     _PAYLOAD="${_PAYLOAD}
 Balance: ${GETBALANCE}
-Total Balance: ${GETTOTALBALANCE}
+Total Balance: ${GETTOTALBALANCE}"
+  fi
+  if [[ ! -z "${TIME_TO_STAKE}" ]]
+  then
+    _PAYLOAD="${_PAYLOAD}
 Staking Average ETA: ${TIME_TO_STAKE}"
   fi
   if [[ ! -z "${ALL_STAKE_INPUTS_BALANCE_COUNT}" ]]
@@ -1382,7 +1474,7 @@ GET_INFO_ON_THIS_NODE () {
   if [[ $( echo "${GETBALANCE} > 0" | bc -l ) -gt 0 ]]
   then
     LIST_STAKE_INPUTS=$( su "${USRNAME}" -c "timeout 10 \"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" liststakeinputs " 2>/dev/null )
-    if [[ $( echo "${LIST_STAKE_INPUTS}" | grep -ci 'Method not found') -eq 0 ]]
+    if [[ $( echo "${LIST_STAKE_INPUTS}" | grep -ci 'Method not found') -eq 0 ]] && [[ $( echo "${LIST_STAKE_INPUTS}" | grep -c 'amount' ) -gt 0 ]]
     then
       STAKING_INPUTS_COUNT=$( echo "${LIST_STAKE_INPUTS}" | grep -c 'amount' )
       STAKE_INPUTS_BALANCE=$( echo "${LIST_STAKE_INPUTS}" | jq '.[].amount' | awk '{s+=$1} END {print s}' )
@@ -1514,6 +1606,20 @@ GET_ALL_NODES () {
       if [[ ! -z "${DAEMON_BIN_FILTER}" ]] && [[ "${DAEMON_BIN_FILTER}" != "${DAEMON_BIN}" ]]
       then
         continue
+      fi
+
+      if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+      then
+        echo
+        echo "+++++++++++++++++++++++++++++"
+        echo "Has Function: ${HAS_FUNCTION}"
+        echo "Username: ${USRNAME}"
+        echo "Cli: ${CONTROLLER_BIN}"
+        echo "Daemon: ${DAEMON_BIN}"
+        echo "Conf Location: ${CONF_LOCATION}"
+        echo "PID: ${DAEMON_PID}"
+        echo "Uptime: ${UPTIME}"
+        echo
       fi
 
       GET_INFO_ON_THIS_NODE "${HAS_FUNCTION}" "${USRNAME}" "${CONTROLLER_BIN}" "${DAEMON_BIN}" "${CONF_LOCATION}" "${DAEMON_PID}" "${UPTIME}"
