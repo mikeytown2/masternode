@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Copyright (c) 2019
-# All rights reserved.
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+ # Copyright (c) 2019
+ # All rights reserved.
+ # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
-# shellcheck disable=SC2016
+ # shellcheck disable=SC2016
 : '
 # Run this file
 
@@ -14,10 +14,10 @@
 
 '
 
-# Simple guide
-# https://imgur.com/a/B8RMhHV
+ # Simple guide
+ # https://imgur.com/a/B8RMhHV
 
-# Define simple variables.
+ # Define simple variables.
  stty sane 2>/dev/null
  arg1="${1}"
  arg2="${2}"
@@ -27,7 +27,7 @@
  DISCORD_WEBHOOK_AVATAR_DEFAULT='https://i.imgur.com/8WHSSa7s.jpg'
  DISCORD_TITLE_LIMIT=266
 
-# debug arg.
+ # debug arg.
  DEBUG_OUTPUT=0
  if [[ "${arg1}" == 'debug' ]]
 then
@@ -42,7 +42,7 @@ then
   DEBUG_OUTPUT=1
 fi
 
-# test arg.
+ # test arg.
  TEST_OUTPUT=0
  if [[ "${arg1}" == 'test' ]]
 then
@@ -57,23 +57,23 @@ then
   TEST_OUTPUT=1
 fi
 
-# Get sqlite.
+ # Get sqlite.
  if ! [ -x "$( command -v sqlite3 )" ]
 then
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq sqlite3
 fi
-# Get jq.
+ # Get jq.
  if ! [ -x "$( command -v jq)" ]
 then
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq jq
 fi
-# Get ntpdate.
+ # Get ntpdate.
  if [ ! -x "$( command -v ntpdate )" ]
 then
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq ntpdate
 fi
 
-# Run a sqlite query.
+ # Run a sqlite query.
  SQL_QUERY () {
   if [[ ! -d /var/multi-masternode-data/mnbot ]]
   then
@@ -82,21 +82,21 @@ fi
   sudo sqlite3 -batch /var/multi-masternode-data/mnbot/mnmon.sqlite3.db "${1}"
 }
 
-# Create tables if they do not exist.
-# Key Value table.
+ # Create tables if they do not exist.
+ # Key Value table.
  SQL_QUERY "CREATE TABLE IF NOT EXISTS variables (
  key TEXT PRIMARY KEY,
  value TEXT NOT NULL
 );"
 
-# User login.
+ # User login.
  SQL_QUERY "CREATE TABLE IF NOT EXISTS login_data (
   time INTEGER,
   message TEXT,
   PRIMARY KEY (time, message)
 );"
 
-# System logs.
+ # System logs.
  SQL_QUERY "CREATE TABLE IF NOT EXISTS system_log (
   name TEXT PRIMARY KEY,
   start_time INTEGER ,
@@ -104,7 +104,7 @@ fi
   message TEXT
 );"
 
-# Daemon logs.
+ # Daemon logs.
  SQL_QUERY "CREATE TABLE IF NOT EXISTS node_log (
   conf_loc TEXT,
   type TEXT,
@@ -144,7 +144,7 @@ then
   sudo cp "${HOME}/.bashrc" /var/multi-masternode-data/.bashrc
 fi
 
-# Daemon_bin_name URL_to_logo Bot_name
+ # Daemon_bin_name URL_to_logo Bot_name
  DAEMON_BIN_LUT="
 energid https://s2.coinmarketcap.com/static/img/coins/128x128/3218.png Energi Monitor
 dogecashd https://s2.coinmarketcap.com/static/img/coins/128x128/3672.png DogeCash Monitor
@@ -155,13 +155,13 @@ gossipd https://s2.coinmarketcap.com/static/img/coins/128x128/3332.png Gossip Mo
 catocoind https://cmc.io/img/coin_icons/128x128/catocoin.png CatoCoin Monitor
 "
 
-# Daemon_bin_name minimum_balance_to_stake staking_reward mn_reward confirmations cooloff_seconds networkhashps_multiplier ticker_name blocktime_seconds
+ # Daemon_bin_name minimum_balance_to_stake staking_reward mn_reward confirmations cooloff_seconds networkhashps_multiplier ticker_name blocktime_seconds
  DAEMON_BALANCE_LUT="
 energid 1 2.28 9.14 101 3600 0.000001 NRG 60
 dogecashd 1 2.16 8.64 101 3600 0.000001 DOGEC 60
 "
 
-# Convert seconds to days, hours, minutes, seconds.
+ # Convert seconds to days, hours, minutes, seconds.
  DISPLAYTIME () {
   # Round up the time.
   local T=0
@@ -176,7 +176,7 @@ dogecashd 1 2.16 8.64 101 3600 0.000001 DOGEC 60
   (( S > 0 )) && printf '%d seconds ' "${S}"
 }
 
-# Create a service that runs every minute.
+ # Create a service that runs every minute.
  INSTALL_MN_MON_SERVICE () {
   if [[ -f "${HOME}/masternode/mnmon/mnmon.sh" ]]
   then
@@ -184,7 +184,7 @@ dogecashd 1 2.16 8.64 101 3600 0.000001 DOGEC 60
   else
     COUNTER=0
     sudo rm -f /var/multi-masternode-data/mnbot/mnmon.sh
-    while [[ ! -f /var/multi-masternode-data/mnbot/mnmon.sh ]] || [[ $( sudo grep -Fxc "# End of the masternode monitor script." /var/multi-masternode-data/mnbot/mnmon.sh ) -eq 0 ]]
+    while [[ ! -f /var/multi-masternode-data/mnbot/mnmon.sh ]] || [[ $( sudo grep -Fxc " # End of the masternode monitor script." /var/multi-masternode-data/mnbot/mnmon.sh ) -eq 0 ]]
     do
       sudo rm -f /var/multi-masternode-data/mnbot/mnmon.sh
       echo "Downloading Masternode Setup Script."
@@ -248,7 +248,7 @@ SYSTEMD_CONF
   sudo systemctl enable mnmon.timer --now
 }
 
-# Send the data to discord via webhook.
+ # Send the data to discord via webhook.
  DISCORD_WEBHOOK_SEND () {
 (
   local SERVER_ALIAS
@@ -304,7 +304,6 @@ SYSTEMD_CONF
   fi
 
   # Replace new line with \n
-#   DESCRIPTION=$( echo "${DESCRIPTION}" | awk '{printf "%s\\n", $0}' )
   SERVER_INFO=$( echo "${SERVER_INFO}" | awk '{printf "%s\\n", $0}' )
   TITLE=$( echo "${TITLE}" | tr '\n' ' ' )
 
@@ -390,7 +389,7 @@ PAYLOAD
 )
 }
 
-# Get the webhook url and test to make sure it works.
+ # Get the webhook url and test to make sure it works.
  DISCORD_WEBHOOK_URL_PROMPT () {
   # Title of this webhook.
   TEXT_A="${1}"
@@ -422,7 +421,7 @@ PAYLOAD
   SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('discord_webhook_url_${TEXT_A}','${DISCORD_WEBHOOK_URL}');"
 }
 
-# Prompt for all webhooks that we need.
+ # Prompt for all webhooks that we need.
  GET_DISCORD_WEBHOOKS () {
   # Get webhook url from discord.
   echo
@@ -455,7 +454,7 @@ PAYLOAD
   SEND_SUCCESS "Test Success"
 }
 
-# Send the data to telegram via bot.
+ # Send the data to telegram via bot.
  TELEGRAM_SEND () {
 (
   local SERVER_INFO
@@ -539,7 +538,7 @@ ${MESSAGE}"
 )
 }
 
-# Install telegram bot.
+ # Install telegram bot.
  TELEGRAM_SETUP () {
   TOKEN=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_token';" )
   echo "Message the @botfather https://web.telegram.org/#/im?p=@BotFather"
@@ -595,7 +594,7 @@ ${MESSAGE}"
   TELEGRAM_SEND "${TOKEN}" "${CHAT_ID}" "${TITLE}" "<pre>${MESSAGE}</pre>"
 }
 
-# Send an error messsage to discord and telegram.
+ # Send an error messsage to discord and telegram.
  SEND_ERROR () {
   URL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_error';" )
   TOKEN=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_token';" )
@@ -983,7 +982,6 @@ ${MESSAGE}"
  GET_LATEST_LOGINS () {
   while read -r DATE_1 DATE_2 DATE_3 LINE
   do
-#     echo "GET_LATEST_LOGINS ${LINE}" >/dev/tty
     INFO=$( echo "${LINE}" | grep -oE '\]\: .*' | cut -c 4- )
 
     if [[ -z "${INFO}" ]]
@@ -1248,8 +1246,8 @@ ${MNINFO}" "" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATA
   MIN_STAKE=0
   STAKE_REWARD=0
   MASTERNODE_REWARD=0
-#   BLOCKS_WAIT=0
-#   SECONDS_WAIT=0
+ #   BLOCKS_WAIT=0
+ #   SECONDS_WAIT=0
   NET_HASH_FACTOR=0
   TICKER_NAME='COIN'
   STAKE_REWARD_UPPER=0
@@ -1261,8 +1259,8 @@ ${MNINFO}" "" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATA
     MIN_STAKE=$( echo "${EXTRA_INFO}" | cut -d ' ' -f2 )
     STAKE_REWARD=$( echo "${EXTRA_INFO}" | cut -d ' ' -f3 )
     MASTERNODE_REWARD=$( echo "${EXTRA_INFO}" | cut -d ' ' -f4 )
-#     BLOCKS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f5 )
-#     SECONDS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f6 )
+ #     BLOCKS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f5 )
+ #     SECONDS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f6 )
     NET_HASH_FACTOR=$( echo "${EXTRA_INFO}" | cut -d ' ' -f7 )
     TICKER_NAME=$( echo "${EXTRA_INFO}" | cut -d ' ' -f8 )
     BLOCKTIME_SECONDS=$( echo "${EXTRA_INFO}" | cut -d ' ' -f9 )
@@ -1389,14 +1387,14 @@ New Balance: ${GETTOTALBALANCE}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEB
   fi
 
   # Get average staking times for masternode and staking rewards.
-#   SECONDS_TO_AVERAGE_STAKE_MASTERNODE_REWARD=0
-#   SECONDS_TO_AVERAGE_STAKE_STAKING_REWARD=0
+ #   SECONDS_TO_AVERAGE_STAKE_MASTERNODE_REWARD=0
+ #   SECONDS_TO_AVERAGE_STAKE_STAKING_REWARD=0
   COINS_STAKED_TOTAL_NETWORK=$( echo "${NETWORKHASHPS} * ${NET_HASH_FACTOR}" | bc -l )
-#   if [[ ! -z "${COINS_STAKED_TOTAL_NETWORK}" ]] && [[ $( echo "${COINS_STAKED_TOTAL_NETWORK} != 0" | bc -l ) -eq 1 ]]
-#   then
-#     SECONDS_TO_AVERAGE_STAKE_MASTERNODE_REWARD=$( echo "${MASTERNODE_REWARD} / ${GETBALANCE} * ${BLOCKTIME_SECONDS}" | bc -l )
-#     SECONDS_TO_AVERAGE_STAKE_STAKING_REWARD=$( echo "${STAKE_REWARD} / ${GETBALANCE} * ${BLOCKTIME_SECONDS}" | bc -l )
-#   fi
+ #   if [[ ! -z "${COINS_STAKED_TOTAL_NETWORK}" ]] && [[ $( echo "${COINS_STAKED_TOTAL_NETWORK} != 0" | bc -l ) -eq 1 ]]
+ #   then
+ #     SECONDS_TO_AVERAGE_STAKE_MASTERNODE_REWARD=$( echo "${MASTERNODE_REWARD} / ${GETBALANCE} * ${BLOCKTIME_SECONDS}" | bc -l )
+ #     SECONDS_TO_AVERAGE_STAKE_STAKING_REWARD=$( echo "${STAKE_REWARD} / ${GETBALANCE} * ${BLOCKTIME_SECONDS}" | bc -l )
+ #   fi
   # Report on staking.
   TIME_TO_STAKE=''
   if [[ ! -z "${GETBALANCE}" ]] && [[ "$( echo "${GETBALANCE} > 0.0" | bc -l )" -gt 0 ]]
@@ -1765,7 +1763,7 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
   done <<< "$( cut -d: -f1 /etc/passwd | getent passwd | sed 's/:/ X /g' | sort -h )"
 }
 
-NOT_CRON_WORKFLOW () {
+ NOT_CRON_WORKFLOW () {
   echo
   SERVER_ALIAS=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'server_alias';" )
   if [[ -z "${SERVER_ALIAS}" ]]
@@ -1840,7 +1838,7 @@ NOT_CRON_WORKFLOW () {
   return 1 2>/dev/null || exit 1
 }
 
-# Main
+ # Main
   if [[ "${arg1}" == 'node_run' ]]
   then
     GET_ALL_NODES "${arg2}" "${arg3}"
@@ -1857,4 +1855,4 @@ NOT_CRON_WORKFLOW () {
     GET_ALL_NODES
   fi
 
-# End of the masternode monitor script.
+ # End of the masternode monitor script.
