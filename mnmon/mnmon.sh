@@ -1072,7 +1072,7 @@ CHECK_RAM () {
 REPORT_INFO_ABOUT_NODE () {
   USRNAME=$( echo "${1}" | tr -d \" )
   DAEMON_BIN=$( echo "${2}" | tr -d \" )
-  CONTROLLER_BIN=$( echo "${3}" | tr -d \" )
+  CONTROLLER_BIN_LOC=$( echo "${3}" | tr -d \" )
   CONF_FOLDER=$( echo "${4}" | tr -d \" )
   CONF_LOCATION=$( echo "${5}" | tr -d \" )
   MASTERNODE=$( echo "${6}" | tr -d \" )
@@ -1302,7 +1302,7 @@ ${GETBALANCE} < ${MIN_STAKE} " "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISC
 Has enough coins to stake now!" "Balance is above the minimum" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
       if [[ "${STAKING}" -eq 0 ]]
       then
-        GETSTAKINGSTATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getstakingstatus" 2>&1 | jq . | grep 'false' | tr -d \" )
+        GETSTAKINGSTATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" getstakingstatus" 2>&1 | jq . | grep 'false' | tr -d \" )
         PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_status" "" "__${USRNAME} ${DAEMON_BIN}__
 ${GETSTAKINGSTATUS}" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
       fi
@@ -1364,7 +1364,7 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
 GET_INFO_ON_THIS_NODE () {
   HAS_FUNCTION=${1}
   USRNAME=${2}
-  CONTROLLER_BIN=${3}
+  CONTROLLER_BIN_LOC=${3}
   DAEMON_BIN=${4}
   CONF_LOCATION=${5}
   DAEMON_PID=${6}
@@ -1382,8 +1382,8 @@ GET_INFO_ON_THIS_NODE () {
   # setup vars.
   CONF_FOLDER=$( dirname "${CONF_LOCATION}" )
 
-  GETBLOCKCOUNT=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getblockcount" 2>&1 | grep -o '[0-9].*' )
-  GETCONNECTIONCOUNT=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getconnectioncount" 2>&1 | grep -o '[0-9].*' )
+  GETBLOCKCOUNT=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" getblockcount" 2>&1 | grep -o '[0-9].*' )
+  GETCONNECTIONCOUNT=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" getconnectioncount" 2>&1 | grep -o '[0-9].*' )
 
   if [[ -z "${GETBLOCKCOUNT}" ]] && [[ -z "${GETCONNECTIONCOUNT}" ]]
   then
@@ -1396,10 +1396,10 @@ GET_INFO_ON_THIS_NODE () {
   if [[ $( grep 'privkey=' "${CONF_LOCATION}" | grep -vE -c '^#' ) -gt 0 ]]
   then
     MASTERNODE=1
-    MASTERNODE_STATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" masternode status" 2>&1 )
+    MASTERNODE_STATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" masternode status" 2>&1 )
     if [[ $( echo "${MASTERNODE_STATUS}" | grep -ic "method not found" ) -gt 0 ]]
     then
-      MASTERNODE_STATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" masternode debug" 2>&1 )
+      MASTERNODE_STATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" masternode debug" 2>&1 )
     fi
     if [[ $( echo "${MASTERNODE_STATUS}" | grep -ic "method not found" ) -gt 0 ]] && [[ "${HAS_FUNCTION}" -gt 0 ]]
     then
@@ -1441,20 +1441,20 @@ GET_INFO_ON_THIS_NODE () {
   fi
 
   # Get total balance in the wallet.
-  WALLETINFO=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getwalletinfo" 2>&1 )
+  WALLETINFO=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" getwalletinfo" 2>&1 )
   if [[ ! -z "${WALLETINFO}" ]] && [[ $( echo "${WALLETINFO}" | grep -ic 'balance' ) -gt 0 ]]
   then
     GETBALANCE=$( echo "${WALLETINFO}" | jq -r '.balance' )
     GETTOTALBALANCE=$( echo "${WALLETINFO}" | jq -r '.balance, .unconfirmed_balance, .immature_balance' | awk '{sum += $0} END {printf "%.8f", sum}' )
   else
-    WALLETINFO=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getbalance" 2>&1 )
+    WALLETINFO=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" getbalance" 2>&1 )
   fi
 
   # Get the version number.
-  VERSION=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" --help " 2>/dev/null | head -n 1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/' )
+  VERSION=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" --help " 2>/dev/null | head -n 1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/' )
   if [[ -z "${VERSION}" ]]
   then
-    VERSION=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" -version " 2>/dev/null | sed 's/[^0-9.]*\([0-9.]*\).*/\1/' )
+    VERSION=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" -version " 2>/dev/null | sed 's/[^0-9.]*\([0-9.]*\).*/\1/' )
   fi
 
   # Check staking status.
@@ -1462,7 +1462,7 @@ GET_INFO_ON_THIS_NODE () {
   GETSTAKINGSTATUS=''
   if [[ $( echo "${GETBALANCE} > 0" | bc -l ) -gt 0 ]]
   then
-    GETSTAKINGSTATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getstakingstatus" 2>&1 )
+    GETSTAKINGSTATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" getstakingstatus" 2>&1 )
     if [[ $( echo "${GETSTAKINGSTATUS}" | grep -c 'false' ) -eq 0 ]]
     then
       STAKING=1
@@ -1473,7 +1473,7 @@ GET_INFO_ON_THIS_NODE () {
   ALL_STAKE_INPUTS_BALANCE_COUNT=''
   if [[ $( echo "${GETBALANCE} > 0" | bc -l ) -gt 0 ]]
   then
-    LIST_STAKE_INPUTS=$( su "${USRNAME}" -c "timeout 10 \"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" liststakeinputs " 2>/dev/null )
+    LIST_STAKE_INPUTS=$( su "${USRNAME}" -c "timeout 10 \"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" liststakeinputs " 2>/dev/null )
     if [[ $( echo "${LIST_STAKE_INPUTS}" | grep -ci 'Method not found') -eq 0 ]] && [[ $( echo "${LIST_STAKE_INPUTS}" | grep -c 'amount' ) -gt 0 ]]
     then
       STAKING_INPUTS_COUNT=$( echo "${LIST_STAKE_INPUTS}" | grep -c 'amount' )
@@ -1483,7 +1483,7 @@ GET_INFO_ON_THIS_NODE () {
   fi
 
   # Check networkhashps
-  GETNETHASHRATE=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getnetworkhashps" 2>&1 | grep -Eo '[+-]?[0-9]+([.][0-9]+)?' 2>/dev/null )
+  GETNETHASHRATE=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" getnetworkhashps" 2>&1 | grep -Eo '[+-]?[0-9]+([.][0-9]+)?' 2>/dev/null )
   if [[ -z "${GETNETHASHRATE}" ]]
   then
     GETNETHASHRATE=0
@@ -1491,7 +1491,7 @@ GET_INFO_ON_THIS_NODE () {
 
   # Output info.
   CONF_LOCATION=$( dirname "${CONF_LOCATION}" )
-  REPORT_INFO_ABOUT_NODE "${USRNAME}" "${DAEMON_BIN}" "${CONTROLLER_BIN}" "${CONF_FOLDER}" "${CONF_LOCATION}" "${MASTERNODE}" "${MNINFO}" "${GETBALANCE}" "${GETTOTALBALANCE}" "${STAKING}" "${GETCONNECTIONCOUNT}" "${GETBLOCKCOUNT}" "${UPTIME}" "${DAEMON_PID}" "${GETNETHASHRATE}" "${MNWIN}" "${ALL_STAKE_INPUTS_BALANCE_COUNT}"
+  REPORT_INFO_ABOUT_NODE "${USRNAME}" "${DAEMON_BIN}" "${CONTROLLER_BIN_LOC}" "${CONF_FOLDER}" "${CONF_LOCATION}" "${MASTERNODE}" "${MNINFO}" "${GETBALANCE}" "${GETTOTALBALANCE}" "${STAKING}" "${GETCONNECTIONCOUNT}" "${GETBLOCKCOUNT}" "${UPTIME}" "${DAEMON_PID}" "${GETNETHASHRATE}" "${MNWIN}" "${ALL_STAKE_INPUTS_BALANCE_COUNT}"
 }
 
 GET_ALL_NODES () {
@@ -1559,19 +1559,30 @@ GET_ALL_NODES () {
 
     while read -r CONF_LOCATION
     do
+      FUNCTION_PARAMS=''
+      DAEMON_BIN_LOC=''
+      CONTROLLER_BIN_LOC=''
+      if [[ $( grep -ric "nomnmon" "${CONF_LOCATION}" ) -gt 0 ]]
+      then
+        continue
+      fi
+
+      # Get daemon bin name and pid from lock in conf folder.
       CONF_FOLDER=$( dirname "${CONF_LOCATION}" )
       DAEMON_BIN=$( echo "${LSLOCKS}" | grep -m 1 "${CONF_FOLDER}" | awk '{print $1}' )
       CONTROLLER_BIN="${DAEMON_BIN}"
       DAEMON_PID=$( echo "${LSLOCKS}" | grep -m 1 "${CONF_FOLDER}" | awk '{print $2}' )
+
+      # Get path to daemon bin.
       if [[ ! -z "${DAEMON_PID}" ]]
       then
-        DAEMON_BIN=$( echo "${PS_LIST}" | cut -c 32- | grep " ${DAEMON_PID} " | awk '{print $3}' )
-        CONTROLLER_BIN="${DAEMON_BIN}"
-        COMMAND_FOLDER=$( dirname "${DAEMON_BIN}" )
+        DAEMON_BIN_LOC=$( echo "${PS_LIST}" | cut -c 32- | grep " ${DAEMON_PID} " | awk '{print $3}' )
+        CONTROLLER_BIN_LOC="${DAEMON_BIN_LOC}"
+        COMMAND_FOLDER=$( dirname "${DAEMON_BIN_LOC}" )
         CONTROLLER_BIN_FOLDER=$( find "${COMMAND_FOLDER}" -executable -type f 2>/dev/null | grep -Ei "${DAEMON_BIN::-1}-cli$" )
         if [[ ! -z "${CONTROLLER_BIN_FOLDER}" ]]
         then
-          CONTROLLER_BIN="${CONTROLLER_BIN_FOLDER}"
+          CONTROLLER_BIN_LOC="${CONTROLLER_BIN_FOLDER}"
         fi
       fi
 
@@ -1583,19 +1594,16 @@ GET_ALL_NODES () {
           DAEMON_BIN=$( echo "${FUNCTION_PARAMS}" | awk '{print $5}' | tr -d \" )
           if [[ -z "${DAEMON_BIN}" ]]
           then
-            DAEMON_BIN=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${MN_USRNAME} daemon loc" )
+            DAEMON_BIN_LOC=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${MN_USRNAME} daemon loc" )
+            DAEMON_BIN=$( basename "${DAEMON_BIN_LOC}" )
           fi
         fi
-        if [[ -z "${CONTROLLER_BIN}" ]]
+        if [[ -z "${CONTROLLER_BIN_LOC}" ]]
         then
-          CONTROLLER_BIN=$( echo "${FUNCTION_PARAMS}" | awk '{print $3}' | tr -d \" )
-          if [[ -z "${CONTROLLER_BIN}" ]]
-          then
-            CONTROLLER_BIN=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${MN_USRNAME} cli loc" )
-          fi
+          CONTROLLER_BIN_LOC=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${MN_USRNAME} cli loc" )
+          CONTROLLER_BIN=$( basename "${CONTROLLER_BIN_LOC}" )
         fi
       fi
-      DAEMON_BIN=$( basename "${DAEMON_BIN}" )
 
       UPTIME=0
       if [[ ! -z "${DAEMON_PID}" ]]
@@ -1613,16 +1621,17 @@ GET_ALL_NODES () {
         echo
         echo "+++++++++++++++++++++++++++++"
         echo "Has Function: ${HAS_FUNCTION}"
-        echo "Username: ${USRNAME}"
-        echo "Cli: ${CONTROLLER_BIN}"
-        echo "Daemon: ${DAEMON_BIN}"
+        echo "Function: ${FUNCTION_PARAMS}"
+        echo "Username: ${USRNAME} ${MN_USRNAME}"
+        echo "Cli: ${CONTROLLER_BIN} ${CONTROLLER_BIN_LOC}"
+        echo "Daemon: ${DAEMON_BIN} ${DAEMON_BIN_LOC}"
         echo "Conf Location: ${CONF_LOCATION}"
         echo "PID: ${DAEMON_PID}"
         echo "Uptime: ${UPTIME}"
         echo
       fi
 
-      GET_INFO_ON_THIS_NODE "${HAS_FUNCTION}" "${USRNAME}" "${CONTROLLER_BIN}" "${DAEMON_BIN}" "${CONF_LOCATION}" "${DAEMON_PID}" "${UPTIME}"
+      GET_INFO_ON_THIS_NODE "${HAS_FUNCTION}" "${USRNAME}" "${CONTROLLER_BIN_LOC}" "${DAEMON_BIN}" "${CONF_LOCATION}" "${DAEMON_PID}" "${UPTIME}"
     done <<< "${CONF_LOCATIONS}"
   done <<< "$( cut -d: -f1 /etc/passwd | getent passwd | sed 's/:/ X /g' | sort -h )"
 }
