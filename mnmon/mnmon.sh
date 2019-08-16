@@ -27,7 +27,7 @@
  DISCORD_WEBHOOK_AVATAR_DEFAULT='https://i.imgur.com/8WHSSa7s.jpg'
  DISCORD_TITLE_LIMIT=266
 
-# Debug arg.
+# debug arg.
  DEBUG_OUTPUT=0
  if [[ "${arg1}" == 'debug' ]]
 then
@@ -40,6 +40,21 @@ fi
  if [[ "${arg3}" == 'debug' ]]
 then
   DEBUG_OUTPUT=1
+fi
+
+# test arg.
+ TEST_OUTPUT=0
+ if [[ "${arg1}" == 'test' ]]
+then
+  TEST_OUTPUT=1
+fi
+ if [[ "${arg2}" == 'test' ]]
+then
+  TEST_OUTPUT=1
+fi
+ if [[ "${arg3}" == 'test' ]]
+then
+  TEST_OUTPUT=1
 fi
 
 # Get sqlite.
@@ -835,7 +850,7 @@ ${MESSAGE}"
   if [[ ! -z "${ERRORS}" ]]
   then
     echo "${ERRORS}" >/dev/tty
-  elif [[ "${arg1}" != 'test' ]] && [[ ! -z "${MESSAGE}" ]]
+  elif [[ "${TEST_OUTPUT}" -eq 1 ]] && [[ ! -z "${MESSAGE}" ]]
   then
     SQL_QUERY "REPLACE INTO system_log (start_time,last_ping_time,name,message) VALUES ('${START_TIME}','${UNIX_TIME}','${NAME}','${MESSAGE}');"
   fi
@@ -939,7 +954,7 @@ ${MESSAGE}"
   if [[ ! -z "${ERRORS}" ]]
   then
     echo "${ERRORS}" >/dev/tty
-  elif [[ "${arg1}" != 'test' ]] && [[ ! -z "${MESSAGE}" ]]
+  elif [[ "${TEST_OUTPUT}" -eq 1 ]] && [[ ! -z "${MESSAGE}" ]]
   then
     SQL_QUERY "REPLACE INTO node_log (start_time,last_ping_time,conf_loc,type,message) VALUES ('${START_TIME}','${UNIX_TIME}','${CONF_LOCATION}','${TYPE}','${MESSAGE}');"
   fi
@@ -959,7 +974,7 @@ ${MESSAGE}"
     UNIX_TIME_LOG=$( date -u --date="${DATE_1} ${DATE_2} ${DATE_3}" +%s )
     # Logins are one time; not continual issues.
     MESSAGE=$( SQL_QUERY "SELECT message FROM login_data WHERE time == ${UNIX_TIME_LOG} " )
-    if [[ ! -z "${MESSAGE}" ]] && [[ "${arg1}" != 'test' ]]
+    if [[ ! -z "${MESSAGE}" ]] && [[ "${TEST_OUTPUT}" -eq 1 ]]
     then
       if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
       then
@@ -973,7 +988,7 @@ ${MESSAGE}"
     if [[ ! -z "${ERRORS}" ]]
     then
       echo "ERROR: ${ERRORS}"
-    elif [[ "${arg1}" != 'test' ]]
+    elif [[ "${TEST_OUTPUT}" -eq 1 ]]
     then
       SQL_QUERY "INSERT INTO login_data (time,message) VALUES ('${UNIX_TIME_LOG}','${INFO}');"
     fi
@@ -989,12 +1004,12 @@ ${MESSAGE}"
 
   FREEPSPACE_ALL=$( df -P . | tail -1 | awk '{print $4}' )
   FREEPSPACE_BOOT=$( df -P /boot | tail -1 | awk '{print $4}' )
-  if [[ "${FREEPSPACE_ALL}" -lt 524288 ]] || [[ "${arg1}" == 'test' ]]
+  if [[ "${FREEPSPACE_ALL}" -lt 524288 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
   then
     FREEPSPACE_ALL=$( echo "${FREEPSPACE_ALL} / 1024" | bc )
     MESSAGE_ERROR="${MESSAGE_ERROR} Less than 512 MB of free space is left on the drive. ${FREEPSPACE_ALL} MB left."
   fi
-  if [[ "${FREEPSPACE_BOOT}" -lt 65536 ]] || [[ "${arg1}" == 'test' ]]
+  if [[ "${FREEPSPACE_BOOT}" -lt 65536 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
   then
     FREEPSPACE_BOOT=$( echo "${FREEPSPACE_BOOT} / 1024" | bc )
     MESSAGE_ERROR="${MESSAGE_ERROR} Less than 64 MB of free space is left in the boot folder. ${FREEPSPACE_BOOT} MB left."
@@ -1002,12 +1017,12 @@ ${MESSAGE}"
 
   if [[ -z "${MESSAGE_ERROR}" ]]
   then
-    if [[ "${FREEPSPACE_ALL}" -lt 1572864 ]] || [[ "${arg1}" == 'test' ]]
+    if [[ "${FREEPSPACE_ALL}" -lt 1572864 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
     then
       FREEPSPACE_ALL=$( echo "${FREEPSPACE_ALL} / 1024" | bc )
       MESSAGE_WARNING="${MESSAGE_WARNING} Less than 1.5 GB of free space is left on the drive. ${FREEPSPACE_ALL} MB left."
     fi
-    if [[ "${FREEPSPACE_BOOT}" -lt 131072 ]] || [[ "${arg1}" == 'test' ]]
+    if [[ "${FREEPSPACE_BOOT}" -lt 131072 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
     then
       FREEPSPACE_BOOT=$( echo "${FREEPSPACE_BOOT} / 1024" | bc )
       MESSAGE_WARNING="${MESSAGE_WARNING} Less than 128 MB of free space is left in the boot folder. ${FREEPSPACE_BOOT} MB left."
@@ -1046,10 +1061,10 @@ ${MESSAGE}"
   CPU_COUNT=$( grep -c 'processor' /proc/cpuinfo )
   LOAD_PER_CPU="$( printf "%.3f\n" "$( bc -l <<< "${LOAD} / ${CPU_COUNT}" )" )"
 
-  if [[ "$( echo "${LOAD_PER_CPU} >= 4" | bc -l )" -gt 0 ]] || [[ "${arg1}" == 'test' ]]
+  if [[ "$( echo "${LOAD_PER_CPU} >= 4" | bc -l )" -gt 0 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
   then
     MESSAGE_ERROR=" :desktop: :fire:  CPU LOAD is over 4: ${LOAD_PER_CPU} :fire: :desktop: "
-  elif [[ "$( echo "${LOAD_PER_CPU} > 2" | bc -l )" -gt 0 ]] || [[ "${arg1}" == 'test' ]]
+  elif [[ "$( echo "${LOAD_PER_CPU} > 2" | bc -l )" -gt 0 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
   then
     MESSAGE_WARNING=" :desktop: CPU LOAD is over 2: ${LOAD_PER_CPU} :desktop: "
   fi
@@ -1075,11 +1090,11 @@ ${MESSAGE}"
   MESSAGE_SUCCESS=''
 
   SWAP_FREE_MB=$( free -wm | grep -i 'Swap:' | awk '{print $4}' )
-  if [[ $( echo "${SWAP_FREE_MB} < 512" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
+  if [[ $( echo "${SWAP_FREE_MB} < 512" | bc ) -gt 0 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
   then
     MESSAGE_ERROR=":desktop: :fire: Swap is under 512 MB: ${SWAP_FREE_MB} MB :fire: :desktop: "
   fi
-  if ([[ $( echo "${SWAP_FREE_MB} >= 512" | bc ) -gt 0 ]] && [[ $( echo "${SWAP_FREE_MB} < 1024" | bc ) -gt 0 ]]) || [[ "${arg1}" == 'test' ]]
+  if ([[ $( echo "${SWAP_FREE_MB} >= 512" | bc ) -gt 0 ]] && [[ $( echo "${SWAP_FREE_MB} < 1024" | bc ) -gt 0 ]]) || [[ "${TEST_OUTPUT}" -eq 1 ]]
   then
     MESSAGE_WARNING=":desktop: Swap is under 1024 MB: ${SWAP_FREE_MB} MB :desktop: "
   fi
@@ -1108,11 +1123,11 @@ ${MESSAGE}"
   PERCENT_FREE=$( echo "${MEM_AVAILABLE} / ${MEM_TOTAL}" | bc -l )
 
 
-  if [[ "${arg1}" == 'test' ]] || ([[ $( echo "${PERCENT_FREE} < 10" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 256" | bc ) -gt 0 ]])
+  if [[ "${TEST_OUTPUT}" -eq 1 ]] || ([[ $( echo "${PERCENT_FREE} < 10" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 256" | bc ) -gt 0 ]])
   then
     MESSAGE_ERROR=":desktop: :fire: Free RAM is under 256 MB: ${MEM_AVAILABLE_MB} MB :fire: :desktop: "
   fi
-  if [[ "${arg1}" == 'test' ]] || ([[ $( echo "${PERCENT_FREE} < 20" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} >= 256" | bc ) -gt 0 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 512" | bc ) -gt 0 ]])
+  if [[ "${TEST_OUTPUT}" -eq 1 ]] || ([[ $( echo "${PERCENT_FREE} < 20" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} >= 256" | bc ) -gt 0 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 512" | bc ) -gt 0 ]])
   then
     MESSAGE_WARNING=":desktop: Free RAM is under 512 MB: ${MEM_AVAILABLE_MB} MB :desktop: "
   fi
@@ -1137,13 +1152,13 @@ ${MESSAGE}"
 
   TIME_OFFSET=$( ntpdate -q pool.ntp.org | tail -n 1 | grep -o 'offset.*' | awk '{print $2 }' | tr -d '-' )
 
-  if [[ $( echo "${TIME_OFFSET} > 1" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
+  if [[ $( echo "${TIME_OFFSET} > 1" | bc ) -gt 0 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
   then
     MESSAGE_ERROR=":clock: :fire: System Clock if off by over 1 second. Offset: ${TIME_OFFSET} seconds :fire: :clock: "
   fi
-  if [[ $( echo "${TIME_OFFSET} > 0.1" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
+  if [[ $( echo "${TIME_OFFSET} > 0.1" | bc ) -gt 0 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
   then
-    MESSAGE_ERROR=":clock: System Clock if off by over 0.1 seconds. Offset: ${TIME_OFFSET} seconds :clock: "
+    MESSAGE_WARNING=":clock: System Clock if off by over 0.1 seconds. Offset: ${TIME_OFFSET} seconds :clock: "
   fi
 
   if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
