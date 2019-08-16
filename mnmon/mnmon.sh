@@ -9,7 +9,7 @@
 # Run this file
 
 ```
-bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/mnmon/mnmon.sh)" ; source ~/.bashrc
+  bash -ic "$( wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/master/mnmon/mnmon.sh )" ; source ~/.bashrc
 ```
 
 '
@@ -18,57 +18,48 @@ bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/maste
 # https://imgur.com/a/B8RMhHV
 
 # Define simple variables.
-stty sane 2>/dev/null
-arg1="${1}"
-arg2="${2}"
-arg3="${3}"
-RE='^[0-9]+$'
-DISCORD_WEBHOOK_USERNAME_DEFAULT='Masternode Monitor'
-DISCORD_WEBHOOK_AVATAR_DEFAULT='https://i.imgur.com/8WHSSa7s.jpg'
-
-# Daemon_bin_name URL_to_logo Bot_name
-DAEMON_BIN_LUT="
-energid https://s2.coinmarketcap.com/static/img/coins/128x128/3218.png Energi Monitor
-dogecashd https://s2.coinmarketcap.com/static/img/coins/128x128/3672.png DogeCash Monitor
-unigridd https://assets.coingecko.com/coins/images/8937/large/unigrid-logo-round.png UniGrid Monitor
-"
-
-# Daemon_bin_name minimum_balance_to_stake staking_reward mn_reward confirmations cooloff_seconds networkhashps_multiplier ticker_name blocktime_seconds
-DAEMON_BALANCE_LUT="
-energid 1 2.28 9.14 101 3600 0.000001 NRG 60
-dogecashd 1 2.16 8.64 101 3600 0.000001 DOGEC 60
-"
-
-DISCORD_TITLE_LIMIT=266
+ stty sane 2>/dev/null
+ arg1="${1}"
+ arg2="${2}"
+ arg3="${3}"
+ RE='^[0-9]+$'
+ DISCORD_WEBHOOK_USERNAME_DEFAULT='Masternode Monitor'
+ DISCORD_WEBHOOK_AVATAR_DEFAULT='https://i.imgur.com/8WHSSa7s.jpg'
+ DISCORD_TITLE_LIMIT=266
 
 # Debug arg.
-DEBUG_OUTPUT=0
-if [[ "${arg1}" == 'debug' ]]
+ DEBUG_OUTPUT=0
+ if [[ "${arg1}" == 'debug' ]]
 then
   DEBUG_OUTPUT=1
 fi
-if [[ "${arg2}" == 'debug' ]]
+ if [[ "${arg2}" == 'debug' ]]
 then
   DEBUG_OUTPUT=1
 fi
-if [[ "${arg3}" == 'debug' ]]
+ if [[ "${arg3}" == 'debug' ]]
 then
   DEBUG_OUTPUT=1
 fi
 
 # Get sqlite.
-if ! [ -x "$(command -v sqlite3 )" ]
+ if ! [ -x "$( command -v sqlite3 )" ]
 then
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq sqlite3
 fi
 # Get jq.
-if ! [ -x "$(command -v jq)" ]
+ if ! [ -x "$( command -v jq)" ]
 then
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq jq
 fi
+# Get ntpdate.
+ if [ ! -x "$( command -v ntpdate )" ]
+then
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq ntpdate
+fi
 
 # Run a sqlite query.
-SQL_QUERY () {
+ SQL_QUERY () {
   if [[ ! -d /var/multi-masternode-data/mnbot ]]
   then
     sudo mkdir -p /var/multi-masternode-data/mnbot
@@ -78,20 +69,20 @@ SQL_QUERY () {
 
 # Create tables if they do not exist.
 # Key Value table.
-SQL_QUERY "CREATE TABLE IF NOT EXISTS variables (
+ SQL_QUERY "CREATE TABLE IF NOT EXISTS variables (
  key TEXT PRIMARY KEY,
  value TEXT NOT NULL
 );"
 
 # User login.
-SQL_QUERY "CREATE TABLE IF NOT EXISTS login_data (
+ SQL_QUERY "CREATE TABLE IF NOT EXISTS login_data (
   time INTEGER,
   message TEXT,
   PRIMARY KEY (time, message)
 );"
 
 # System logs.
-SQL_QUERY "CREATE TABLE IF NOT EXISTS system_log (
+ SQL_QUERY "CREATE TABLE IF NOT EXISTS system_log (
   name TEXT PRIMARY KEY,
   start_time INTEGER ,
   last_ping_time INTEGER ,
@@ -99,7 +90,7 @@ SQL_QUERY "CREATE TABLE IF NOT EXISTS system_log (
 );"
 
 # Daemon logs.
-SQL_QUERY "CREATE TABLE IF NOT EXISTS node_log (
+ SQL_QUERY "CREATE TABLE IF NOT EXISTS node_log (
   conf_loc TEXT,
   type TEXT,
   start_time INTEGER ,
@@ -108,15 +99,44 @@ SQL_QUERY "CREATE TABLE IF NOT EXISTS node_log (
   PRIMARY KEY (conf_loc, type)
 );"
 
+ if [[ -f /var/multi-masternode-data/.bashrc ]] && [[ $( sudo grep -c mnstatus /var/multi-masternode-data/.bashrc ) -eq 0 ]]
+then
+  wget -4qo- gist.githack.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O mcarper.sh
+  echo "
+  #!/bin/bash
+  DAEMON_BIN='energid'
+  $( cat mcarper.sh)" > mcarper.sh
+  bash mcarper.sh UPDATE_BASHRC
+  sudo rm mcarper.sh
+  sudo cp "${HOME}/.bashrc" /var/multi-masternode-data/.bashrc
+fi
+
+# Daemon_bin_name URL_to_logo Bot_name
+ DAEMON_BIN_LUT="
+energid https://s2.coinmarketcap.com/static/img/coins/128x128/3218.png Energi Monitor
+dogecashd https://s2.coinmarketcap.com/static/img/coins/128x128/3672.png DogeCash Monitor
+unigridd https://assets.coingecko.com/coins/images/8937/large/unigrid-logo-round.png UniGrid Monitor
+millenniumd https://pbs.twimg.com/profile_images/1096902939342503937/uo3aeRep.png Millennium Club Monitor
+galileld https://s2.coinmarketcap.com/static/img/coins/128x128/3793.png Galilel Monitor
+gossipd https://s2.coinmarketcap.com/static/img/coins/128x128/3332.png Gossip Monitor
+catocoind https://cmc.io/img/coin_icons/128x128/catocoin.png CatoCoin Monitor
+"
+
+# Daemon_bin_name minimum_balance_to_stake staking_reward mn_reward confirmations cooloff_seconds networkhashps_multiplier ticker_name blocktime_seconds
+ DAEMON_BALANCE_LUT="
+energid 1 2.28 9.14 101 3600 0.000001 NRG 60
+dogecashd 1 2.16 8.64 101 3600 0.000001 DOGEC 60
+"
+
 # Convert seconds to days, hours, minutes, seconds.
-DISPLAYTIME () {
+ DISPLAYTIME () {
   # Round up the time.
   local T=0
   T=$( printf '%.*f\n' 0 "${1}" )
-  local D=$((T/60/60/24))
-  local H=$((T/60/60%24))
-  local M=$((T/60%60))
-  local S=$((T%60))
+  local D=$(( T/60/60/24 ))
+  local H=$(( T/60/60%24 ))
+  local M=$(( T/60%60 ))
+  local S=$(( T%60 ))
   (( D > 0 )) && printf '%d days ' "${D}"
   (( H > 0 )) && printf '%d hours ' "${H}"
   (( M > 0 )) && printf '%d minutes ' "${M}"
@@ -124,7 +144,7 @@ DISPLAYTIME () {
 }
 
 # Create a service that runs every minute.
-INSTALL_MN_MON_SERVICE () {
+ INSTALL_MN_MON_SERVICE () {
   if [[ -f "${HOME}/masternode/mnmon/mnmon.sh" ]]
   then
     sudo cp "${HOME}/masternode/mnmon/mnmon.sh" /var/multi-masternode-data/mnbot/mnmon.sh
@@ -136,7 +156,7 @@ INSTALL_MN_MON_SERVICE () {
       sudo rm -f /var/multi-masternode-data/mnbot/mnmon.sh
       echo "Downloading Masternode Setup Script."
       sudo wget -q4o- https://raw.githubusercontent.com/mikeytown2/masternode/master/mnmon/mnmon.sh -O /var/multi-masternode-data/mnbot/mnmon.sh
-      COUNTER=$((COUNTER+1))
+      COUNTER=$(( COUNTER+1 ))
       if [[ "${COUNTER}" -gt 3 ]]
       then
         echo
@@ -196,7 +216,7 @@ SYSTEMD_CONF
 }
 
 # Send the data to discord via webhook.
-DISCORD_WEBHOOK_SEND () {
+ DISCORD_WEBHOOK_SEND () {
 (
   local SERVER_ALIAS
   local SHOW_IP
@@ -338,7 +358,7 @@ PAYLOAD
 }
 
 # Get the webhook url and test to make sure it works.
-DISCORD_WEBHOOK_URL_PROMPT () {
+ DISCORD_WEBHOOK_URL_PROMPT () {
   # Title of this webhook.
   TEXT_A="${1}"
   # Url of the existing webhook.
@@ -370,7 +390,7 @@ DISCORD_WEBHOOK_URL_PROMPT () {
 }
 
 # Prompt for all webhooks that we need.
-GET_DISCORD_WEBHOOKS () {
+ GET_DISCORD_WEBHOOKS () {
   # Get webhook url from discord.
   echo
   echo -n 'Get Webhook URL: Your personal server (press plus on left if you do not have one)'
@@ -403,7 +423,7 @@ GET_DISCORD_WEBHOOKS () {
 }
 
 # Send the data to telegram via bot.
-TELEGRAM_SEND () {
+ TELEGRAM_SEND () {
 (
   local SERVER_INFO
   local SHOW_IP
@@ -485,7 +505,7 @@ ${MESSAGE}"
 }
 
 # Install telegram bot.
-TELEGRAM_SETUP () {
+ TELEGRAM_SETUP () {
   TOKEN=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_token';" )
   echo "Message the @botfather https://web.telegram.org/#/im?p=@BotFather"
   echo "with the following text: "
@@ -541,7 +561,7 @@ TELEGRAM_SETUP () {
 }
 
 # Send an error messsage to discord and telegram.
-SEND_ERROR () {
+ SEND_ERROR () {
   URL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_error';" )
   TOKEN=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_token';" )
   CHAT_ID=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_chatid';" )
@@ -585,7 +605,7 @@ SEND_ERROR () {
   fi
 }
 
-SEND_WARNING () {
+ SEND_WARNING () {
   URL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_warning';" )
   TOKEN=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_token';" )
   CHAT_ID=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_chatid';" )
@@ -629,7 +649,7 @@ SEND_WARNING () {
   fi
 }
 
-SEND_INFO () {
+ SEND_INFO () {
   URL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_information';" )
   TOKEN=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_token';" )
   CHAT_ID=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_chatid';" )
@@ -673,7 +693,7 @@ SEND_INFO () {
   fi
 }
 
-SEND_SUCCESS () {
+ SEND_SUCCESS () {
   URL=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'discord_webhook_url_success';" )
   TOKEN=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_token';" )
   CHAT_ID=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'telegram_chatid';" )
@@ -717,7 +737,7 @@ SEND_SUCCESS () {
   fi
 }
 
-PROCESS_MESSAGES () {
+ PROCESS_MESSAGES () {
   local ERRORS=''
   local MESSAGE=''
   local NAME=${1}
@@ -782,14 +802,32 @@ PROCESS_MESSAGES () {
 
   if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
   then
-    echo "node_log conf ${CONF_LOCATION} type ${TYPE}"
+    echo "system_log name ${NAME}"
     echo "Last ping: ${SECONDS_SINCE_PING}"
-    echo "Error: ${MESSAGE_ERROR}"
-    echo "Warning: ${MESSAGE_WARNING}"
-    echo "Info: ${MESSAGE_INFO}"
-    echo "Success: ${MESSAGE_SUCCESS}"
-    echo "Message: ${MESSAGE}"
-    echo "Errors: ${ERRORS}"
+    if [[ ! -z "${MESSAGE_ERROR}" ]]
+    then
+      echo "Error: ${MESSAGE_ERROR}"
+    fi
+    if [[ ! -z "${MESSAGE_WARNING}" ]]
+    then
+      echo "Warning: ${MESSAGE_WARNING}"
+    fi
+    if [[ ! -z "${MESSAGE_INFO}" ]]
+    then
+      echo "Info: ${MESSAGE_INFO}"
+    fi
+    if [[ ! -z "${MESSAGE_SUCCESS}" ]]
+    then
+      echo "Success: ${MESSAGE_SUCCESS}"
+    fi
+    if [[ ! -z "${MESSAGE}" ]]
+    then
+      echo "Message: ${MESSAGE}"
+    fi
+    if [[ ! -z "${ERRORS}" ]]
+    then
+      echo "Errors: ${ERRORS}"
+    fi
     echo
   fi
 
@@ -803,7 +841,7 @@ PROCESS_MESSAGES () {
   fi
 }
 
-PROCESS_NODE_MESSAGES () {
+ PROCESS_NODE_MESSAGES () {
   local ERRORS=''
   local MESSAGE=''
   local CONF_LOCATION=${1}
@@ -870,12 +908,30 @@ PROCESS_NODE_MESSAGES () {
   then
     echo "node_log conf ${CONF_LOCATION} type ${TYPE}"
     echo "Last ping: ${SECONDS_SINCE_PING}"
-    echo "Error: ${MESSAGE_ERROR}"
-    echo "Warning: ${MESSAGE_WARNING}"
-    echo "Info: ${MESSAGE_INFO}"
-    echo "Success: ${MESSAGE_SUCCESS}"
-    echo "Message: ${MESSAGE}"
-    echo "Errors: ${ERRORS}"
+    if [[ ! -z "${MESSAGE_ERROR}" ]]
+    then
+      echo "Error: ${MESSAGE_ERROR}"
+    fi
+    if [[ ! -z "${MESSAGE_WARNING}" ]]
+    then
+      echo "Warning: ${MESSAGE_WARNING}"
+    fi
+    if [[ ! -z "${MESSAGE_INFO}" ]]
+    then
+      echo "Info: ${MESSAGE_INFO}"
+    fi
+    if [[ ! -z "${MESSAGE_SUCCESS}" ]]
+    then
+      echo "Success: ${MESSAGE_SUCCESS}"
+    fi
+    if [[ ! -z "${MESSAGE}" ]]
+    then
+      echo "Message: ${MESSAGE}"
+    fi
+    if [[ ! -z "${ERRORS}" ]]
+    then
+      echo "Errors: ${ERRORS}"
+    fi
     echo
   fi
 
@@ -889,7 +945,7 @@ PROCESS_NODE_MESSAGES () {
   fi
 }
 
-GET_LATEST_LOGINS () {
+ GET_LATEST_LOGINS () {
   while read -r DATE_1 DATE_2 DATE_3 LINE
   do
 #     echo "GET_LATEST_LOGINS ${LINE}" >/dev/tty
@@ -924,7 +980,7 @@ GET_LATEST_LOGINS () {
   done <<< "$( grep -B 20 ' systemd-logind' /var/log/auth.log | grep -B 20 'New' | grep -C10 'sshd' | grep port | grep -v 'CRON\|preauth\|Invalid user\|user unknown\|Failed[[:space:]]password\|authentication[[:space:]]failure\|refused[[:space:]]connect\|ignoring[[:space:]]max\|not[[:space:]]receive[[:space:]]identification\|[[:space:]]sudo\|[[:space:]]su\|Bad[[:space:]]protocol' )"
 }
 
-CHECK_DISK () {
+ CHECK_DISK () {
   NAME='disk_space'
   MESSAGE_ERROR=''
   MESSAGE_WARNING=''
@@ -979,7 +1035,7 @@ CHECK_DISK () {
   PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${DISCORD_WEBHOOK_USERNAME_DEFAULT}" "${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
 }
 
-CHECK_CPU_LOAD () {
+ CHECK_CPU_LOAD () {
   NAME='cpu_usage'
   MESSAGE_ERROR=''
   MESSAGE_WARNING=''
@@ -1011,7 +1067,7 @@ CHECK_CPU_LOAD () {
   PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${DISCORD_WEBHOOK_USERNAME_DEFAULT}" "${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
 }
 
-CHECK_SWAP () {
+ CHECK_SWAP () {
   NAME='swap_free'
   MESSAGE_ERROR=''
   MESSAGE_WARNING=''
@@ -1039,7 +1095,7 @@ CHECK_SWAP () {
   PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${DISCORD_WEBHOOK_USERNAME_DEFAULT}" "${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
 }
 
-CHECK_RAM () {
+ CHECK_RAM () {
   NAME='ram_free'
   MESSAGE_ERROR=''
   MESSAGE_WARNING=''
@@ -1069,7 +1125,36 @@ CHECK_RAM () {
   PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${DISCORD_WEBHOOK_USERNAME_DEFAULT}" "${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
 }
 
-REPORT_INFO_ABOUT_NODE () {
+ CHECK_CLOCK () {
+  NAME='system_clock'
+  MESSAGE_ERROR=''
+  MESSAGE_WARNING=''
+  MESSAGE_INFO=''
+  MESSAGE_SUCCESS=''
+
+  TIME_OFFSET=$( ntpdate -q pool.ntp.org | tail -n 1 | grep -o 'offset.*' | awk '{print $2 }' | tr -d '-' )
+
+  if [[ $( echo "${TIME_OFFSET} > 1" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
+  then
+    MESSAGE_ERROR=":clock: :fire: System Clock if off by over 1 second. Offset: ${TIME_OFFSET} seconds :fire: :clock: "
+  fi
+  if [[ $( echo "${TIME_OFFSET} > 0.1" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
+  then
+    MESSAGE_ERROR=":clock: System Clock if off by over 0.1 seconds. Offset: ${TIME_OFFSET} seconds :clock: "
+  fi
+
+  if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo "System clock offset: ${TIME_OFFSET}"
+    echo
+  fi
+
+  RECOVERED_MESSAGE_SUCCESS="System clock is now at ${TIME_OFFSET} seconds."
+  RECOVERED_TITLE_SUCCESS="System clock is back to normal."
+  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${DISCORD_WEBHOOK_USERNAME_DEFAULT}" "${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
+}
+
+ REPORT_INFO_ABOUT_NODE () {
   USRNAME=$( echo "${1}" | tr -d \" )
   DAEMON_BIN=$( echo "${2}" | tr -d \" )
   CONTROLLER_BIN_LOC=$( echo "${3}" | tr -d \" )
@@ -1087,6 +1172,7 @@ REPORT_INFO_ABOUT_NODE () {
   NETWORKHASHPS=$( echo "${15}" | tr -d \" )
   MNWIN=$( echo "${16}" | tr -d \" )
   ALL_STAKE_INPUTS_BALANCE_COUNT=$( echo "${17}" | tr -d \" )
+  VERSION=$( echo "${18}" | tr -d \" )
 
   if [[ -z "${USRNAME}" ]]
   then
@@ -1218,12 +1304,12 @@ in approximately ${MN_REWARD_IN_TIME}." "" "" "${DISCORD_WEBHOOK_USERNAME}" "${D
   BALANCE_DIFF=$( echo "${GETTOTALBALANCE} - ${PAST_BALANCE}" | bc -l )
 
   # Empty Wallet.
-  if [[ $(echo "${BALANCE_DIFF} != 0 " | bc -l ) -eq 0 ]]
+  if [[ $( echo "${BALANCE_DIFF} != 0 " | bc -l ) -eq 0 ]]
   then
     : # Do nothing.
 
   # Wallet has been drained.
-  elif [[ -z "${GETTOTALBALANCE}" ]] || [[ $(echo "${GETTOTALBALANCE} == 0" | bc -l ) -eq 1 ]]
+  elif [[ -z "${GETTOTALBALANCE}" ]] || [[ $( echo "${GETTOTALBALANCE} == 0" | bc -l ) -eq 1 ]]
   then
     SEND_ERROR "__${USRNAME} ${DAEMON_BIN}__
 Balance is now zero ${TICKER_NAME}!
@@ -1337,6 +1423,7 @@ Connections: ${GETCONNECTIONCOUNT}
 Staking Status: ${STAKING_TEXT}
 Masternode Status: ${MASTERNODE_TEXT}
 PID: ${DAEMON_PID}
+Version: ${VERSION}
 Uptime: ${UPTIME} seconds (${UPTIME_HUMAN})"
   if [[ ! -z "${GETBALANCE}" ]] && [[ "$( echo "${GETBALANCE} > 0.0" | bc -l )" -gt 0 ]]
   then
@@ -1361,7 +1448,7 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
   PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "node_info" "" "" "${_PAYLOAD}" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
 }
 
-GET_INFO_ON_THIS_NODE () {
+ GET_INFO_ON_THIS_NODE () {
   HAS_FUNCTION=${1}
   USRNAME=${2}
   CONTROLLER_BIN_LOC=${3}
@@ -1404,6 +1491,10 @@ GET_INFO_ON_THIS_NODE () {
     if [[ $( echo "${MASTERNODE_STATUS}" | grep -ic "method not found" ) -gt 0 ]] && [[ "${HAS_FUNCTION}" -gt 0 ]]
     then
       MASTERNODE_STATUS=$( bash -ic "source /var/multi-masternode-data/.bashrc; ${USRNAME} mnstatus" )
+    fi
+    if [[ $( echo "${MASTERNODE_STATUS}" | grep -ic "method not found" ) -gt 0 ]]
+    then
+      MASTERNODE_STATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" getmasternodestatus" 2>&1 )
     fi
 
     if [[ $( echo "${MASTERNODE_STATUS}" | grep -ic " successfully started" ) -eq 1 ]] || [[ $( echo "${MASTERNODE_STATUS}" | grep -ic " started remotely" ) -eq 1 ]]
@@ -1491,10 +1582,10 @@ GET_INFO_ON_THIS_NODE () {
 
   # Output info.
   CONF_LOCATION=$( dirname "${CONF_LOCATION}" )
-  REPORT_INFO_ABOUT_NODE "${USRNAME}" "${DAEMON_BIN}" "${CONTROLLER_BIN_LOC}" "${CONF_FOLDER}" "${CONF_LOCATION}" "${MASTERNODE}" "${MNINFO}" "${GETBALANCE}" "${GETTOTALBALANCE}" "${STAKING}" "${GETCONNECTIONCOUNT}" "${GETBLOCKCOUNT}" "${UPTIME}" "${DAEMON_PID}" "${GETNETHASHRATE}" "${MNWIN}" "${ALL_STAKE_INPUTS_BALANCE_COUNT}"
+  REPORT_INFO_ABOUT_NODE "${USRNAME}" "${DAEMON_BIN}" "${CONTROLLER_BIN_LOC}" "${CONF_FOLDER}" "${CONF_LOCATION}" "${MASTERNODE}" "${MNINFO}" "${GETBALANCE}" "${GETTOTALBALANCE}" "${STAKING}" "${GETCONNECTIONCOUNT}" "${GETBLOCKCOUNT}" "${UPTIME}" "${DAEMON_PID}" "${GETNETHASHRATE}" "${MNWIN}" "${ALL_STAKE_INPUTS_BALANCE_COUNT}" "${VERSION}"
 }
 
-GET_ALL_NODES () {
+ GET_ALL_NODES () {
   DAEMON_BIN_FILTER="${1}"
 
   FILENAME_WITH_FUNCTIONS=''
@@ -1712,19 +1803,20 @@ NOT_CRON_WORKFLOW () {
 }
 
 # Main
-if [[ "${arg1}" == 'node_run' ]]
-then
-  GET_ALL_NODES "${arg2}" "${arg3}"
-elif [[ "${arg1}" != 'cron' ]]
-then
-  NOT_CRON_WORKFLOW
-else
-  GET_LATEST_LOGINS
-  CHECK_DISK
-  CHECK_CPU_LOAD
-  CHECK_SWAP
-  CHECK_RAM
-  GET_ALL_NODES
-fi
+  if [[ "${arg1}" == 'node_run' ]]
+  then
+    GET_ALL_NODES "${arg2}" "${arg3}"
+  elif [[ "${arg1}" != 'cron' ]]
+  then
+    NOT_CRON_WORKFLOW
+  else
+    GET_LATEST_LOGINS
+    CHECK_DISK
+    CHECK_CPU_LOAD
+    CHECK_SWAP
+    CHECK_RAM
+    CHECK_CLOCK
+    GET_ALL_NODES
+  fi
 
 # End of the masternode monitor script.
