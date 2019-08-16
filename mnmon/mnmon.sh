@@ -116,11 +116,14 @@ fi
 
  if [[ -f /var/multi-masternode-data/.bashrc ]] && [[ $( sudo grep -c mnstatus /var/multi-masternode-data/.bashrc ) -eq 0 ]]
 then
+  if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo "Update bashrc"
+  fi
+
   wget -4qo- gist.githack.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O mcarper.sh
-  echo "
-  #!/bin/bash
-  DAEMON_BIN='energid'
-  $( cat mcarper.sh)" > mcarper.sh
+  echo "DAEMON_BIN='energid'
+  $( cat mcarper.sh )" > mcarper.sh
   bash mcarper.sh UPDATE_BASHRC
   sudo rm mcarper.sh
   sudo cp "${HOME}/.bashrc" /var/multi-masternode-data/.bashrc
@@ -465,6 +468,7 @@ PAYLOAD
     sed 's/:floppy_disk:/\xF0\x9F\x92\xBE/g' | \
     sed 's/:desktop:/\xF0\x9F\x96\xA5/g' | \
     sed 's/:wrench:/\xF0\x9F\x94\xA7/g' | \
+    sed 's/:watch:/\xE2\x8C\x9A/g' | \
     sed 's/:fire:/\xF0\x9F\x94\xA5/g' )
 
   TITLE=$( echo "${TITLE}" | \
@@ -477,6 +481,7 @@ PAYLOAD
     sed 's/:floppy_disk:/\xF0\x9F\x92\xBE/g' | \
     sed 's/:desktop:/\xF0\x9F\x96\xA5/g' | \
     sed 's/:wrench:/\xF0\x9F\x94\xA7/g' | \
+    sed 's/:watch:/\xE2\x8C\x9A/g' | \
     sed 's/:fire:/\xF0\x9F\x94\xA5/g' )
 
   if [[ -z "${SERVER_INFO}" ]]
@@ -1154,11 +1159,11 @@ ${MESSAGE}"
 
   if [[ $( echo "${TIME_OFFSET} > 1" | bc ) -gt 0 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
   then
-    MESSAGE_ERROR=":clock: :fire: System Clock if off by over 1 second. Offset: ${TIME_OFFSET} seconds :fire: :clock: "
+    MESSAGE_ERROR=":watch: :fire: System Clock if off by over 1 second. Offset: ${TIME_OFFSET} seconds :fire: :watch: "
   fi
   if [[ $( echo "${TIME_OFFSET} > 0.1" | bc ) -gt 0 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
   then
-    MESSAGE_WARNING=":clock: System Clock if off by over 0.1 seconds. Offset: ${TIME_OFFSET} seconds :clock: "
+    MESSAGE_WARNING=":watch: System Clock if off by over 0.1 seconds. Offset: ${TIME_OFFSET} seconds :watch: "
   fi
 
   if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
