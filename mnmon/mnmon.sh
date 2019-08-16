@@ -1102,14 +1102,17 @@ ${MESSAGE}"
   MESSAGE_INFO=''
   MESSAGE_SUCCESS=''
 
+  MEM_TOTAL=$( sudo cat /proc/meminfo | grep -i 'MemTotal:' | awk '{print $2}' | head -n 1 )
   MEM_AVAILABLE=$( sudo cat /proc/meminfo | grep -i 'MemAvailable:\|MemFree:' | awk '{print $2}' | tail -n 1 )
   MEM_AVAILABLE_MB=$( echo "${MEM_AVAILABLE} / 1024" | bc )
+  PERCENT_FREE=$( echo "${MEM_AVAILABLE} / ${MEM_TOTAL}" | bc -l )
 
-  if [[ $( echo "${MEM_AVAILABLE_MB} < 256" | bc ) -gt 0 ]] || [[ "${arg1}" == 'test' ]]
+
+  if [[ "${arg1}" == 'test' ]] || ([[ $( echo "${PERCENT_FREE} < 10" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 256" | bc ) -gt 0 ]])
   then
     MESSAGE_ERROR=":desktop: :fire: Free RAM is under 256 MB: ${MEM_AVAILABLE_MB} MB :fire: :desktop: "
   fi
-  if ([[ $( echo "${MEM_AVAILABLE_MB} >= 256" | bc ) -gt 0 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 512" | bc ) -gt 0 ]]) || [[ "${arg1}" == 'test' ]]
+  if [[ "${arg1}" == 'test' ]] || ([[ $( echo "${PERCENT_FREE} < 20" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} >= 256" | bc ) -gt 0 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 512" | bc ) -gt 0 ]])
   then
     MESSAGE_WARNING=":desktop: Free RAM is under 512 MB: ${MEM_AVAILABLE_MB} MB :desktop: "
   fi
