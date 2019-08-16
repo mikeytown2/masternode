@@ -994,7 +994,7 @@ ${MESSAGE}"
     UNIX_TIME_LOG=$( date -u --date="${DATE_1} ${DATE_2} ${DATE_3}" +%s )
     # Logins are one time; not continual issues.
     MESSAGE=$( SQL_QUERY "SELECT message FROM login_data WHERE time == ${UNIX_TIME_LOG} " )
-    if [[ ! -z "${MESSAGE}" ]] && [[ "${TEST_OUTPUT}" -eq 1 ]]
+    if [[ ! -z "${MESSAGE}" ]] && [[ "${TEST_OUTPUT}" -eq 0 ]]
     then
       if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
       then
