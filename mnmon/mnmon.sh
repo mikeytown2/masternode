@@ -1002,7 +1002,7 @@ ${MESSAGE}"
       continue
     fi
 
-    ERRORS=$( SEND_INFO "${INFO}" ":unlock: User logged in" )
+    ERRORS=$( SEND_WARNING "${INFO}" ":unlock: User logged in" )
     if [[ ! -z "${ERRORS}" ]]
     then
       echo "ERROR: ${ERRORS}"
