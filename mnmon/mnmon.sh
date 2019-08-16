@@ -122,25 +122,26 @@ then
   fi
 
   COUNTER=0
-  sudo rm -f ~/___mn.sh
-  while [[ ! -f ~/___mn.sh ]] || [[ $( grep -Fxc " # End of masternode setup script." ~/___mn.sh ) -eq 0 ]]
+  sudo rm -f "${HOME}/___mn.sh"
+  while [[ ! -f "${HOME}/___mn.sh" ]] || [[ $( grep -Fxc "# End of masternode setup script." "${HOME}/___mn.sh" ) -eq 0 ]]
   do
-    sudo rm -f ~/___mn.sh
+    sudo rm -f "${HOME}/___mn.sh"
     echo "Downloading Masternode Setup Script."
-    wget -4qo- gist.githack.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O ~/___mn.sh
-    COUNTER=$((COUNTER+1))
+    wget -4qo- gist.githack.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O "${HOME}/___mn.sh"
+    COUNTER=$(( COUNTER+1 ))
     if [[ "${COUNTER}" -gt 3 ]]
     then
       echo
       echo "Download of masternode setup script failed."
       echo
+      break
     fi
   done
 
   echo "DAEMON_BIN='energid'
-  $( cat ~/___mn.sh )" > ~/___mn.sh
-  bash ~/___mn.sh UPDATE_BASHRC
-  sudo rm ~/___mn.sh
+  $( cat "${HOME}/___mn.sh" )" > "${HOME}/___mn.sh"
+  bash "${HOME}/___mn.sh" UPDATE_BASHRC
+  sudo rm "${HOME}/___mn.sh"
   sudo cp "${HOME}/.bashrc" /var/multi-masternode-data/.bashrc
 fi
 
