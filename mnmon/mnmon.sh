@@ -114,37 +114,6 @@ fi
   PRIMARY KEY (conf_loc, type)
 );"
 
- if [[ -f /var/multi-masternode-data/.bashrc ]] && [[ $( sudo grep -c mnstatus /var/multi-masternode-data/.bashrc ) -eq 0 ]]
-then
-  if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
-  then
-    echo "Updating bashrc"
-  fi
-
-  COUNTER=0
-  sudo rm -f "${HOME}/___mn.sh"
-  while [[ ! -f "${HOME}/___mn.sh" ]] || [[ $( grep -Fxc "# End of masternode setup script." "${HOME}/___mn.sh" ) -eq 0 ]]
-  do
-    sudo rm -f "${HOME}/___mn.sh"
-    echo "Downloading Masternode Setup Script."
-    wget -4qo- gist.githack.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O "${HOME}/___mn.sh"
-    COUNTER=$(( COUNTER+1 ))
-    if [[ "${COUNTER}" -gt 3 ]]
-    then
-      echo
-      echo "Download of masternode setup script failed."
-      echo
-      break
-    fi
-  done
-
-  echo "DAEMON_BIN='energid'
-  $( cat "${HOME}/___mn.sh" )" > "${HOME}/___mn.sh"
-  bash "${HOME}/___mn.sh" UPDATE_BASHRC
-  sudo rm "${HOME}/___mn.sh"
-  sudo cp "${HOME}/.bashrc" /var/multi-masternode-data/.bashrc
-fi
-
  # Daemon_bin_name URL_to_logo Bot_name
  DAEMON_BIN_LUT="
 energid https://s2.coinmarketcap.com/static/img/coins/128x128/3218.png Energi Monitor
@@ -1765,6 +1734,37 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
 }
 
  NOT_CRON_WORKFLOW () {
+  if [[ -f /var/multi-masternode-data/.bashrc ]] && [[ $( sudo grep -c mnstatus /var/multi-masternode-data/.bashrc ) -eq 0 ]]
+  then
+    if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+    then
+      echo "Updating bashrc"
+    fi
+
+    COUNTER=0
+    sudo rm -f "${HOME}/___mn.sh"
+    while [[ ! -f "${HOME}/___mn.sh" ]] || [[ $( grep -Fxc "# End of masternode setup script." "${HOME}/___mn.sh" ) -eq 0 ]]
+    do
+      sudo rm -f "${HOME}/___mn.sh"
+      echo "Downloading Masternode Setup Script."
+      wget -4qo- gist.githack.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O "${HOME}/___mn.sh"
+      COUNTER=$(( COUNTER+1 ))
+      if [[ "${COUNTER}" -gt 3 ]]
+      then
+        echo
+        echo "Download of masternode setup script failed."
+        echo
+        break
+      fi
+    done
+
+    echo "DAEMON_BIN='energid'
+    $( cat "${HOME}/___mn.sh" )" > "${HOME}/___mn.sh"
+    bash "${HOME}/___mn.sh" UPDATE_BASHRC
+    sudo rm "${HOME}/___mn.sh"
+    sudo cp "${HOME}/.bashrc" /var/multi-masternode-data/.bashrc
+  fi
+
   echo
   SERVER_ALIAS=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'server_alias';" )
   if [[ -z "${SERVER_ALIAS}" ]]
