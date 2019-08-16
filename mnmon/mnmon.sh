@@ -122,10 +122,10 @@ then
   fi
 
   COUNTER=0
-  rm -f ~/___mn.sh
-  while [[ ! -f ~/___mn.sh ]] || [[ $( grep -Fxc "# End of masternode setup script." ~/___mn.sh ) -eq 0 ]]
+  sudo rm -f ~/___mn.sh
+  while [[ ! -f ~/___mn.sh ]] || [[ $( grep -Fxc " # End of masternode setup script." ~/___mn.sh ) -eq 0 ]]
   do
-    rm -f ~/___mn.sh
+    sudo rm -f ~/___mn.sh
     echo "Downloading Masternode Setup Script."
     wget -4qo- gist.githack.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O ~/___mn.sh
     COUNTER=$((COUNTER+1))
