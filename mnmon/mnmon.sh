@@ -998,6 +998,7 @@ REPORT_INFO_ABOUT_NODE () {
   DAEMON_PID=$( echo "${14}" | tr -d \" )
   NETWORKHASHPS=$( echo "${15}" | tr -d \" )
   MNWIN=$( echo "${16}" | tr -d \" )
+  ALL_STAKE_INPUTS_BALANCE_COUNT=$( echo "${17}" | tr -d \" )
 
   if [[ -z "${USRNAME}" ]]
   then
@@ -1035,8 +1036,8 @@ ${MNINFO}" "" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATA
   MIN_STAKE=0
   STAKE_REWARD=0
   MASTERNODE_REWARD=0
-#     BLOCKS_WAIT=0
-#     SECONDS_WAIT=0
+#   BLOCKS_WAIT=0
+#   SECONDS_WAIT=0
   NET_HASH_FACTOR=0
   TICKER_NAME='COIN'
   STAKE_REWARD_UPPER=0
@@ -1048,12 +1049,29 @@ ${MNINFO}" "" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATA
     MIN_STAKE=$( echo "${EXTRA_INFO}" | cut -d ' ' -f2 )
     STAKE_REWARD=$( echo "${EXTRA_INFO}" | cut -d ' ' -f3 )
     MASTERNODE_REWARD=$( echo "${EXTRA_INFO}" | cut -d ' ' -f4 )
-#       BLOCKS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f5 )
-#       SECONDS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f6 )
+#     BLOCKS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f5 )
+#     SECONDS_WAIT=$( echo "${EXTRA_INFO}" | cut -d ' ' -f6 )
     NET_HASH_FACTOR=$( echo "${EXTRA_INFO}" | cut -d ' ' -f7 )
     TICKER_NAME=$( echo "${EXTRA_INFO}" | cut -d ' ' -f8 )
     BLOCKTIME_SECONDS=$( echo "${EXTRA_INFO}" | cut -d ' ' -f9 )
     STAKE_REWARD_UPPER=$( echo "${STAKE_REWARD} + 0.3" | bc -l )
+  fi
+
+  # Report on connection count.
+  if [[ ${GETCONNECTIONCOUNT} =~ ${RE} ]]
+  then
+    if [[ "${GETCONNECTIONCOUNT}" -lt 2 ]]
+    then
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "__${USRNAME} ${DAEMON_BIN}__
+  Connection Count (${GETCONNECTIONCOUNT}) is very low!" "" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
+    elif [[ "${GETCONNECTIONCOUNT}" -lt 5 ]]
+    then
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "" "__${USRNAME} ${DAEMON_BIN}__
+  Connection Count (${GETCONNECTIONCOUNT}) is low!" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
+    else
+      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
+  Connection count has been restored" "Connection Count Normal" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
+    fi
   fi
 
   # Masternode Status.
@@ -1082,6 +1100,22 @@ Masternode status and masternode list are good!" "Masternode Running" "${DISCORD
       PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
 Masternode status is good!" "Masternode Running" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     fi
+  fi
+
+  # Report on masternode winner
+  if [[ "${MNWIN}" == 0 ]]
+  then
+    :
+  else
+    MN_ADDRESS_WIN=$( echo "${MNWIN}" | cut -d ' ' -f1 )
+    BLOCK_WIN=$( echo "${MNWIN}" | cut -d ' ' -f2 )
+    MN_REWARD_IN_BLOCKS=$( echo "${BLOCK_WIN} - ${GETBLOCKCOUNT}" | bc -l )
+    MN_REWARD_IN_SECONDS=$( echo "${MN_REWARD_IN_BLOCKS} * ${BLOCKTIME_SECONDS}" | bc -l )
+    MN_REWARD_IN_TIME=$( DISPLAYTIME "${MN_REWARD_IN_SECONDS}" )
+    PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "mnwin:${BLOCK_WIN}" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
+Masternode on ${MN_ADDRESS_WIN} will get paid
+on block ${BLOCK_WIN}
+in approximately ${MN_REWARD_IN_TIME}." "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
   fi
 
   # Update & report on balance.
@@ -1142,14 +1176,31 @@ New Balance: ${GETTOTALBALANCE}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEB
     fi
   fi
 
+  # Get average staking times for masternode and staking rewards.
+#   SECONDS_TO_AVERAGE_STAKE_MASTERNODE_REWARD=0
+#   SECONDS_TO_AVERAGE_STAKE_STAKING_REWARD=0
+  COINS_STAKED_TOTAL_NETWORK=$( echo "${NETWORKHASHPS} * ${NET_HASH_FACTOR}" | bc -l )
+#   if [[ ! -z "${COINS_STAKED_TOTAL_NETWORK}" ]] && [[ $( echo "${COINS_STAKED_TOTAL_NETWORK} != 0" | bc -l ) -eq 1 ]]
+#   then
+#     SECONDS_TO_AVERAGE_STAKE_MASTERNODE_REWARD=$( echo "${MASTERNODE_REWARD} / ${GETBALANCE} * ${BLOCKTIME_SECONDS}" | bc -l )
+#     SECONDS_TO_AVERAGE_STAKE_STAKING_REWARD=$( echo "${STAKE_REWARD} / ${GETBALANCE} * ${BLOCKTIME_SECONDS}" | bc -l )
+#   fi
   # Report on staking.
   TIME_TO_STAKE=''
   if [[ ! -z "${GETBALANCE}" ]] && [[ "$( echo "${GETBALANCE} > 0.0" | bc -l )" -gt 0 ]]
   then
-    COINS_STAKED_TOTAL_NETWORK=$( echo "${NETWORKHASHPS} * ${NET_HASH_FACTOR}" | bc -l )
+
     if [[ ! -z "${COINS_STAKED_TOTAL_NETWORK}" ]] && [[ $( echo "${COINS_STAKED_TOTAL_NETWORK} != 0" | bc -l ) -eq 1 ]]
     then
-      SECONDS_TO_AVERAGE_STAKE=$( echo "${COINS_STAKED_TOTAL_NETWORK} / ${GETBALANCE} * ${BLOCKTIME_SECONDS}" | bc -l )
+
+      # Better staking info
+      if [[ ! -z "${ALL_STAKE_INPUTS_BALANCE_COUNT}" ]]
+      then
+        STAKE_GETBALANCE=$( echo "${ALL_STAKE_INPUTS_BALANCE_COUNT}" | awk '{print $1}' )
+        SECONDS_TO_AVERAGE_STAKE=$( echo "${COINS_STAKED_TOTAL_NETWORK} / ${STAKE_GETBALANCE} * ${BLOCKTIME_SECONDS}" | bc -l )
+      else
+        SECONDS_TO_AVERAGE_STAKE=$( echo "${COINS_STAKED_TOTAL_NETWORK} / ${GETBALANCE} * ${BLOCKTIME_SECONDS}" | bc -l )
+      fi
       TIME_TO_STAKE=$( DISPLAYTIME "${SECONDS_TO_AVERAGE_STAKE}" )
     fi
 
@@ -1175,39 +1226,6 @@ Staking status is now TRUE!" "Staking is enabled" "${DISCORD_WEBHOOK_USERNAME}" 
     fi
   fi
 
-  # Report on connection count.
-  if [[ ${GETCONNECTIONCOUNT} =~ ${RE} ]]
-  then
-    if [[ "${GETCONNECTIONCOUNT}" -lt 2 ]]
-    then
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "__${USRNAME} ${DAEMON_BIN}__
-  Connection Count (${GETCONNECTIONCOUNT}) is very low!" "" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
-    elif [[ "${GETCONNECTIONCOUNT}" -lt 5 ]]
-    then
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "" "__${USRNAME} ${DAEMON_BIN}__
-  Connection Count (${GETCONNECTIONCOUNT}) is low!" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
-    else
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
-  Connection count has been restored" "Connection Count Normal" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
-    fi
-  fi
-
-  # Report on masternode winner
-  if [[ "${MNWIN}" == 0 ]]
-  then
-    :
-  else
-    MN_ADDRESS_WIN=$( echo "${MNWIN}" | cut -d ' ' -f1 )
-    BLOCK_WIN=$( echo "${MNWIN}" | cut -d ' ' -f2 )
-    MN_REWARD_IN_BLOCKS=$( echo "${BLOCK_WIN} - ${GETBLOCKCOUNT}" | bc -l )
-    MN_REWARD_IN_SECONDS=$( echo "${MN_REWARD_IN_BLOCKS} * ${BLOCKTIME_SECONDS}" | bc -l )
-    MN_REWARD_IN_TIME=$( DISPLAYTIME "${MN_REWARD_IN_SECONDS}" )
-    PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "mnwin:${BLOCK_WIN}" "" "" "" "__${USRNAME} ${DAEMON_BIN}__
-Masternode on ${MN_ADDRESS_WIN} will get paid
-on block ${BLOCK_WIN}
-in approximately ${MN_REWARD_IN_TIME}." "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
-  fi
-
   # Report on daemon info.
   UPTIME_HUMAN=$( DISPLAYTIME "${UPTIME}" )
   STAKING_TEXT='Disabled'
@@ -1224,15 +1242,31 @@ in approximately ${MN_REWARD_IN_TIME}." "" "" "${DISCORD_WEBHOOK_USERNAME}" "${D
       MASTERNODE_TEXT='Enabled'
     fi
   fi
-  PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "node_info" "" "" "__${USRNAME} ${DAEMON_BIN}__
+
+  _PAYLOAD="__${USRNAME} ${DAEMON_BIN}__
 BlockCount: ${GETBLOCKCOUNT}
-PID: ${DAEMON_PID}
-Uptime: ${UPTIME} seconds (${UPTIME_HUMAN})
+Connections: ${GETCONNECTIONCOUNT}
 Staking Status: ${STAKING_TEXT}
 Masternode Status: ${MASTERNODE_TEXT}
+PID: ${DAEMON_PID}
+Uptime: ${UPTIME} seconds (${UPTIME_HUMAN})"
+  if [[ ! -z "${GETBALANCE}" ]] && [[ "$( echo "${GETBALANCE} > 0.0" | bc -l )" -gt 0 ]]
+  then
+    _PAYLOAD="${_PAYLOAD}
 Balance: ${GETBALANCE}
 Total Balance: ${GETTOTALBALANCE}
-Staking Average ETA: ${TIME_TO_STAKE}" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
+Staking Average ETA: ${TIME_TO_STAKE}"
+  fi
+  if [[ ! -z "${ALL_STAKE_INPUTS_BALANCE_COUNT}" ]]
+  then
+    STAKE_GETBALANCE=$( echo "${ALL_STAKE_INPUTS_BALANCE_COUNT}" | awk '{print $1}' )
+    NUMBER_OF_STAKING_INPUTS=$( echo "${ALL_STAKE_INPUTS_BALANCE_COUNT}" | awk '{print $2}' )
+    _PAYLOAD="${_PAYLOAD}
+Staking Balance: ${STAKE_GETBALANCE}
+Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
+  fi
+
+  PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "node_info" "" "" "${_PAYLOAD}" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
 }
 
 GET_INFO_ON_THIS_NODE () {
@@ -1314,6 +1348,7 @@ GET_INFO_ON_THIS_NODE () {
     MNWIN='0'
   fi
 
+  # Get total balance in the wallet.
   WALLETINFO=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getwalletinfo" 2>&1 )
   if [[ ! -z "${WALLETINFO}" ]] && [[ $( echo "${WALLETINFO}" | grep -ic 'balance' ) -gt 0 ]]
   then
@@ -1323,8 +1358,14 @@ GET_INFO_ON_THIS_NODE () {
     WALLETINFO=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getbalance" 2>&1 )
   fi
 
+  # Get the version number.
+  VERSION=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" --help " 2>/dev/null | head -n 1 | sed 's/[^0-9.]*\([0-9.]*\).*/\1/' )
+  if [[ -z "${VERSION}" ]]
+  then
+    VERSION=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" -version " 2>/dev/null | sed 's/[^0-9.]*\([0-9.]*\).*/\1/' )
+  fi
 
-  # check staking status.
+  # Check staking status.
   STAKING=0
   GETSTAKINGSTATUS=''
   if [[ $( echo "${GETBALANCE} > 0" | bc -l ) -gt 0 ]]
@@ -1336,20 +1377,34 @@ GET_INFO_ON_THIS_NODE () {
     fi
   fi
 
-  # check networkhashps
+  LIST_STAKE_INPUTS=''
+  ALL_STAKE_INPUTS_BALANCE_COUNT=''
+  if [[ $( echo "${GETBALANCE} > 0" | bc -l ) -gt 0 ]]
+  then
+    LIST_STAKE_INPUTS=$( su "${USRNAME}" -c "timeout 10 \"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" liststakeinputs " 2>/dev/null )
+    if [[ $( echo "${LIST_STAKE_INPUTS}" | grep -ci 'Method not found') -eq 0 ]]
+    then
+      STAKING_INPUTS_COUNT=$( echo "${LIST_STAKE_INPUTS}" | grep -c 'amount' )
+      STAKE_INPUTS_BALANCE=$( echo "${LIST_STAKE_INPUTS}" | jq '.[].amount' | awk '{s+=$1} END {print s}' )
+      ALL_STAKE_INPUTS_BALANCE_COUNT="${STAKE_INPUTS_BALANCE} ${STAKING_INPUTS_COUNT}"
+    fi
+  fi
+
+  # Check networkhashps
   GETNETHASHRATE=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN}\" \"-datadir=${CONF_FOLDER}\" getnetworkhashps" 2>&1 | grep -Eo '[+-]?[0-9]+([.][0-9]+)?' 2>/dev/null )
   if [[ -z "${GETNETHASHRATE}" ]]
   then
     GETNETHASHRATE=0
   fi
 
-  # output info.
-  DAEMON_BIN=$( basename "${DAEMON_BIN}" )
+  # Output info.
   CONF_LOCATION=$( dirname "${CONF_LOCATION}" )
-  REPORT_INFO_ABOUT_NODE "${USRNAME}" "${DAEMON_BIN}" "${CONTROLLER_BIN}" "${CONF_FOLDER}" "${CONF_LOCATION}" "${MASTERNODE}" "${MNINFO}" "${GETBALANCE}" "${GETTOTALBALANCE}" "${STAKING}" "${GETCONNECTIONCOUNT}" "${GETBLOCKCOUNT}" "${UPTIME}" "${DAEMON_PID}" "${GETNETHASHRATE}" "${MNWIN}"
+  REPORT_INFO_ABOUT_NODE "${USRNAME}" "${DAEMON_BIN}" "${CONTROLLER_BIN}" "${CONF_FOLDER}" "${CONF_LOCATION}" "${MASTERNODE}" "${MNINFO}" "${GETBALANCE}" "${GETTOTALBALANCE}" "${STAKING}" "${GETCONNECTIONCOUNT}" "${GETBLOCKCOUNT}" "${UPTIME}" "${DAEMON_PID}" "${GETNETHASHRATE}" "${MNWIN}" "${ALL_STAKE_INPUTS_BALANCE_COUNT}"
 }
 
 GET_ALL_NODES () {
+  DAEMON_BIN_FILTER="${1}"
+
   FILENAME_WITH_FUNCTIONS=''
   if [[ -r /var/multi-masternode-data/.bashrc ]]
   then
@@ -1421,7 +1476,7 @@ GET_ALL_NODES () {
         DAEMON_BIN=$( echo "${PS_LIST}" | cut -c 32- | grep " ${DAEMON_PID} " | awk '{print $3}' )
         CONTROLLER_BIN="${DAEMON_BIN}"
         COMMAND_FOLDER=$( dirname "${DAEMON_BIN}" )
-        CONTROLLER_BIN_FOLDER=$( find "${COMMAND_FOLDER}" -executable -type f | grep -Ei "${DAEMON_BIN::-1}-cli$" )
+        CONTROLLER_BIN_FOLDER=$( find "${COMMAND_FOLDER}" -executable -type f 2>/dev/null | grep -Ei "${DAEMON_BIN::-1}-cli$" )
         if [[ ! -z "${CONTROLLER_BIN_FOLDER}" ]]
         then
           CONTROLLER_BIN="${CONTROLLER_BIN_FOLDER}"
@@ -1448,11 +1503,17 @@ GET_ALL_NODES () {
           fi
         fi
       fi
+      DAEMON_BIN=$( basename "${DAEMON_BIN}" )
 
       UPTIME=0
       if [[ ! -z "${DAEMON_PID}" ]]
       then
         UPTIME=$( echo "${PS_LIST}" | cut -c 32- | grep " ${DAEMON_PID} " | awk '{print $2}' | head -n 1 | awk '{print $1}' | grep -o '[0-9].*' )
+      fi
+
+      if [[ ! -z "${DAEMON_BIN_FILTER}" ]] && [[ "${DAEMON_BIN_FILTER}" != "${DAEMON_BIN}" ]]
+      then
+        continue
       fi
 
       GET_INFO_ON_THIS_NODE "${HAS_FUNCTION}" "${USRNAME}" "${CONTROLLER_BIN}" "${DAEMON_BIN}" "${CONF_LOCATION}" "${DAEMON_PID}" "${UPTIME}"
@@ -1536,7 +1597,10 @@ NOT_CRON_WORKFLOW () {
 }
 
 # Main
-if [[ "${arg1}" != 'cron' ]]
+if [[ "${arg1}" == 'node_run' ]]
+then
+  GET_ALL_NODES "${arg2}" "${arg3}"
+elif [[ "${arg1}" != 'cron' ]]
 then
   NOT_CRON_WORKFLOW
 else
