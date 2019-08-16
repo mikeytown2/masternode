@@ -1222,6 +1222,7 @@ ${MNINFO}" "" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATA
   TICKER_NAME='COIN'
   STAKE_REWARD_UPPER=0
   BLOCKTIME_SECONDS=60
+  UPTIME_HUMAN=$( DISPLAYTIME "${UPTIME}" )
 
   EXTRA_INFO=$( echo "${DAEMON_BALANCE_LUT}" | grep -E "^${DAEMON_BIN} " )
   if [[ ! -z "${EXTRA_INFO}" ]]
@@ -1297,6 +1298,32 @@ Masternode on ${MN_ADDRESS_WIN} will get paid
 on block ${BLOCK_WIN}
 in approximately ${MN_REWARD_IN_TIME}." "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
   fi
+
+  # Report on uptime
+  UPTIME
+  PAST_UPTIME=$( SQL_QUERY "SELECT value FROM variables WHERE key = '${CONF_LOCATION}:uptime';" )
+  if [[ -z "${PAST_UPTIME}" ]]
+  then
+    PAST_UPTIME="${UPTIME}"
+  fi
+  if [[ "${UPTIME}" -lt "${PAST_UPTIME}" ]]
+  then
+    PAST_UPTIME_HUMAN=$( DISPLAYTIME "${PAST_UPTIME}" )
+
+    if [[ "${PAST_UPTIME}" -lt 300 ]]
+    then
+      SEND_ERROR "__${USRNAME} ${DAEMON_BIN}__
+Daemon was restarted mutiple times in teh last 5 minutes.
+Past uptime: ${PAST_UPTIME_HUMAN}.
+New uptime: ${UPTIME_HUMAN} " "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
+    else
+      SEND_WARNING "__${USRNAME} ${DAEMON_BIN}__
+Daemon was restarted.
+Past uptime: ${PAST_UPTIME_HUMAN}.
+New uptime: ${UPTIME_HUMAN}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
+    fi
+  fi
+  SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_LOCATION}:uptime','${UPTIME}');"
 
   # Update & report on balance.
   PAST_BALANCE=$( SQL_QUERY "SELECT value FROM variables WHERE key = '${CONF_LOCATION}:balance';" )
@@ -1407,7 +1434,6 @@ Staking status is now TRUE!" "Staking is enabled" "${DISCORD_WEBHOOK_USERNAME}" 
   fi
 
   # Report on daemon info.
-  UPTIME_HUMAN=$( DISPLAYTIME "${UPTIME}" )
   STAKING_TEXT='Disabled'
   if [[ "${STAKING}" -eq 1 ]]
   then
