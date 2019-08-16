@@ -118,14 +118,29 @@ fi
 then
   if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
   then
-    echo "Update bashrc"
+    echo "Updating bashrc"
   fi
 
-  wget -4qo- gist.githack.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O mcarper.sh
+  COUNTER=0
+  rm -f ~/___mn.sh
+  while [[ ! -f ~/___mn.sh ]] || [[ $( grep -Fxc "# End of masternode setup script." ~/___mn.sh ) -eq 0 ]]
+  do
+    rm -f ~/___mn.sh
+    echo "Downloading Masternode Setup Script."
+    wget -4qo- gist.githack.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O ~/___mn.sh
+    COUNTER=$((COUNTER+1))
+    if [[ "${COUNTER}" -gt 3 ]]
+    then
+      echo
+      echo "Download of masternode setup script failed."
+      echo
+    fi
+  done
+
   echo "DAEMON_BIN='energid'
-  $( cat mcarper.sh )" > mcarper.sh
-  bash mcarper.sh UPDATE_BASHRC
-  sudo rm mcarper.sh
+  $( cat ~/___mn.sh )" > ~/___mn.sh
+  bash ~/___mn.sh UPDATE_BASHRC
+  sudo rm ~/___mn.sh
   sudo cp "${HOME}/.bashrc" /var/multi-masternode-data/.bashrc
 fi
 
