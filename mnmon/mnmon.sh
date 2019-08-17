@@ -453,6 +453,7 @@ PAYLOAD
     sed 's/:desktop:/\xF0\x9F\x96\xA5/g' | \
     sed 's/:wrench:/\xF0\x9F\x94\xA7/g' | \
     sed 's/:watch:/\xE2\x8C\x9A/g' | \
+    sed 's/:link:/\xF0\x9F\x94\x97/g' | \
     sed 's/:fire:/\xF0\x9F\x94\xA5/g' )
 
   TITLE=$( echo "${TITLE}" | \
@@ -466,6 +467,7 @@ PAYLOAD
     sed 's/:desktop:/\xF0\x9F\x96\xA5/g' | \
     sed 's/:wrench:/\xF0\x9F\x94\xA7/g' | \
     sed 's/:watch:/\xE2\x8C\x9A/g' | \
+    sed 's/:link:/\xF0\x9F\x94\x97/g' | \
     sed 's/:fire:/\xF0\x9F\x94\xA5/g' )
 
   if [[ -z "${SERVER_INFO}" ]]
@@ -1179,6 +1181,7 @@ ${MESSAGE}"
   MNWIN=$( echo "${16}" | tr -d \" )
   ALL_STAKE_INPUTS_BALANCE_COUNT=$( echo "${17}" | tr -d \" )
   VERSION=$( echo "${18}" | tr -d \" )
+  GETCHAINTIPS=$( echo "${19}" | tr -d \" )
 
   if [[ -z "${USRNAME}" ]]
   then
@@ -1434,6 +1437,25 @@ Staking status is now TRUE!" "Staking is enabled" "${DISCORD_WEBHOOK_USERNAME}" 
     fi
   fi
 
+  # Report on chain splits
+  if [[ ! -z "${GETCHAINTIPS}" ]]
+  then
+    LAST_CHAIN_SPLIT_HEIGHT=$( SQL_QUERY "SELECT value FROM variables WHERE key = '${CONF_LOCATION}:chain_split';" )
+    SPLIT_HEIGHT=$( echo "${GETCHAINTIPS}" | head -n 1 | awk '{print $1}' )
+    if [[ "${LAST_CHAIN_SPLIT_HEIGHT}" != "${SPLIT_HEIGHT}" ]]
+    then
+      SPLIT_BRANCHLEN=$( echo "${GETCHAINTIPS}" | head -n 1 | awk '{print $2}' )
+      SPLIT_HASH=$( echo "${GETCHAINTIPS}" | head -n 1 | awk '{print $3}' )
+      SEND_WARNING "__${USRNAME} ${DAEMON_BIN}__
+Chain Split detected.
+Height: ${SPLIT_HEIGHT}
+Current Branch Lenght: ${SPLIT_BRANCHLEN}
+Hash: ${SPLIT_HASH}" ":warning: Warning Chain :link: Split :warning:" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
+
+      SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_LOCATION}:chain_split','${SPLIT_HEIGHT}');"
+    fi
+  fi
+
   # Report on daemon info.
   STAKING_TEXT='Disabled'
   if [[ "${STAKING}" -eq 1 ]]
@@ -1613,9 +1635,13 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
     GETNETHASHRATE=0
   fi
 
+  # Check for chain splits.
+  GETBLOCKCOUNT_MINUS_1K=$( (echo "${GETBLOCKCOUNT} - 500" | bc -l ; echo -n "500" ) | jq -s max )
+  GETCHAINTIPS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" getchaintips " 2>&1 | jq ".[] | select( .branchlen > 5 and .height > ${GETBLOCKCOUNT_MINUS_1K} )" 2>/dev/null | jq -r '[.height, .branchlen, .hash] | "\(.[0]) \(.[1]) \(.[2])"' 2>/dev/null | column -t | sort -r )
+
   # Output info.
   CONF_LOCATION=$( dirname "${CONF_LOCATION}" )
-  REPORT_INFO_ABOUT_NODE "${USRNAME}" "${DAEMON_BIN}" "${CONTROLLER_BIN_LOC}" "${CONF_FOLDER}" "${CONF_LOCATION}" "${MASTERNODE}" "${MNINFO}" "${GETBALANCE}" "${GETTOTALBALANCE}" "${STAKING}" "${GETCONNECTIONCOUNT}" "${GETBLOCKCOUNT}" "${UPTIME}" "${DAEMON_PID}" "${GETNETHASHRATE}" "${MNWIN}" "${ALL_STAKE_INPUTS_BALANCE_COUNT}" "${VERSION}"
+  REPORT_INFO_ABOUT_NODE "${USRNAME}" "${DAEMON_BIN}" "${CONTROLLER_BIN_LOC}" "${CONF_FOLDER}" "${CONF_LOCATION}" "${MASTERNODE}" "${MNINFO}" "${GETBALANCE}" "${GETTOTALBALANCE}" "${STAKING}" "${GETCONNECTIONCOUNT}" "${GETBLOCKCOUNT}" "${UPTIME}" "${DAEMON_PID}" "${GETNETHASHRATE}" "${MNWIN}" "${ALL_STAKE_INPUTS_BALANCE_COUNT}" "${VERSION}" "${GETCHAINTIPS}"
 }
 
  GET_ALL_NODES () {
