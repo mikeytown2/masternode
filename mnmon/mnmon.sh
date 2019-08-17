@@ -1448,9 +1448,10 @@ Staking status is now TRUE!" "Staking is enabled" "${DISCORD_WEBHOOK_USERNAME}" 
       SPLIT_HASH=$( echo "${GETCHAINTIPS}" | head -n 1 | awk '{print $3}' )
       SEND_WARNING "__${USRNAME} ${DAEMON_BIN}__
 Chain Split detected.
-Height: ${SPLIT_HEIGHT}
-Current Branch Lenght: ${SPLIT_BRANCHLEN}
-Hash: ${SPLIT_HASH}" ":warning: Warning Chain :link: Split :warning:" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
+Current height: ${GETBLOCKCOUNT}
+Split Height: ${SPLIT_HEIGHT}
+Split Branch Lenght: ${SPLIT_BRANCHLEN}
+Split Hash: ${SPLIT_HASH}" ":warning: Warning Chain :link: Split :warning:" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
 
       SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_LOCATION}:chain_split','${SPLIT_HEIGHT}');"
     fi
@@ -1800,7 +1801,17 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
     do
       sudo rm -f "${HOME}/___mn.sh"
       echo "Downloading Masternode Setup Script."
-      wget -4qo- gist.githack.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O "${HOME}/___mn.sh"
+      wget -4qo- -t 2 -T 10 gist.githubusercontent.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O "${HOME}/___mn.sh"
+      FILE_SIZE=0
+      if [[ -f "${HOME}/___mn.sh" ]]
+      then
+        FILE_SIZE=$(wc -c < "${HOME}/___mn.sh")
+      fi
+      if [[ "${FILE_SIZE}" -lt 10000 ]]
+      then
+        echo "Downloading Masternode Setup Script from alt domain."
+        wget -4qo- -t 2 -T 10 gist.githack.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O "${HOME}/___mn.sh"
+      fi
       COUNTER=$(( COUNTER+1 ))
       if [[ "${COUNTER}" -gt 3 ]]
       then
