@@ -27,34 +27,35 @@ DIRECTORY='.millenniumclub'
 # Conf File.
 CONF='millenniumclub.conf'
 # Port.
-DEFAULT_PORT=5792
+DEFAULT_PORT=11724
 # Explorer URL.
-EXPLORER_URL='http://explorer.millenniumclub.ca:3001/'
+# EXPLORER_URL='http://explorer.millenniumclub.ca:3001/'
 # Rate limit explorer.
-EXPLORER_SLEEP=1
+# EXPLORER_SLEEP=1
 # Amount of Collateral needed.
 COLLATERAL=50000
 # Direct Daemon Download if github has no releases.
-#DAEMON_DOWNLOAD='https://millenniumclub.ca/beta/millenniumclubd
-#https://millenniumclub.ca/beta/millenniumclub-cli'
+DAEMON_DOWNLOAD='https://portfolio.millenniumclub.ca/assets-new/millenniumclub-linux-v0.14.0.0.tgz'
 # Blocktime in seconds.
 BLOCKTIME=60
 # Cycle Daemon on first start.
 DAEMON_CYCLE=1
 # Multiple on single IP.
-MULTI_IP_MODE=0
+MULTI_IP_MODE=1
+MASTERNODE_GENKEY_COMMAND='bls generate'
+MASTERNODE_PRIVKEY='masternodeblsprivkey'
 
 # Sentinel Info.
-SENTINEL_GITHUB='dashpay/sentinel'
-SENTINEL_CONF_START='dash_conf'
+# SENTINEL_GITHUB='dashpay/sentinel'
+# SENTINEL_CONF_START='dash_conf'
 
 # Tip Address.
-TIPS='MBSFsmQdF7N4k67QmKGxJyT4wzi3TyGr39'
-# Dropbox Addnodes.
+TIPS='MU1hhr5BkBPNRPRsZSwoPcxGb3wJ4kb1Hp'
+# Dropbox Addnodes
 DROPBOX_ADDNODES='xc0iqq328mh1pf5'
 # If set to 1 then use addnodes from dropbox.
 USE_DROPBOX_ADDNODES=1
-# Dropbox Bootstrap.
+# Dropbox Bootstrap
 DROPBOX_BOOTSTRAP='ja7h8sk1q0sjmua'
 # If set to 1 then use bootstrap from dropbox.
 USE_DROPBOX_BOOTSTRAP=1

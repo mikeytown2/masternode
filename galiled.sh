@@ -38,12 +38,9 @@ BLOCKCOUNT_FALLBACK_VALUE=269000
 MULTI_IP_MODE=1
 # Direct Daemon Download if github has no releases.
 # DAEMON_DOWNLOAD='https://galilel.cloud/downloads/wallets/galilel-v3.0.2-lin64.tar.gz'
-# Daemon can use IPv4.
-IPV4=1
-# Daemon can use IPv6.
-IPV6=0
-# Daemon can use TOR.
-TOR=0
+MASTERNODE_GENKEY_COMMAND='createmasternodekey'
+MASTERNODE_LIST='listmasternodes'
+MASTERNODE_CALLER='getmasternode'
 
 # Tip Address
 TIPS='UYFEvLMguJaLDXAZPtynAPKWC3hWh6vXKY'
@@ -57,13 +54,6 @@ DROPBOX_BOOTSTRAP='ro3oo9rjyf8o8kb'
 USE_DROPBOX_BOOTSTRAP=1
 # Dropbox blocks and chainstake folders.
 DROPBOX_BLOCKS_N_CHAINS='pjmfe78kjdprh49'
-
-# Mini Monitor check masternode list.
-MINI_MONITOR_MN_LIST=1
-# Mini Monitor Status to check for.
-MINI_MONITOR_MN_STATUS='4'
-# Mini Monitor masternode count is a json string.
-MINI_MONITOR_MN_COUNT_JSON=1
 
 ASCII_ART () {
 echo -e "\\e[0m"
