@@ -5,7 +5,7 @@
  # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 
  # shellcheck disable=SC2016
-: '
+ : '
 # Run this file
 
 ```
@@ -1663,7 +1663,7 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
     FILENAME_WITH_FUNCTIONS='/home/ubuntu/.bashrc'
   fi
 
-  LSLOCKS=$( lslocks -n -o COMMAND,PID,PATH )
+  LSLOCKS=$( lslocks -n -o COMMAND,PID,PATH | grep -v ' /run/' )
   PS_LIST=$( ps --no-headers -axo user:32,pid,etimes,command )
   # shellcheck disable=SC2034
   while read -r USRNAME DEL_1 DEL_2 DEL_3 DEL_4 DEL_5 DEL_6 DEL_7 DEL_8 USR_HOME_DIR USR_HOME_DIR_ALT DEL_9
