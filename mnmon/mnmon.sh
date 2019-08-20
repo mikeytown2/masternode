@@ -1480,6 +1480,11 @@ Masternode Status: ${MASTERNODE_TEXT}
 PID: ${DAEMON_PID}
 Version: ${VERSION}
 Uptime: ${UPTIME} seconds (${UPTIME_HUMAN})"
+  if [[ ! -z "${MNPING}" ]]
+  then
+    _PAYLOAD="${_PAYLOAD}
+Masternode Ping: ${MNPING}"
+  fi
   if [[ ! -z "${GETBALANCE}" ]] && [[ "$( echo "${GETBALANCE} > 0.0" | bc -l )" -gt 0 ]]
   then
     _PAYLOAD="${_PAYLOAD}
