@@ -940,6 +940,7 @@ ${MESSAGE}"
  GET_LATEST_LOGINS () {
   while read -r DATE_1 DATE_2 DATE_3 LINE
   do
+    LINE=$( echo "${LINE}" | sed 's/SHA[[:digit:]]\+.*$//' )
     INFO=$( echo "${LINE}" | grep -oE '\]\: .*' | cut -c 4- )
 
     if [[ -z "${INFO}" ]]
