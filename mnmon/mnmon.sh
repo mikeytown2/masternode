@@ -938,8 +938,16 @@ ${MESSAGE}"
 }
 
  GET_LATEST_LOGINS () {
+  LAST_LOGIN_TIME_CHECK=$( SQL_QUERY "SELECT value FROM variables WHERE key == 'last_login_time_check' " )
+  if [[ -z "${LAST_LOGIN_TIME_CHECK}" ]]
+  then
+    LAST_LOGIN_TIME_CHECK=0
+  fi
+  UNIX_TIME=$( date -u +%s )
+
   while read -r DATE_1 DATE_2 DATE_3 LINE
   do
+    # shellcheck disable=SC2001
     LINE=$( echo "${LINE}" | sed 's/SHA[[:digit:]]\+.*$//' )
     INFO=$( echo "${LINE}" | grep -oE '\]\: .*' | cut -c 4- )
 
@@ -949,6 +957,10 @@ ${MESSAGE}"
     fi
 
     UNIX_TIME_LOG=$( date -u --date="${DATE_1} ${DATE_2} ${DATE_3}" +%s )
+    if [[ "${LAST_LOGIN_TIME_CHECK}" > "${UNIX_TIME_LOG}" ]]
+    then
+      continue
+    fi
     # Logins are one time; not continual issues.
     MESSAGE=$( SQL_QUERY "SELECT message FROM login_data WHERE time == ${UNIX_TIME_LOG} " )
     if [[ ! -z "${MESSAGE}" ]] && [[ "${TEST_OUTPUT}" -eq 0 ]]
@@ -958,13 +970,20 @@ ${MESSAGE}"
     SSH_USER=$( echo "${INFO}" | grep -Pio 'for .*? from' | cut -d ' ' -f 2 | sed 's/for //' | sed 's/ from//' )
     SSH_IP=$( echo "${INFO}" | grep -Pio 'from .*? port' | sed 's/from //' | sed 's/ port//' )
 
-    ERRORS=$( SEND_WARNING "${DATE_1} ${DATE_2} ${DATE_3} ${LINE}" ":unlock: User ${SSH_USER} logged in at ${UNIX_TIME_LOG} from ${SSH_IP}" )
+    VERB='in'
+    if [[ $( echo "${LINE}" | grep -ci ': Accepted ' ) -eq 0 ]]
+    then
+      VERB='out'
+    fi
+
+    ERRORS=$( SEND_WARNING "${DATE_1} ${DATE_2} ${DATE_3} ${LINE}" ":unlock: User ${SSH_USER} logged ${VERB} at ${UNIX_TIME_LOG} from ${SSH_IP}" )
     if [[ ! -z "${ERRORS}" ]]
     then
       echo "ERROR: ${ERRORS}"
     elif [[ "${TEST_OUTPUT}" -eq 0 ]]
     then
       SQL_QUERY "INSERT INTO login_data (time,message) VALUES ('${UNIX_TIME_LOG}','${INFO}');"
+      SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('last_login_time_check','${UNIX_TIME}');"
     fi
   done <<< "$( grep -B 20 ' systemd-logind' /var/log/auth.log | grep -B 20 'New' | grep -C10 'sshd' | grep port | grep -v 'CRON\|preauth\|Invalid user\|user unknown\|major versions differ\|Failed[[:space:]]password\|authentication[[:space:]]failure\|refused[[:space:]]connect\|ignoring[[:space:]]max\|not[[:space:]]receive[[:space:]]identification\|[[:space:]]sudo\|[[:space:]]su\|Bad[[:space:]]protocol\|Disconnected[[:space:]]from[[:space:]]user' )"
 }
