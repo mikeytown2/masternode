@@ -955,8 +955,9 @@ ${MESSAGE}"
       continue
     fi
     SSH_USER=$( echo "${INFO}" | grep -Pio 'for .*? from' | cut -d ' ' -f 2 | sed 's/for //' | sed 's/ from//' )
+    SSH_IP=$( echo "${INFO}" | grep -Pio 'from .*? port' | sed 's/from //' | sed 's/ port//' )
 
-    ERRORS=$( SEND_WARNING "${DATE_1} ${DATE_2} ${DATE_3} ${LINE}" ":unlock: User ${SSH_USER} logged in at ${UNIX_TIME_LOG}" )
+    ERRORS=$( SEND_WARNING "${DATE_1} ${DATE_2} ${DATE_3} ${LINE}" ":unlock: User ${SSH_USER} logged in at ${UNIX_TIME_LOG} from ${SSH_IP}" )
     if [[ ! -z "${ERRORS}" ]]
     then
       echo "ERROR: ${ERRORS}"
