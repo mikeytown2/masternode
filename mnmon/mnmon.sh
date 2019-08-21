@@ -58,12 +58,12 @@ then
 fi
 
  # Get sqlite.
- if ! [ -x "$( command -v sqlite3 )" ]
+ if [ ! -x "$( command -v sqlite3 )" ]
 then
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq sqlite3
 fi
  # Get jq.
- if ! [ -x "$( command -v jq)" ]
+ if [ ! -x "$( command -v jq)" ]
 then
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq jq
 fi
@@ -71,6 +71,11 @@ fi
  if [ ! -x "$( command -v ntpdate )" ]
 then
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq ntpdate
+fi
+ # Get debsums.
+ if [ ! -x "$( command -v debsums )" ]
+then
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq debsums
 fi
 
  # Run a sqlite query.
@@ -957,7 +962,7 @@ ${MESSAGE}"
     fi
 
     UNIX_TIME_LOG=$( date -u --date="${DATE_1} ${DATE_2} ${DATE_3}" +%s )
-    if [[ "${LAST_LOGIN_TIME_CHECK}" > "${UNIX_TIME_LOG}" ]]
+    if [[ "${LAST_LOGIN_TIME_CHECK}" -gt "${UNIX_TIME_LOG}" ]]
     then
       continue
     fi
@@ -1163,6 +1168,72 @@ ${MESSAGE}"
   RECOVERED_MESSAGE_SUCCESS="System clock is now at ${TIME_OFFSET} seconds."
   RECOVERED_TITLE_SUCCESS="System clock is back to normal."
   PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${DISCORD_WEBHOOK_USERNAME_DEFAULT}" "${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
+}
+
+ CHECK_DEBSUMS() {
+  # Get the last time this check was ran.
+  DEBSUMS_LAST_RUN=$( SQL_QUERY "SELECT value FROM variables WHERE key == 'debsums_last_run' " )
+  if [[ -z "${DEBSUMS_LAST_RUN}" ]]
+  then
+    DEBSUMS_LAST_RUN=0
+  fi
+  UNIX_TIME=$( date -u +%s )
+  # Only run once every 2 hours.
+  DEBSUMS_LAST_RUN=$(( DEBSUMS_LAST_RUN + 7200 ))
+  if [[ "${DEBSUMS_LAST_RUN}" -gt "${UNIX_TIME}" ]]
+  then
+    if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+    then
+      echo "Debsums was already ran. ${DEBSUMS_LAST_RUN} -gt ${UNIX_TIME}"
+      echo
+    fi
+    return
+  fi
+
+  NAME='system_clock_check'
+  MESSAGE_ERROR=''
+  MESSAGE_WARNING=''
+  MESSAGE_INFO=''
+  MESSAGE_SUCCESS=''
+
+  RECOVERED_MESSAGE_SUCCESS="debsums doesn't show any errors."
+  RECOVERED_TITLE_SUCCESS="debsums is good."
+
+  DEBSUMS_OUTPUT=$( sudo debsums -c 2>&1 )
+  # Debug Output
+  if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo "Timing: ${DEBSUMS_LAST_RUN} -gt ${UNIX_TIME}"
+    echo "Debsums Output: ${DEBSUMS_OUTPUT}"
+    echo
+  fi
+
+  if [[ ! -z "${DEBSUMS_OUTPUT}" ]]
+  then
+    BROKEN_PACKAGES=$( echo "${DEBSUMS_OUTPUT}" | grep -P -o '/.*?\s' | xargs dpkg -S | cut -d : -f 1  )
+    OUTPUT=$( echo "${BROKEN_PACKAGES}" | xargs apt-get install --reinstall )
+    DEBSUMS_OUTPUT=$( sudo debsums -c 2>&1 )
+    if [[ ! -z "${DEBSUMS_OUTPUT}" ]]
+    then
+      MESSAGE_ERROR="There are still issues with the 'debsums -c' command:
+${DEBSUMS_OUTPUT}"
+    else
+      MESSAGE_WARNING="The following packages were reinstalled:
+${BROKEN_PACKAGES}"
+    fi
+
+    # Debug Output
+    if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+    then
+      echo "NEW Debsums Output: ${DEBSUMS_OUTPUT}"
+      echo "Broken Packages: ${BROKEN_PACKAGES}"
+      echo "Reinstall Output: ${OUTPUT}"
+      echo
+    fi
+  fi
+
+  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${DISCORD_WEBHOOK_USERNAME_DEFAULT}" "${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
+  SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('debsums_last_run','${UNIX_TIME}');"
 }
 
  REPORT_INFO_ABOUT_NODE () {
@@ -1970,6 +2041,7 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
     CHECK_SWAP
     CHECK_RAM
     CHECK_CLOCK
+    CHECK_DEBSUMS
     GET_ALL_NODES
   fi
 
