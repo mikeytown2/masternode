@@ -15,7 +15,7 @@ bash -ic "$(wget -4qO- -o- raw.githubusercontent.com/mikeytown2/masternode/maste
 '
 
 # Github user and project.
-GITHUB_REPO='TourcoinGroup/TOUR'
+GITHUB_REPO='Touriva/TOUR'
 # Display Name.
 DAEMON_NAME='TOUR Core'
 # Coin Ticker.
@@ -45,21 +45,17 @@ BLOCKTIME=60
 # Cycle Daemon on first start.
 DAEMON_CYCLE=1
 # Multiple on single IP.
-MULTI_IP_MODE=1
+MULTI_IP_MODE=3
 
 
 # Tip Address.
 TIPS='TW1EvMNptSoTWtYdNZdKTWWzqepYPvpHbk'
 # Dropbox Addnodes.
-DROPBOX_ADDNODES='a37pqfaxmf1kfdv'
-# If set to 1 then use addnodes from dropbox.
-USE_DROPBOX_ADDNODES=1
+DROPBOX_ADDNODES='https://raw.githubusercontent.com/YellowFeveRs/Tour-1/master/res/peers_1.txt'
 # Dropbox Bootstrap.
-DROPBOX_BOOTSTRAP='51ltqsreqz7hw1s'
-# If set to 1 then use bootstrap from dropbox.
-USE_DROPBOX_BOOTSTRAP=1
+DROPBOX_BOOTSTRAP='https://github.com/YellowFeveRs/Tour-1/raw/master/res/bootstrap.dat.gz'
 # Dropbox blocks and chainstake folders.
-DROPBOX_BLOCKS_N_CHAINS='lefeex41x0agab1'
+DROPBOX_BLOCKS_N_CHAINS='https://github.com/YellowFeveRs/Tour-1/raw/master/res/blocks_n_chains.tar.gz'
 
 ASCII_ART () {
 echo -e "\e[0m"
