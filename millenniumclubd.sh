@@ -41,9 +41,10 @@ BLOCKTIME=60
 # Cycle Daemon on first start.
 DAEMON_CYCLE=1
 # Multiple on single IP.
-MULTI_IP_MODE=1
+MULTI_IP_MODE=3
 MASTERNODE_GENKEY_COMMAND='bls generate'
 MASTERNODE_PRIVKEY='masternodeblsprivkey'
+IPV6=1
 
 # Sentinel Info.
 # SENTINEL_GITHUB='dashpay/sentinel'
