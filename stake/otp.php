@@ -172,12 +172,13 @@ else if (file_exists($_SERVER['HOME'] . '/.google_authenticator.temp')) {
 }
 if (empty($f)) {
   echo "Could not open the .google_authenticator file for reading.";
+  fclose($f);
   exit;
 }
 $InitalizationKey = trim(fgets($f));
-fclose($f);
 if (strlen($InitalizationKey) > 100) {
   echo "Key is too long.";
+  fclose($f);
   exit;
 }
 
@@ -191,6 +192,7 @@ if (isset($argv[1])) {
 }
 else {
   echo "Key was not passed in.";
+  fclose($f);
   exit;
 }
 
@@ -200,7 +202,17 @@ if ($result == TRUE) {
   echo "Key Verified\n";
 }
 else {
+  echo 'Current PHP version: ' . phpversion();
+  echo "\n";
   echo "Failure\n $argv[0]\n $argv[1]\n $argv[2]\n";
+  echo "Key: >$InitalizationKey<\n";
+  $line = trim(fgets($f));
+  echo "Line: >${line}<\n";
+  $line = trim(fgets($f));
+  echo "Line: >${line}<\n";
+  $line = trim(fgets($f));
+  echo "Line: >${line}<\n";
 }
 
+fclose($f);
 // End Of File.
