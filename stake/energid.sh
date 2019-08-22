@@ -111,7 +111,8 @@ _setup_two_factor() {
   sudo update-rc.d apache2 disable 2>/dev/null
   sudo update-rc.d apache2 remove 2>/dev/null
 
-  if [[  -s "${HOME}/.google_authenticator" ]]
+  # Ask to review if .google_authenticator file already exists.
+  if [[ -s "${HOME}/.google_authenticator" ]]
   then
     REPLY=''
     read -p "Review 2 factor authentication code for password SSH login (y/n)?: " -r
@@ -120,6 +121,12 @@ _setup_two_factor() {
     then
       return
     fi
+  fi
+
+  # Clear out an old failed run.
+  if [[ -f "${HOME}/.google_authenticator.temp" ]]
+  then
+    rm "${HOME}/.google_authenticator.temp"
   fi
 
   # Install google-authenticator if not there.
@@ -152,7 +159,6 @@ _setup_two_factor() {
   IP_ADDRESS=$( timeout --signal=SIGKILL 10s wget -4qO- -T 10 -t 2 -o- http://ipinfo.io/ip )
   USRNAME=$( whoami )
   SECRET=''
-  stty sane 2>/dev/null
   if [[ -f "${HOME}/.google_authenticator" ]]
   then
     SECRET=$( sudo head -n 1 "${HOME}/.google_authenticator" 2>/dev/null )
@@ -173,14 +179,12 @@ _setup_two_factor() {
   if [[ -z "${SECRET}" ]]
   then
     echo "Google Authenticator install failed."
+    return
   fi
 
-  if [[ -f "${HOME}/.google_authenticator.temp" ]]
-  then
-    rm "${HOME}/.google_authenticator.temp"
-  fi
   mv "${HOME}/.google_authenticator" "${HOME}/.google_authenticator.temp"
 
+  stty sane 2>/dev/null
   echo "Warning: pasting the following URL into your browser exposes the OTP secret to Google:"
   echo "https://www.google.com/chart?chs=200x200&chld=M|0&cht=qr&chl=otpauth://totp/ssh%2520login%2520for%2520'${USRNAME}'%3Fsecret%3D${SECRET}%26issuer%3D${IP_ADDRESS}"
   echo
@@ -196,8 +200,7 @@ _setup_two_factor() {
   echo
 
   # Validate otp.
-  REPLY=''
-  while [[ -z "${REPLY}" ]] || [[ "$( php /tmp/___otp.php "${REPLY}" "${HOME}/.google_authenticator.temp" | grep -c 'Key Verified' )" -eq 0 ]]
+  while :
   do
     REPLY=''
     read -p "6 digit verification code (leave blank to disable & delete): " -r
@@ -205,9 +208,21 @@ _setup_two_factor() {
     then
       rm -f "${HOME}/.google_authenticator"
       rm -f "${HOME}/.google_authenticator.temp"
+      echo "Not going to use google authenticator."
       return
     fi
+
+    KEY_CHECK=$( php /tmp/___otp.php "${REPLY}" "${HOME}/.google_authenticator.temp" )
+    if [[ ! -z "${KEY_CHECK}" ]]
+    then
+      echo "${KEY_CHECK}"
+      if [[ $( echo "${KEY_CHECK}" | grep -ic 'Key Verified' ) -gt 0 ]]
+      then
+        break
+      fi
+    fi
   done
+
   if [[ -f "${HOME}/.google_authenticator.temp" ]]
   then
     mv "${HOME}/.google_authenticator.temp" "${HOME}/.google_authenticator"

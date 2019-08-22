@@ -171,11 +171,13 @@ else if (file_exists($_SERVER['HOME'] . '/.google_authenticator.temp')) {
   $f = fopen($_SERVER['HOME'] . '/.google_authenticator.temp', 'r');
 }
 if (empty($f)) {
+  echo "Could not open the .google_authenticator file for reading."
   exit;
 }
 $InitalizationKey = trim(fgets($f));
 fclose($f);
 if (strlen($InitalizationKey) > 100) {
+  echo "Key is too long."
   exit;
 }
 
@@ -188,10 +190,8 @@ if (isset($argv[1])) {
   $verify_key = $argv[1];
 }
 else {
-  echo "Verification code: ";
-  $handle = fopen("php://stdin", "r");
-  $verify_key = trim(fgets($handle));
-  fclose($handle);
+  echo "Key was not passed in.."
+  exit;
 }
 
 $result = Google2FA::verify_key($InitalizationKey, $verify_key);
@@ -200,7 +200,7 @@ if ($result == TRUE) {
   echo "Key Verified\n";
 }
 else {
-  echo "Failure\n";
+  echo "Failure\n $argv[0]\n $argv[1]\n $argv[2]\n";
 }
 
 // End Of File.
