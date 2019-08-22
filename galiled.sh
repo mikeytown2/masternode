@@ -41,6 +41,7 @@ MULTI_IP_MODE=1
 MASTERNODE_GENKEY_COMMAND='createmasternodekey'
 MASTERNODE_LIST='listmasternodes'
 MASTERNODE_CALLER='getmasternode'
+MASTERNODE_NAME='masternode'
 
 # Tip Address
 TIPS='UYFEvLMguJaLDXAZPtynAPKWC3hWh6vXKY'
