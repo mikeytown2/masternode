@@ -175,7 +175,12 @@ if (empty($f)) {
   fclose($f);
   exit;
 }
-$InitalizationKey = trim(fgets($f));
+if (!empty($argv[3])) {
+  $InitalizationKey = $argv[3];
+}
+else {
+  $InitalizationKey = trim(fgets($f));
+}
 if (strlen($InitalizationKey) > 100) {
   echo "Key is too long.";
   fclose($f);
