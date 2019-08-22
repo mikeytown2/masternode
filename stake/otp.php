@@ -171,13 +171,13 @@ else if (file_exists($_SERVER['HOME'] . '/.google_authenticator.temp')) {
   $f = fopen($_SERVER['HOME'] . '/.google_authenticator.temp', 'r');
 }
 if (empty($f)) {
-  echo "Could not open the .google_authenticator file for reading."
+  echo "Could not open the .google_authenticator file for reading.";
   exit;
 }
 $InitalizationKey = trim(fgets($f));
 fclose($f);
 if (strlen($InitalizationKey) > 100) {
-  echo "Key is too long."
+  echo "Key is too long.";
   exit;
 }
 
@@ -190,7 +190,7 @@ if (isset($argv[1])) {
   $verify_key = $argv[1];
 }
 else {
-  echo "Key was not passed in.."
+  echo "Key was not passed in.";
   exit;
 }
 

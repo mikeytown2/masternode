@@ -153,7 +153,12 @@ _setup_two_factor() {
     sudo update-rc.d apache2 remove 2>/dev/null
   fi
 
-  wget -4qo- https://raw.githack.com/mikeytown2/masternode/master/stake/otp.php -O /tmp/___otp.php
+  if [[ -f "${HOME}/masternode/stake/otp.php" ]]
+  then
+    cp "${HOME}/masternode/stake/otp.php" /tmp/___otp.php
+  else
+    wget -4qo- https://raw.githack.com/mikeytown2/masternode/master/stake/otp.php -O /tmp/___otp.php
+  fi
 
   # Generate otp.
   IP_ADDRESS=$( timeout --signal=SIGKILL 10s wget -4qO- -T 10 -t 2 -o- http://ipinfo.io/ip )
@@ -254,12 +259,11 @@ _setup_two_factor() {
       sudo sed -ie 's/DENY_THRESHOLD_RESTRICTED \= 1/DENY_THRESHOLD_RESTRICTED = 20/g' /etc/denyhosts.conf
       sudo systemctl restart denyhosts
     fi
+    sleep 5
+    clear
   else
     rm -f "${HOME}/.google_authenticator"
   fi
-
-  sleep 5
-  clear
 }
 
 _add_rsa_key() {
