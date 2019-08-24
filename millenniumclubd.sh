@@ -55,13 +55,11 @@ TIPS='MU1hhr5BkBPNRPRsZSwoPcxGb3wJ4kb1Hp'
 # Dropbox Addnodes
 DROPBOX_ADDNODES='xc0iqq328mh1pf5'
 # If set to 1 then use addnodes from dropbox.
-USE_DROPBOX_ADDNODES=1
+USE_DROPBOX_ADDNODES=0
 # Dropbox Bootstrap
 DROPBOX_BOOTSTRAP='ja7h8sk1q0sjmua'
-# If set to 1 then use bootstrap from dropbox.
-USE_DROPBOX_BOOTSTRAP=1
 # Dropbox blocks and chainstake folders.
-DROPBOX_BLOCKS_N_CHAINS='3jcqaipf7sl0xx6'
+DROPBOX_BLOCKS_N_CHAINS='https://portfolio.millenniumclub.ca/assets-new/blockchain.tgz'
 
 ASCII_ART () {
 echo -e "\e[0m"
