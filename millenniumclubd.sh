@@ -64,7 +64,7 @@ DROPBOX_BLOCKS_N_CHAINS='https://portfolio.millenniumclub.ca/assets-new/blockcha
 ASCII_ART () {
 echo -e "\e[0m"
 clear 2> /dev/null
-cat << "QUANTISNET"
+cat << "MILLENNIUM"
   __  __ _ _ _                  _                    _____ _       _
  |  \/  (_) | |                (_)                  / ____| |     | |
  | \  / |_| | | ___ _ __  _ __  _ _   _ _ __ ___   | |    | |_   _| |__
@@ -72,7 +72,7 @@ cat << "QUANTISNET"
  | |  | | | | |  __/ | | | | | | | |_| | | | | | | | |____| | |_| | |_) |
  |_|  |_|_|_|_|\___|_| |_|_| |_|_|\__,_|_| |_| |_|  \_____|_|\__,_|_.__/
 
-QUANTISNET
+MILLENNIUM
 }
 
 # Discord User Info
