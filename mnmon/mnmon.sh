@@ -953,14 +953,6 @@ ${MESSAGE}"
   while read -r DATE_1 DATE_2 DATE_3 LINE
   do
     # shellcheck disable=SC2001
-    LINE=$( echo "${LINE}" | sed 's/SHA[[:digit:]]\+.*$//' )
-    INFO=$( echo "${LINE}" | grep -oE '\]\: .*' | cut -c 4- )
-
-    if [[ -z "${INFO}" ]]
-    then
-      continue
-    fi
-
     UNIX_TIME_LOG=$( date -u --date="${DATE_1} ${DATE_2} ${DATE_3}" +%s )
     if [[ "${LAST_LOGIN_TIME_CHECK}" -gt "${UNIX_TIME_LOG}" ]]
     then
@@ -972,8 +964,10 @@ ${MESSAGE}"
     then
       continue
     fi
-    SSH_USER=$( echo "${INFO}" | grep -Pio 'for .*? from' | cut -d ' ' -f 2 | sed 's/for //' | sed 's/ from//' )
-    SSH_IP=$( echo "${INFO}" | grep -Pio 'from .*? port' | sed 's/from //' | sed 's/ port//' )
+
+    LINE=$( echo "${LINE}" | sed 's/SHA[[:digit:]]\+.*$//' )
+    SSH_USER=$( echo "${LINE}" | grep -Pio 'for .*? from' | cut -d ' ' -f 2 | sed 's/for //' | sed 's/ from//' )
+    SSH_IP=$( echo "${LINE}" | grep -Pio 'from .*? port' | sed 's/from //' | sed 's/ port//' )
 
     VERB='in'
     if [[ $( echo "${LINE}" | grep -ci ': Accepted ' ) -eq 0 ]]
@@ -987,10 +981,11 @@ ${MESSAGE}"
       echo "ERROR: ${ERRORS}"
     elif [[ "${TEST_OUTPUT}" -eq 0 ]]
     then
+      INFO=$( echo "${LINE}" | grep -oE '\]\: .*' | cut -c 4- )
       SQL_QUERY "INSERT INTO login_data (time,message) VALUES ('${UNIX_TIME_LOG}','${INFO}');"
       SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('last_login_time_check','${UNIX_TIME}');"
     fi
-  done <<< "$( grep -B 20 ' systemd-logind' /var/log/auth.log | grep -B 20 'New' | grep -C10 'sshd' | grep port | grep -iv 'CRON\|preauth\|Invalid user\|user unknown\|major versions differ\|Failed[[:space:]]password\|authentication[[:space:]]failure\|refused[[:space:]]connect\|ignoring[[:space:]]max\|not[[:space:]]receive[[:space:]]identification\|[[:space:]]sudo\|[[:space:]]su\|Bad[[:space:]]protocol\|Disconnected[[:space:]]from[[:space:]]user' )"
+  done <<< "$( grep 'port' /var/log/auth.log | grep -iv 'CRON\|preauth\|Invalid user\|user unknown\|major versions differ\|Failed[[:space:]]password\|authentication[[:space:]]failure\|refused[[:space:]]connect\|ignoring[[:space:]]max\|not[[:space:]]receive[[:space:]]identification\|[[:space:]]sudo\|[[:space:]]su\|Bad[[:space:]]protocol\|Disconnected[[:space:]]from[[:space:]]user' )"
 }
 
  CHECK_DISK () {
@@ -1121,11 +1116,10 @@ ${MESSAGE}"
   PERCENT_FREE=$( echo "${MEM_AVAILABLE} / ${MEM_TOTAL}" | bc -l )
 
 
-  if [[ "${TEST_OUTPUT}" -eq 1 ]] || ([[ $( echo "${PERCENT_FREE} < 10" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 256" | bc ) -gt 0 ]])
+  if [[ "${TEST_OUTPUT}" -eq 1 ]] || ([[ $( echo "${PERCENT_FREE} < 0.05" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 256" | bc ) -gt 0 ]])
   then
     MESSAGE_ERROR=":desktop: :fire: Free RAM is under 256 MB: ${MEM_AVAILABLE_MB} MB :fire: :desktop: "
-  fi
-  if [[ "${TEST_OUTPUT}" -eq 1 ]] || ([[ $( echo "${PERCENT_FREE} < 20" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} >= 256" | bc ) -gt 0 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 512" | bc ) -gt 0 ]])
+  elif [[ "${TEST_OUTPUT}" -eq 1 ]] || ([[ $( echo "${PERCENT_FREE} < 0.10" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 512" | bc ) -gt 0 ]])
   then
     MESSAGE_WARNING=":desktop: Free RAM is under 512 MB: ${MEM_AVAILABLE_MB} MB :desktop: "
   fi
@@ -1133,6 +1127,7 @@ ${MESSAGE}"
   if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
   then
     echo "Ram Free MB: ${MEM_AVAILABLE_MB}"
+    echo "Percent Free: ${PERCENT_FREE}"
     echo
   fi
 
