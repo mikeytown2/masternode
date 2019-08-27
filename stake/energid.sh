@@ -61,7 +61,10 @@ UBUNTU_SECURITY_PACKAGES
 fi
 
 # Have linux passwords show stars.
-cat /etc/sudoers | sed -r 's/^Defaults(\s+)env_reset$/Defaults\1env_reset,pwfeedback/' | sudo EDITOR='tee ' visudo >/dev/null
+if [[ -f /etc/sudoers ]] && [[ $( sudo grep -c 'env_reset,pwfeedback' /etc/sudoers ) -eq 0 ]]
+then
+  sudo cat /etc/sudoers | sed -r 's/^Defaults(\s+)env_reset$/Defaults\1env_reset,pwfeedback/' | sudo EDITOR='tee ' visudo >/dev/null
+fi
 
 _restrict_logins() {
   USRS_THAT_CAN_LOGIN=$( whoami )
