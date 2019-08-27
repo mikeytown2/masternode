@@ -41,10 +41,10 @@ BLOCKTIME=60
 # Cycle Daemon on first start.
 DAEMON_CYCLE=1
 # Multiple on single IP.
-MULTI_IP_MODE=3
+MULTI_IP_MODE=0
 MASTERNODE_GENKEY_COMMAND='bls generate'
 MASTERNODE_PRIVKEY='masternodeblsprivkey'
-IPV6=1
+IPV6=0
 
 # Sentinel Info.
 # SENTINEL_GITHUB='dashpay/sentinel'
@@ -55,18 +55,16 @@ TIPS='MU1hhr5BkBPNRPRsZSwoPcxGb3wJ4kb1Hp'
 # Dropbox Addnodes
 DROPBOX_ADDNODES='xc0iqq328mh1pf5'
 # If set to 1 then use addnodes from dropbox.
-USE_DROPBOX_ADDNODES=1
+USE_DROPBOX_ADDNODES=0
 # Dropbox Bootstrap
 DROPBOX_BOOTSTRAP='ja7h8sk1q0sjmua'
-# If set to 1 then use bootstrap from dropbox.
-USE_DROPBOX_BOOTSTRAP=1
 # Dropbox blocks and chainstake folders.
-DROPBOX_BLOCKS_N_CHAINS='3jcqaipf7sl0xx6'
+DROPBOX_BLOCKS_N_CHAINS='https://portfolio.millenniumclub.ca/assets-new/blockchain.tgz'
 
 ASCII_ART () {
 echo -e "\e[0m"
 clear 2> /dev/null
-cat << "QUANTISNET"
+cat << "MILLENNIUM"
   __  __ _ _ _                  _                    _____ _       _
  |  \/  (_) | |                (_)                  / ____| |     | |
  | \  / |_| | | ___ _ __  _ __  _ _   _ _ __ ___   | |    | |_   _| |__
@@ -74,7 +72,7 @@ cat << "QUANTISNET"
  | |  | | | | |  __/ | | | | | | | |_| | | | | | | | |____| | |_| | |_) |
  |_|  |_|_|_|_|\___|_| |_|_| |_|_|\__,_|_| |_| |_|  \_____|_|\__,_|_.__/
 
-QUANTISNET
+MILLENNIUM
 }
 
 # Discord User Info
