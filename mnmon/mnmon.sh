@@ -952,7 +952,7 @@ ${MESSAGE}"
 
   while read -r DATE_1 DATE_2 DATE_3 LINE
   do
-    # shellcheck disable=SC2001
+
     UNIX_TIME_LOG=$( date -u --date="${DATE_1} ${DATE_2} ${DATE_3}" +%s )
     if [[ "${LAST_LOGIN_TIME_CHECK}" -gt "${UNIX_TIME_LOG}" ]]
     then
@@ -965,6 +965,7 @@ ${MESSAGE}"
       continue
     fi
 
+    # shellcheck disable=SC2001
     LINE=$( echo "${LINE}" | sed 's/SHA[[:digit:]]\+.*$//' )
     SSH_USER=$( echo "${LINE}" | grep -Pio 'for .*? from' | cut -d ' ' -f 2 | sed 's/for //' | sed 's/ from//' )
     SSH_IP=$( echo "${LINE}" | grep -Pio 'from .*? port' | sed 's/from //' | sed 's/ port//' )
@@ -1252,6 +1253,8 @@ ${BROKEN_PACKAGES}"
   VERSION=$( echo "${18}" | tr -d \" )
   GETCHAINTIPS=$( echo "${19}" | tr -d \" )
   MNPING=$( echo "${20}" | tr -d \" )
+  GETINFO=$( echo "${21}" )
+  GETNETWORKINFO=$( echo "${22}" )
 
   if [[ -z "${USRNAME}" ]]
   then
@@ -1560,18 +1563,34 @@ Split Hash: ${SPLIT_HASH}" ":warning: Warning Chain :link: Split :warning:" "${D
     fi
   fi
 
+  VERSION_NUMBER=$( echo "${GETINFO}" | jq -r '.version' 2>/dev/null )
+  VERSION_PROTOCOL=$( echo "${GETINFO}" | jq -r '.protocolversion' 2>/dev/null )
+  GETINFO_ERRORS=$( echo "${GETINFO}" | jq -r '.errors' 2>/dev/null )
+  GETNETWORKINFO_WARNINGS=$( echo "${GETNETWORKINFO}" | jq -r '.warnings' 2>/dev/null )
+
   _PAYLOAD="__${USRNAME} ${DAEMON_BIN}__
 BlockCount: ${GETBLOCKCOUNT}
 Connections: ${GETCONNECTIONCOUNT}
 Staking Status: ${STAKING_TEXT}
 Masternode Status: ${MASTERNODE_TEXT}
 PID: ${DAEMON_PID}
-Version: ${VERSION}
+Version: ${VERSION} (${VERSION_NUMBER})
+Protocol Version: ${VERSION_PROTOCOL}
 Uptime: ${UPTIME} seconds (${UPTIME_HUMAN})"
   if [[ ! -z "${MNPING}" ]]
   then
     _PAYLOAD="${_PAYLOAD}
 Masternode Ping: ${MNPING}"
+  fi
+  if [[ ! -z "${GETINFO_ERRORS}" ]]
+  then
+    _PAYLOAD="${_PAYLOAD}
+Get Info Errors: ${GETINFO_ERRORS}"
+  fi
+  if [[ ! -z "${GETNETWORKINFO_WARNINGS}" ]]
+  then
+    _PAYLOAD="${_PAYLOAD}
+Get Network Info Warnings: ${GETNETWORKINFO_WARNINGS}"
   fi
   if [[ ! -z "${GETBALANCE}" ]] && [[ "$( echo "${GETBALANCE} > 0.0" | bc -l )" -gt 0 ]]
   then
@@ -1712,6 +1731,12 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
     VERSION=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" -version " 2>/dev/null | sed 's/[^0-9.]*\([0-9.]*\).*/\1/' )
   fi
 
+  # Get the other version numbers.
+  GETINFO=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" getinfo " 2>/dev/null )
+
+  # Get the other version numbers.
+  GETNETWORKINFO=$( su "${USRNAME}" -c "timeout 5 \"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" getnetworkinfo " 2>/dev/null )
+
   # Check staking status.
   STAKING=0
   GETSTAKINGSTATUS=''
@@ -1750,7 +1775,7 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
 
   # Output info.
   CONF_LOCATION=$( dirname "${CONF_LOCATION}" )
-  REPORT_INFO_ABOUT_NODE "${USRNAME}" "${DAEMON_BIN}" "${CONTROLLER_BIN_LOC}" "${CONF_FOLDER}" "${CONF_LOCATION}" "${MASTERNODE}" "${MNINFO}" "${GETBALANCE}" "${GETTOTALBALANCE}" "${STAKING}" "${GETCONNECTIONCOUNT}" "${GETBLOCKCOUNT}" "${UPTIME}" "${DAEMON_PID}" "${GETNETHASHRATE}" "${MNWIN}" "${ALL_STAKE_INPUTS_BALANCE_COUNT}" "${VERSION}" "${GETCHAINTIPS}" "${MNPING}"
+  REPORT_INFO_ABOUT_NODE "${USRNAME}" "${DAEMON_BIN}" "${CONTROLLER_BIN_LOC}" "${CONF_FOLDER}" "${CONF_LOCATION}" "${MASTERNODE}" "${MNINFO}" "${GETBALANCE}" "${GETTOTALBALANCE}" "${STAKING}" "${GETCONNECTIONCOUNT}" "${GETBLOCKCOUNT}" "${UPTIME}" "${DAEMON_PID}" "${GETNETHASHRATE}" "${MNWIN}" "${ALL_STAKE_INPUTS_BALANCE_COUNT}" "${VERSION}" "${GETCHAINTIPS}" "${MNPING}" "${GETINFO}" "${GETNETWORKINFO}"
 }
 
  GET_ALL_NODES () {
