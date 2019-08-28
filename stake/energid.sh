@@ -63,7 +63,10 @@ fi
 # Have linux passwords show stars.
 if [[ -f /etc/sudoers ]] && [[ $( sudo grep -c 'env_reset,pwfeedback' /etc/sudoers ) -eq 0 ]]
 then
+  echo "Show password feeback."
   sudo cat /etc/sudoers | sed -r 's/^Defaults(\s+)env_reset$/Defaults\1env_reset,pwfeedback/' | sudo EDITOR='tee ' visudo >/dev/null
+  echo "Restarting ssh."
+  sudo systemctl restart sshd
 fi
 
 _restrict_logins() {
