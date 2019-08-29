@@ -1106,7 +1106,6 @@ ${MESSAGE}"
   PERCENT_FREE=$( echo "${MEM_AVAILABLE} / ${MEM_TOTAL}" | bc -l )
   PERCENT_FREE=$( echo "${PERCENT_FREE} * 100" | bc -l )
 
-
   if [[ "${TEST_OUTPUT}" -eq 1 ]] || ([[ $( echo "${PERCENT_FREE} < 3" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 256" | bc ) -gt 0 ]])
   then
     MESSAGE_ERROR=":desktop: :fire: Free RAM is under 256 MB: ${MEM_AVAILABLE_MB} MB Percent Free: ${PERCENT_FREE}% :fire: :desktop: "
