@@ -94,13 +94,6 @@ fi
  value TEXT NOT NULL
 );"
 
- # User login.
- SQL_QUERY "CREATE TABLE IF NOT EXISTS login_data (
-  time INTEGER,
-  message TEXT,
-  PRIMARY KEY (time, message)
-);"
-
  # System logs.
  SQL_QUERY "CREATE TABLE IF NOT EXISTS system_log (
   name TEXT PRIMARY KEY,
@@ -952,15 +945,13 @@ ${MESSAGE}"
 
   while read -r DATE_1 DATE_2 DATE_3 LINE
   do
-
-    UNIX_TIME_LOG=$( date -u --date="${DATE_1} ${DATE_2} ${DATE_3}" +%s )
-    if [[ "${LAST_LOGIN_TIME_CHECK}" -gt "${UNIX_TIME_LOG}" ]]
+    if [[ -z "${LINE}" ]]
     then
       continue
     fi
-    # Logins are one time; not continual issues.
-    MESSAGE=$( SQL_QUERY "SELECT message FROM login_data WHERE time == ${UNIX_TIME_LOG} " )
-    if [[ ! -z "${MESSAGE}" ]] && [[ "${TEST_OUTPUT}" -eq 0 ]]
+
+    UNIX_TIME_LOG=$( date -u --date="${DATE_1} ${DATE_2} ${DATE_3}" +%s )
+    if [[ "${LAST_LOGIN_TIME_CHECK}" -gt "${UNIX_TIME_LOG}" ]]
     then
       continue
     fi
@@ -982,8 +973,6 @@ ${MESSAGE}"
       echo "ERROR: ${ERRORS}"
     elif [[ "${TEST_OUTPUT}" -eq 0 ]]
     then
-      INFO=$( echo "${LINE}" | grep -oE '\]\: .*' | cut -c 4- )
-      SQL_QUERY "INSERT INTO login_data (time,message) VALUES ('${UNIX_TIME_LOG}','${INFO}');"
       SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('last_login_time_check','${UNIX_TIME}');"
     fi
   done <<< "$( grep 'port' /var/log/auth.log | grep -iv 'CRON\|preauth\|Invalid user\|user unknown\|major versions differ\|Failed[[:space:]]password\|authentication[[:space:]]failure\|refused[[:space:]]connect\|ignoring[[:space:]]max\|not[[:space:]]receive[[:space:]]identification\|[[:space:]]sudo\|[[:space:]]su\|Bad[[:space:]]protocol\|Disconnected[[:space:]]from[[:space:]]user' )"
@@ -1115,14 +1104,15 @@ ${MESSAGE}"
   MEM_AVAILABLE=$( sudo cat /proc/meminfo | grep -i 'MemAvailable:\|MemFree:' | awk '{print $2}' | tail -n 1 )
   MEM_AVAILABLE_MB=$( echo "${MEM_AVAILABLE} / 1024" | bc )
   PERCENT_FREE=$( echo "${MEM_AVAILABLE} / ${MEM_TOTAL}" | bc -l )
+  PERCENT_FREE=$( echo "${PERCENT_FREE} * 100" | bc -l )
 
 
-  if [[ "${TEST_OUTPUT}" -eq 1 ]] || ([[ $( echo "${PERCENT_FREE} < 0.05" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 256" | bc ) -gt 0 ]])
+  if [[ "${TEST_OUTPUT}" -eq 1 ]] || ([[ $( echo "${PERCENT_FREE} < 3" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 256" | bc ) -gt 0 ]])
   then
-    MESSAGE_ERROR=":desktop: :fire: Free RAM is under 256 MB: ${MEM_AVAILABLE_MB} MB :fire: :desktop: "
-  elif [[ "${TEST_OUTPUT}" -eq 1 ]] || ([[ $( echo "${PERCENT_FREE} < 0.10" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 512" | bc ) -gt 0 ]])
+    MESSAGE_ERROR=":desktop: :fire: Free RAM is under 256 MB: ${MEM_AVAILABLE_MB} MB Percent Free: ${PERCENT_FREE}% :fire: :desktop: "
+  elif [[ "${TEST_OUTPUT}" -eq 1 ]] || ([[ $( echo "${PERCENT_FREE} < 6" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 512" | bc ) -gt 0 ]])
   then
-    MESSAGE_WARNING=":desktop: Free RAM is under 512 MB: ${MEM_AVAILABLE_MB} MB :desktop: "
+    MESSAGE_WARNING=":desktop: Free RAM is under 512 MB: ${MEM_AVAILABLE_MB} MB. Percent Free: ${PERCENT_FREE}% :desktop: "
   fi
 
   if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
@@ -1135,6 +1125,39 @@ ${MESSAGE}"
   RECOVERED_MESSAGE_SUCCESS="Free RAM is now at ${MEM_AVAILABLE_MB} MB."
   RECOVERED_TITLE_SUCCESS="Free RAM is back to normal."
   PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${DISCORD_WEBHOOK_USERNAME_DEFAULT}" "${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
+}
+
+ CHECK_OOM_KILLS () {
+  LAST_OOM_TIME_CHECK=$( SQL_QUERY "SELECT value FROM variables WHERE key == 'last_oom_time_check' " )
+  if [[ -z "${LAST_OOM_TIME_CHECK}" ]]
+  then
+    LAST_OOM_TIME_CHECK=0
+  fi
+  UNIX_TIME=$( date -u +%s )
+
+  while read -r DATE_1 DATE_2 DATE_3 LINE
+  do
+    if [[ -z "${LINE}" ]]
+    then
+      continue
+    fi
+
+    UNIX_TIME_LOG=$( date -u --date="${DATE_1} ${DATE_2} ${DATE_3}" +%s )
+    if [[ "${LAST_OOM_TIME_CHECK}" -gt "${UNIX_TIME_LOG}" ]]
+    then
+      continue
+    fi
+
+    ERRORS=$( SEND_ERROR "${DATE_1} ${DATE_2} ${DATE_3} ${LINE}" " :skull_crossbones: :fire: Process killed due to low memory :fire: :skull_crossbones: " )
+    if [[ ! -z "${ERRORS}" ]]
+    then
+      echo "ERROR: ${ERRORS}"
+    elif [[ "${TEST_OUTPUT}" -eq 0 ]]
+    then
+      INFO=$( echo "${LINE}" | grep -oE '\]\: .*' | cut -c 4- )
+      SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('last_oom_time_check','${UNIX_TIME}');"
+    fi
+  done <<< "$( grep -i 'out of memory' /var/log/kern.log )"
 }
 
  CHECK_CLOCK () {
@@ -2060,6 +2083,7 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
     CHECK_CPU_LOAD
     CHECK_SWAP
     CHECK_RAM
+    CHECK_OOM_KILLS
     CHECK_CLOCK
     CHECK_DEBSUMS
     GET_ALL_NODES
