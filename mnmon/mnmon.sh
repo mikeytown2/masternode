@@ -19,7 +19,7 @@
 
 
  function CTRL_C () {
-  stty sane
+  stty sane 2>/dev/null
   printf "\e[0m"
   echo
   exit
@@ -66,6 +66,64 @@ fi
  if [[ "${arg3}" == 'test' ]]
 then
   TEST_OUTPUT=1
+fi
+
+ # Set defaults.
+ # RAM.
+ if [[ -z "${LOW_MEM_WARN_MB}" ]]
+then
+  LOW_MEM_WARN_MB=512
+fi
+ if [[ -z "${LOW_MEM_WARN_PERCENT}" ]]
+then
+  LOW_MEM_WARN_PERCENT=6
+fi
+ if [[ -z "${LOW_MEM_ERROR_MB}" ]]
+then
+  LOW_MEM_ERROR_MB=256
+fi
+ if [[ -z "${LOW_MEM_ERROR_PERCENT}" ]]
+then
+  LOW_MEM_ERROR_PERCENT=3
+fi
+ # SWAP.
+ if [[ -z "${LOW_SWAP_ERROR_MB}" ]]
+then
+  LOW_SWAP_ERROR_MB=512
+fi
+ if [[ -z "${LOW_SWAP_WARN_MB}" ]]
+then
+  LOW_SWAP_WARN_MB=1024
+fi
+ # Hard Drive Space.
+ if [[ -z "${LOW_HDD_ERROR_MB}" ]]
+then
+  LOW_HDD_ERROR_MB=512
+fi
+LOW_HDD_ERROR_KB=$( echo "${LOW_HDD_ERROR_MB} * 1024" | bc )
+ if [[ -z "${LOW_HDD_WARN_MB}" ]]
+then
+  LOW_HDD_WARN_MB=1536
+fi
+LOW_HDD_WARN_KB=$( echo "${LOW_HDD_WARN_MB} * 1024" | bc )
+ if [[ -z "${LOW_HDD_BOOT_ERROR_MB}" ]]
+then
+  LOW_HDD_BOOT_ERROR_MB=64
+fi
+LOW_HDD_BOOT_ERROR_KB=$( echo "${LOW_HDD_BOOT_ERROR_MB} * 1024" | bc )
+ if [[ -z "${LOW_HDD_BOOT_WARN_MB}" ]]
+then
+  LOW_HDD_BOOT_WARN_MB=128
+fi
+LOW_HDD_BOOT_WARN_KB=$( echo "${LOW_HDD_BOOT_WARN_MB} * 1024" | bc )
+ # CPU Load.
+ if [[ -z "${CPU_LOAD_ERROR}" ]]
+then
+  CPU_LOAD_ERROR=4
+fi
+ if [[ -z "${CPU_LOAD_WARN}" ]]
+then
+  CPU_LOAD_WARN=2
 fi
 
  # Get sqlite.
@@ -1002,28 +1060,28 @@ ${MESSAGE}"
 
   FREEPSPACE_ALL=$( df -P . | tail -1 | awk '{print $4}' )
   FREEPSPACE_BOOT=$( df -P /boot | tail -1 | awk '{print $4}' )
-  if [[ "${FREEPSPACE_ALL}" -lt 524288 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
+  if [[ "${FREEPSPACE_ALL}" -lt "${LOW_HDD_ERROR_KB}" ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
   then
     FREEPSPACE_ALL=$( echo "${FREEPSPACE_ALL} / 1024" | bc )
-    MESSAGE_ERROR="${MESSAGE_ERROR} Less than 512 MB of free space is left on the drive. ${FREEPSPACE_ALL} MB left."
+    MESSAGE_ERROR="${MESSAGE_ERROR} Less than ${LOW_HDD_ERROR_MB} MB of free space is left on the drive. ${FREEPSPACE_ALL} MB left."
   fi
-  if [[ "${FREEPSPACE_BOOT}" -lt 65536 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
+  if [[ "${FREEPSPACE_BOOT}" -lt "${LOW_HDD_BOOT_ERROR_KB}" ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
   then
     FREEPSPACE_BOOT=$( echo "${FREEPSPACE_BOOT} / 1024" | bc )
-    MESSAGE_ERROR="${MESSAGE_ERROR} Less than 64 MB of free space is left in the boot folder. ${FREEPSPACE_BOOT} MB left."
+    MESSAGE_ERROR="${MESSAGE_ERROR} Less than ${LOW_HDD_BOOT_ERROR_MB} MB of free space is left in the boot folder. ${FREEPSPACE_BOOT} MB left."
   fi
 
   if [[ -z "${MESSAGE_ERROR}" ]]
   then
-    if [[ "${FREEPSPACE_ALL}" -lt 1572864 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
+    if [[ "${FREEPSPACE_ALL}" -lt "${LOW_HDD_WARN_KB}" ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
     then
       FREEPSPACE_ALL=$( echo "${FREEPSPACE_ALL} / 1024" | bc )
-      MESSAGE_WARNING="${MESSAGE_WARNING} Less than 1.5 GB of free space is left on the drive. ${FREEPSPACE_ALL} MB left."
+      MESSAGE_WARNING="${MESSAGE_WARNING} Less than ${LOW_HDD_WARN_MB} MB of free space is left on the drive. ${FREEPSPACE_ALL} MB left."
     fi
-    if [[ "${FREEPSPACE_BOOT}" -lt 131072 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
+    if [[ "${FREEPSPACE_BOOT}" -lt "${LOW_HDD_BOOT_WARN_KB}" ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
     then
       FREEPSPACE_BOOT=$( echo "${FREEPSPACE_BOOT} / 1024" | bc )
-      MESSAGE_WARNING="${MESSAGE_WARNING} Less than 128 MB of free space is left in the boot folder. ${FREEPSPACE_BOOT} MB left."
+      MESSAGE_WARNING="${MESSAGE_WARNING} Less than ${LOW_HDD_BOOT_WARN_MB} MB of free space is left in the boot folder. ${FREEPSPACE_BOOT} MB left."
     fi
   fi
 
@@ -1059,12 +1117,12 @@ ${MESSAGE}"
   CPU_COUNT=$( grep -c 'processor' /proc/cpuinfo )
   LOAD_PER_CPU="$( printf "%.3f\n" "$( bc -l <<< "${LOAD} / ${CPU_COUNT}" )" )"
 
-  if [[ "$( echo "${LOAD_PER_CPU} >= 4" | bc -l )" -gt 0 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
+  if [[ "$( echo "${LOAD_PER_CPU} >= ${CPU_LOAD_ERROR}" | bc -l )" -gt 0 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
   then
-    MESSAGE_ERROR=" :desktop: :fire:  CPU LOAD is over 4: ${LOAD_PER_CPU} :fire: :desktop: "
-  elif [[ "$( echo "${LOAD_PER_CPU} > 2" | bc -l )" -gt 0 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
+    MESSAGE_ERROR=" :desktop: :fire:  CPU LOAD is over ${CPU_LOAD_ERROR}: ${LOAD_PER_CPU} :fire: :desktop: "
+  elif [[ "$( echo "${LOAD_PER_CPU} > ${CPU_LOAD_WARN}" | bc -l )" -gt 0 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
   then
-    MESSAGE_WARNING=" :desktop: CPU LOAD is over 2: ${LOAD_PER_CPU} :desktop: "
+    MESSAGE_WARNING=" :desktop: CPU LOAD is over ${CPU_LOAD_WARN}: ${LOAD_PER_CPU} :desktop: "
   fi
 
   if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
@@ -1088,13 +1146,13 @@ ${MESSAGE}"
   MESSAGE_SUCCESS=''
 
   SWAP_FREE_MB=$( free -wm | grep -i 'Swap:' | awk '{print $4}' )
-  if [[ $( echo "${SWAP_FREE_MB} < 512" | bc ) -gt 0 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
+  if [[ $( echo "${SWAP_FREE_MB} < ${LOW_SWAP_ERROR_MB}" | bc ) -gt 0 ]] || [[ "${TEST_OUTPUT}" -eq 1 ]]
   then
-    MESSAGE_ERROR=":desktop: :fire: Swap is under 512 MB: ${SWAP_FREE_MB} MB :fire: :desktop: "
+    MESSAGE_ERROR=":desktop: :fire: Swap is under ${LOW_SWAP_ERROR_MB} MB: ${SWAP_FREE_MB} MB :fire: :desktop: "
   fi
-  if ([[ $( echo "${SWAP_FREE_MB} >= 512" | bc ) -gt 0 ]] && [[ $( echo "${SWAP_FREE_MB} < 1024" | bc ) -gt 0 ]]) || [[ "${TEST_OUTPUT}" -eq 1 ]]
+  if ([[ $( echo "${SWAP_FREE_MB} >= ${LOW_SWAP_ERROR_MB}" | bc ) -gt 0 ]] && [[ $( echo "${SWAP_FREE_MB} < ${LOW_SWAP_WARN_MB}" | bc ) -gt 0 ]]) || [[ "${TEST_OUTPUT}" -eq 1 ]]
   then
-    MESSAGE_WARNING=":desktop: Swap is under 1024 MB: ${SWAP_FREE_MB} MB :desktop: "
+    MESSAGE_WARNING=":desktop: Swap is under ${LOW_SWAP_WARN_MB} MB: ${SWAP_FREE_MB} MB :desktop: "
   fi
 
   if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
@@ -1121,12 +1179,12 @@ ${MESSAGE}"
   PERCENT_FREE=$( echo "${MEM_AVAILABLE} / ${MEM_TOTAL}" | bc -l )
   PERCENT_FREE=$( echo "${PERCENT_FREE} * 100" | bc -l )
 
-  if [[ "${TEST_OUTPUT}" -eq 1 ]] || ([[ $( echo "${PERCENT_FREE} < 3" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 256" | bc ) -gt 0 ]])
+  if [[ "${TEST_OUTPUT}" -eq 1 ]] || ([[ $( echo "${PERCENT_FREE} < ${LOW_MEM_ERROR_PERCENT}" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < ${LOW_MEM_ERROR_MB}" | bc ) -gt 0 ]])
   then
-    MESSAGE_ERROR=":desktop: :fire: Free RAM is under 256 MB: ${MEM_AVAILABLE_MB} MB Percent Free: ${PERCENT_FREE}% :fire: :desktop: "
-  elif [[ "${TEST_OUTPUT}" -eq 1 ]] || ([[ $( echo "${PERCENT_FREE} < 6" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < 512" | bc ) -gt 0 ]])
+    MESSAGE_ERROR=":desktop: :fire: Free RAM is under ${LOW_MEM_ERROR_MB} MB: ${MEM_AVAILABLE_MB} MB Percent Free: ${PERCENT_FREE}% :fire: :desktop: "
+  elif [[ "${TEST_OUTPUT}" -eq 1 ]] || ([[ $( echo "${PERCENT_FREE} < ${LOW_MEM_WARN_PERCENT}" | bc -l ) -eq 1 ]] && [[ $( echo "${MEM_AVAILABLE_MB} < ${LOW_MEM_WARN_MB}" | bc ) -gt 0 ]])
   then
-    MESSAGE_WARNING=":desktop: Free RAM is under 512 MB: ${MEM_AVAILABLE_MB} MB. Percent Free: ${PERCENT_FREE}% :desktop: "
+    MESSAGE_WARNING=":desktop: Free RAM is under ${LOW_MEM_WARN_MB} MB: ${MEM_AVAILABLE_MB} MB. Percent Free: ${PERCENT_FREE}% :desktop: "
   fi
 
   if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
