@@ -1153,7 +1153,6 @@ ${MESSAGE}"
       echo "ERROR: ${ERRORS}"
     elif [[ "${TEST_OUTPUT}" -eq 0 ]]
     then
-      INFO=$( echo "${LINE}" | grep -oE '\]\: .*' | cut -c 4- )
       SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('last_oom_time_check','${UNIX_TIME}');"
     fi
   done <<< "$( grep -i 'out of memory' /var/log/kern.log )"
@@ -1275,8 +1274,8 @@ ${BROKEN_PACKAGES}"
   VERSION=$( echo "${18}" | tr -d \" )
   GETCHAINTIPS=$( echo "${19}" | tr -d \" )
   MNPING=$( echo "${20}" | tr -d \" )
-  GETINFO=$( echo "${21}" )
-  GETNETWORKINFO=$( echo "${22}" )
+  GETINFO="${21}"
+  GETNETWORKINFO="${22}"
   WORK_QUEUE_DEPTH_EXCEEDED=$( echo "${23}" | tr -d \" )
 
   if [[ -z "${USRNAME}" ]]
