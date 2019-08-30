@@ -17,6 +17,17 @@
  # Simple guide
  # https://imgur.com/a/B8RMhHV
 
+
+ function CTRL_C () {
+  stty sane
+  printf "\e[0m"
+  echo
+  exit
+
+}
+
+ trap CTRL_C INT
+
  # Define simple variables.
  stty sane 2>/dev/null
  arg1="${1}"
@@ -366,7 +377,9 @@ PAYLOAD
   while :
   do
     echo
-    read -r -e -i "${DISCORD_WEBHOOK_URL}" -p "${TEXT_A}s webhook url: " input
+    printf "${TEXT_A}s webhook url: \e[3m"
+    read -r -e -i "${DISCORD_WEBHOOK_URL}" input
+    printf "\e[0m"
     DISCORD_WEBHOOK_URL="${input:-${DISCORD_WEBHOOK_URL}}"
     if [[ ! -z "${DISCORD_WEBHOOK_URL}" ]]
     then
@@ -516,7 +529,9 @@ ${MESSAGE}"
   echo "/start"
   echo "/newbot"
   echo "Then paste in the token below"
-  read -r -e -i "${TOKEN}" -p "Telegram Token: "
+  printf "Telegram Token: \e[3m"
+  read -r -e -i "${TOKEN}" -p
+  printf "\e[0m"
   if [[ ! -z "${REPLY}" ]]
   then
     TOKEN="${REPLY}"
@@ -2029,12 +2044,15 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
   fi
 
   echo
+  echo -e "\e[4mInteractive Section. Press enter to use defaults.\e[0m"
   SERVER_ALIAS=$( SQL_QUERY "SELECT value FROM variables WHERE key = 'server_alias';" )
   if [[ -z "${SERVER_ALIAS}" ]]
   then
     SERVER_ALIAS=$( hostname )
   fi
-  read -e -p "Current alias for this server: " -i "${SERVER_ALIAS}" -r
+  printf "Current alias for this server: \e[3m"
+  read -e -i "${SERVER_ALIAS}" -r
+  printf "\e[0m"
   SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('server_alias','${REPLY}');"
 
   echo
@@ -2046,7 +2064,9 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
   else
     SHOW_IP='n'
   fi
-  read -e -p "Display IP in logs (y/n)? " -i "${SHOW_IP}" -r
+  printf "Display IP in logs (y/n)? \e[3m"
+  read -e -i "${SHOW_IP}" -r
+  printf "\e[0m"
   REPLY=${REPLY,,} # tolower
   if [[ "${REPLY}" == y ]]
   then
@@ -2064,7 +2084,9 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
     REPLY='n'
     PREFIX='Redo'
   fi
-  read -e -p "${PREFIX} Discord Bot webhook URLs (y/n)? " -i "${REPLY}" -r
+  printf "${PREFIX} Discord Bot webhook URLs (y/n)? \e[3m"
+  read -e -i "${REPLY}" -r
+  printf "\e[0m"
   REPLY=${REPLY,,} # tolower
   if [[ "${REPLY}" == y ]]
   then
@@ -2086,7 +2108,9 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
     REPLY='n'
     PREFIX='Redo'
   fi
-  read -e -p "${PREFIX} Telegram Bot token (y/n)? " -i "${REPLY}" -r
+  printf "\e[3m${PREFIX} Telegram Bot token (y/n)?\e[0m "
+  read -e -i "${REPLY}" -r
+  printf "\e[0m"
   REPLY=${REPLY,,} # tolower
   if [[ "${REPLY}" == y ]]
   then
