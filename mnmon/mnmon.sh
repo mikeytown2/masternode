@@ -1277,6 +1277,7 @@ ${BROKEN_PACKAGES}"
   MNPING=$( echo "${20}" | tr -d \" )
   GETINFO=$( echo "${21}" )
   GETNETWORKINFO=$( echo "${22}" )
+  WORK_QUEUE_DEPTH_EXCEEDED=$( echo "${23}" | tr -d \" )
 
   if [[ -z "${USRNAME}" ]]
   then
@@ -1299,14 +1300,14 @@ ${BROKEN_PACKAGES}"
 
   if [[ "${MASTERNODE}" == '-1' ]]
   then
-    PROCESS_NODE_MESSAGES "${USRNAME}" "not_running" "1" "__${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION}__
+    PROCESS_NODE_MESSAGES "${USRNAME}" "not_running" "1" "__${USRNAME} ${DAEMON_BIN} ${CONF_FOLDER}__
 ${MNINFO}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     return
   fi
 
   if [[ "${MASTERNODE}" == '-2' ]]
   then
-    PROCESS_NODE_MESSAGES "${USRNAME}" "frozen" "1" "__${USRNAME} ${DAEMON_BIN} ${CONF_LOCATION}__
+    PROCESS_NODE_MESSAGES "${USRNAME}" "frozen" "1" "__${USRNAME} ${DAEMON_BIN} ${CONF_FOLDER}__
 ${MNINFO}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     return
   fi
@@ -1341,14 +1342,14 @@ ${MNINFO}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
   then
     if [[ "${GETCONNECTIONCOUNT}" -lt 2 ]]
     then
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "1" "__${USRNAME} ${DAEMON_BIN}__
+      PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "connection_count" "1" "__${USRNAME} ${DAEMON_BIN}__
   Connection Count (${GETCONNECTIONCOUNT}) is very low!" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     elif [[ "${GETCONNECTIONCOUNT}" -lt 5 ]]
     then
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "2" "__${USRNAME} ${DAEMON_BIN}__
+      PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "connection_count" "2" "__${USRNAME} ${DAEMON_BIN}__
   Connection Count (${GETCONNECTIONCOUNT}) is low!" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     else
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "connection_count" "5" "__${USRNAME} ${DAEMON_BIN}__
+      PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "connection_count" "5" "__${USRNAME} ${DAEMON_BIN}__
   Connection count has been restored (${GETCONNECTIONCOUNT})" "Connection Count Normal" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     fi
   fi
@@ -1358,27 +1359,58 @@ ${MNINFO}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
   then
     if [[ ${MNINFO} -eq 1 ]]
     then
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "3" "__${USRNAME} ${DAEMON_BIN}__
+      PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "masternode_status" "3" "__${USRNAME} ${DAEMON_BIN}__
 Masternode should be starting up soon." "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     elif [[ ${MNINFO} -eq 2 ]]
     then
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "2" "__${USRNAME} ${DAEMON_BIN}__
+      PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "masternode_status" "2" "__${USRNAME} ${DAEMON_BIN}__
 Masternode list shows the masternode as active bug masternode status doesn't. Hopefully this changes soon." "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     else
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "1" "__${USRNAME} ${DAEMON_BIN}__
+      PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "masternode_status" "1" "__${USRNAME} ${DAEMON_BIN}__
 Masternode is not currently running." "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     fi
   elif [[ ${MASTERNODE} -eq 2 ]]
   then
     if [[ ${MNINFO} -eq 2 ]]
     then
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "5" "__${USRNAME} ${DAEMON_BIN}__
+      PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "masternode_status" "5" "__${USRNAME} ${DAEMON_BIN}__
 Masternode status and masternode list are good!" "Masternode Running" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     elif [[ ${MNINFO} -eq 0 ]]
     then
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "masternode_status" "5" "__${USRNAME} ${DAEMON_BIN}__
+      PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "masternode_status" "5" "__${USRNAME} ${DAEMON_BIN}__
 Masternode status is good!" "Masternode Running" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     fi
+  fi
+
+  if [[ ! -z "${WORK_QUEUE_DEPTH_EXCEEDED}" ]]
+  then
+    LAST_WORK_QUEUE_DEPTH_TIME=$( SQL_QUERY "SELECT value FROM variables WHERE key == '${CONF_FOLDER}:last_work_queue_depth_time' " )
+    if [[ -z "${LAST_WORK_QUEUE_DEPTH_TIME}" ]]
+    then
+      LAST_WORK_QUEUE_DEPTH_TIME=0
+    fi
+    UNIX_TIME=$( date -u +%s )
+
+    while read -r DATE_1 DATE_2 LINE
+    do
+      # Skip if empty line.
+      if [[ -z "${LINE}" ]]
+      then
+        continue
+      fi
+
+      # Skip if already reported on this message.
+      UNIX_TIME_LOG=$( date -u --date="${DATE_1} ${DATE_2}" +%s )
+      if [[ "${LAST_WORK_QUEUE_DEPTH_TIME}" -gt "${UNIX_TIME_LOG}" ]]
+      then
+        continue
+      fi
+
+      # Report the issue.
+      PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "masternode_status" "1" "__${USRNAME} ${DAEMON_BIN}__
+Work queue depth exceeded; node needs to be restarted!" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
+      SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_FOLDER}:last_work_queue_depth_time','${UNIX_TIME}');"
+    done <<< "${WORK_QUEUE_DEPTH_EXCEEDED}"
   fi
 
   # Report on masternode ping.
@@ -1386,14 +1418,14 @@ Masternode status is good!" "Masternode Running" "${DISCORD_WEBHOOK_USERNAME}" "
   then
     if [[ "${MNPING}" -gt 900 ]]
     then
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "mnping" "2" "__${USRNAME} ${DAEMON_BIN}__
+      PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "mnping" "2" "__${USRNAME} ${DAEMON_BIN}__
 Masternode Ping time is over 15 min (${MNPING} seconds since the last ping)!" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     elif [[ "${MNPING}" -gt 1800 ]]
     then
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "mnping" "1" "__${USRNAME} ${DAEMON_BIN}__
+      PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "mnping" "1" "__${USRNAME} ${DAEMON_BIN}__
 Masternode Ping time is over 30 min (${MNPING} seconds since the last ping)!" "" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     else
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "mnping" "5" "__${USRNAME} ${DAEMON_BIN}__
+      PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "mnping" "5" "__${USRNAME} ${DAEMON_BIN}__
 Masternode Ping time back to normal (${MNPING} seconds since the last ping)" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     fi
   fi
@@ -1408,14 +1440,14 @@ Masternode Ping time back to normal (${MNPING} seconds since the last ping)" "" 
     MN_REWARD_IN_BLOCKS=$( echo "${BLOCK_WIN} - ${GETBLOCKCOUNT}" | bc -l )
     MN_REWARD_IN_SECONDS=$( echo "${MN_REWARD_IN_BLOCKS} * ${BLOCKTIME_SECONDS}" | bc -l )
     MN_REWARD_IN_TIME=$( DISPLAYTIME "${MN_REWARD_IN_SECONDS}" )
-    PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "mnwin:${BLOCK_WIN}" "4" "__${USRNAME} ${DAEMON_BIN}__
+    PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "mnwin:${BLOCK_WIN}" "4" "__${USRNAME} ${DAEMON_BIN}__
 Masternode on ${MN_ADDRESS_WIN} will get paid
 on block ${BLOCK_WIN}
 in approximately ${MN_REWARD_IN_TIME}." "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
   fi
 
   # Report on uptime
-  PAST_UPTIME=$( SQL_QUERY "SELECT value FROM variables WHERE key = '${CONF_LOCATION}:uptime';" )
+  PAST_UPTIME=$( SQL_QUERY "SELECT value FROM variables WHERE key = '${CONF_FOLDER}:uptime';" )
   if [[ -z "${PAST_UPTIME}" ]]
   then
     PAST_UPTIME="${UPTIME}"
@@ -1439,16 +1471,16 @@ Past uptime: ${PAST_UPTIME_HUMAN}
 New uptime: ${UPTIME_HUMAN}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     fi
   fi
-  SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_LOCATION}:uptime','${UPTIME}');"
+  SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_FOLDER}:uptime','${UPTIME}');"
 
   # Update & report on balance.
-  PAST_BALANCE=$( SQL_QUERY "SELECT value FROM variables WHERE key = '${CONF_LOCATION}:balance';" )
+  PAST_BALANCE=$( SQL_QUERY "SELECT value FROM variables WHERE key = '${CONF_FOLDER}:balance';" )
   if [[ -z "${PAST_BALANCE}" ]]
   then
     PAST_BALANCE=0
-    SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_LOCATION}:balance','${GETTOTALBALANCE}');"
+    SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_FOLDER}:balance','${GETTOTALBALANCE}');"
   else
-    SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_LOCATION}:balance','${GETTOTALBALANCE}');"
+    SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_FOLDER}:balance','${GETTOTALBALANCE}');"
   fi
   BALANCE_DIFF=$( echo "${GETTOTALBALANCE} - ${PAST_BALANCE}" | bc -l )
 
@@ -1529,21 +1561,21 @@ New Balance: ${GETTOTALBALANCE}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEB
 
     if [[ "$( echo "${MIN_STAKE} > ${GETBALANCE}" | bc -l )" -gt 0 ]]
     then
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_balance" "2" "__${USRNAME} ${DAEMON_BIN}__
+      PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "staking_balance" "2" "__${USRNAME} ${DAEMON_BIN}__
 Balance (${GETBALANCE}) is below the minimum staking threshold (${MIN_STAKE}).
 ${GETBALANCE} < ${MIN_STAKE} " "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
     else
-      PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_balance" "5" "__${USRNAME} ${DAEMON_BIN}__
+      PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "staking_balance" "5" "__${USRNAME} ${DAEMON_BIN}__
 Has enough coins to stake now!" "Balance is above the minimum" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
       if [[ "${STAKING}" -eq 0 ]]
       then
         GETSTAKINGSTATUS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" getstakingstatus" 2>&1 | jq . | grep 'false' | tr -d \" )
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_status" "2" "__${USRNAME} ${DAEMON_BIN}__
+        PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "staking_status" "2" "__${USRNAME} ${DAEMON_BIN}__
 ${GETSTAKINGSTATUS}" "" "" "" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
       fi
       if [[ "${STAKING}" -eq 1 ]]
       then
-        PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "staking_status" "5" "__${USRNAME} ${DAEMON_BIN}__
+        PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "staking_status" "5" "__${USRNAME} ${DAEMON_BIN}__
 Staking status is now TRUE!" "Staking is enabled" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
       fi
     fi
@@ -1552,7 +1584,7 @@ Staking status is now TRUE!" "Staking is enabled" "${DISCORD_WEBHOOK_USERNAME}" 
   # Report on chain splits
   if [[ ! -z "${GETCHAINTIPS}" ]]
   then
-    LAST_CHAIN_SPLIT_HEIGHT=$( SQL_QUERY "SELECT value FROM variables WHERE key = '${CONF_LOCATION}:chain_split';" )
+    LAST_CHAIN_SPLIT_HEIGHT=$( SQL_QUERY "SELECT value FROM variables WHERE key = '${CONF_FOLDER}:chain_split';" )
     SPLIT_HEIGHT=$( echo "${GETCHAINTIPS}" | head -n 1 | awk '{print $1}' )
     if [[ "${LAST_CHAIN_SPLIT_HEIGHT}" != "${SPLIT_HEIGHT}" ]]
     then
@@ -1565,7 +1597,7 @@ Split Height: ${SPLIT_HEIGHT}
 Split Branch Lenght: ${SPLIT_BRANCHLEN}
 Split Hash: ${SPLIT_HASH}" ":warning: Warning Chain :link: Split :warning:" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
 
-      SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_LOCATION}:chain_split','${SPLIT_HEIGHT}');"
+      SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('${CONF_FOLDER}:chain_split','${SPLIT_HEIGHT}');"
     fi
   fi
 
@@ -1588,9 +1620,9 @@ Split Hash: ${SPLIT_HASH}" ":warning: Warning Chain :link: Split :warning:" "${D
   VERSION_NUMBER=$( echo "${GETINFO}" | jq -r '.version' 2>/dev/null )
   VERSION_PROTOCOL=$( echo "${GETINFO}" | jq -r '.protocolversion' 2>/dev/null )
   GETINFO_ERRORS=$( echo "${GETINFO}" | jq -r '.errors' 2>/dev/null )
-  GETNETWORKINFO_WARNINGS=$( echo "${GETNETWORKINFO}" | jq -r '.warnings' 2>/dev/null )
+  GETNETWORKINFO_WARNINGS=$( echo "${GETNETWORKINFO}" | jq -r '.warnings' 2>/dev/null | grep -v 'null' )
 
-  _PAYLOAD="__${USRNAME} ${DAEMON_BIN}__
+  _PAYLOAD="__${USRNAME} ${DAEMON_BIN} ${CONF_FOLDER}__
 BlockCount: ${GETBLOCKCOUNT}
 Connections: ${GETCONNECTIONCOUNT}
 Staking Status: ${STAKING_TEXT}
@@ -1634,7 +1666,7 @@ Staking Balance: ${STAKE_GETBALANCE}
 Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
   fi
 
-  PROCESS_NODE_MESSAGES "${CONF_LOCATION}" "node_info" "3" "${_PAYLOAD}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
+  PROCESS_NODE_MESSAGES "${CONF_FOLDER}" "node_info" "3" "${_PAYLOAD}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
 }
 
  GET_INFO_ON_THIS_NODE () {
@@ -1692,7 +1724,7 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
     fi
   fi
 
-
+  # Get mnping, mninfo info.
   MNINFO=0
   MNPING=''
   if [[ "${MASTERNODE}" -ge 2 ]]
@@ -1715,7 +1747,7 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
     else
 
       # Get masternode ping
-      DATE_STRING=$( grep -iP 'active.*?ping' "${CONF_LOCATION}/debug.log" | tail -n 1 | awk '{print $1 " " $2}' )
+      DATE_STRING=$( grep -iP 'active.*?ping' "${CONF_FOLDER}/debug.log" | tail -n 1 | awk '{print $1 " " $2}' )
       if [[ ! -z "${DATE_STRING}" ]]
       then
         UNIX_TIME_LAST=$( date -u --date="${DATE_STRING}" +%s )
@@ -1725,6 +1757,9 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
       fi
     fi
   fi
+
+  # Check if node is frozen.
+  WORK_QUEUE_DEPTH_EXCEEDED=$( grep -ic "work queue depth exceeded" "${CONF_FOLDER}/debug.log" )
 
   MNWIN=''
   if [[ "${MNINFO}" -eq 2 ]] && [[ "${HAS_FUNCTION}" -gt 0 ]]
@@ -1796,8 +1831,7 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
   GETCHAINTIPS=$( su "${USRNAME}" -c "\"${CONTROLLER_BIN_LOC}\" \"-datadir=${CONF_FOLDER}\" getchaintips " 2>&1 | jq ".[] | select( .branchlen > 5 and .height > ${GETBLOCKCOUNT_MINUS_1K} )" 2>/dev/null | jq -r '[.height, .branchlen, .hash] | "\(.[0]) \(.[1]) \(.[2])"' 2>/dev/null | column -t | sort -r )
 
   # Output info.
-  CONF_LOCATION=$( dirname "${CONF_LOCATION}" )
-  REPORT_INFO_ABOUT_NODE "${USRNAME}" "${DAEMON_BIN}" "${CONTROLLER_BIN_LOC}" "${CONF_FOLDER}" "${CONF_LOCATION}" "${MASTERNODE}" "${MNINFO}" "${GETBALANCE}" "${GETTOTALBALANCE}" "${STAKING}" "${GETCONNECTIONCOUNT}" "${GETBLOCKCOUNT}" "${UPTIME}" "${DAEMON_PID}" "${GETNETHASHRATE}" "${MNWIN}" "${ALL_STAKE_INPUTS_BALANCE_COUNT}" "${VERSION}" "${GETCHAINTIPS}" "${MNPING}" "${GETINFO}" "${GETNETWORKINFO}"
+  REPORT_INFO_ABOUT_NODE "${USRNAME}" "${DAEMON_BIN}" "${CONTROLLER_BIN_LOC}" "${CONF_FOLDER}" "${CONF_LOCATION}" "${MASTERNODE}" "${MNINFO}" "${GETBALANCE}" "${GETTOTALBALANCE}" "${STAKING}" "${GETCONNECTIONCOUNT}" "${GETBLOCKCOUNT}" "${UPTIME}" "${DAEMON_PID}" "${GETNETHASHRATE}" "${MNWIN}" "${ALL_STAKE_INPUTS_BALANCE_COUNT}" "${VERSION}" "${GETCHAINTIPS}" "${MNPING}" "${GETINFO}" "${GETNETWORKINFO}" "${WORK_QUEUE_DEPTH_EXCEEDED}"
 }
 
  GET_ALL_NODES () {
