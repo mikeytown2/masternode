@@ -1489,10 +1489,10 @@ New uptime: ${UPTIME_HUMAN}" "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK
     : # Do nothing.
 
   # Wallet has been drained.
-  elif [[ -z "${GETTOTALBALANCE}" ]] || [[ $( echo "${GETTOTALBALANCE} == 0" | bc -l ) -eq 1 ]]
+  elif [[ -z "${GETTOTALBALANCE}" ]] || [[ $( echo "${GETTOTALBALANCE} < 0.1" | bc -l ) -eq 1 ]]
   then
     SEND_ERROR "__${USRNAME} ${DAEMON_BIN}__
-Balance is now zero ${TICKER_NAME}!
+Balance is now near zero ${TICKER_NAME}!
 Before: ${PAST_BALANCE}
 After: ${GETTOTALBALANCE} " "" "${DISCORD_WEBHOOK_USERNAME}" "${DISCORD_WEBHOOK_AVATAR}"
 
