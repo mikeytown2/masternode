@@ -146,6 +146,11 @@ fi
 then
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq debsums
 fi
+ # Get rkhunter
+ if [ ! -x "$( command -v rkhunter )" ]
+then
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq rkhunter
+fi
 
  # Run a sqlite query.
  SQL_QUERY () {
@@ -435,7 +440,7 @@ PAYLOAD
   while :
   do
     echo
-    printf "${TEXT_A}s webhook url: \e[3m"
+    echo -en "${TEXT_A}s webhook url: \e[3m"
     read -r -e -i "${DISCORD_WEBHOOK_URL}" input
     printf "\e[0m"
     DISCORD_WEBHOOK_URL="${input:-${DISCORD_WEBHOOK_URL}}"
@@ -1280,7 +1285,7 @@ ${MESSAGE}"
     return
   fi
 
-  NAME='system_clock_check'
+  NAME='debsums_check'
   MESSAGE_ERROR=''
   MESSAGE_WARNING=''
   MESSAGE_INFO=''
@@ -1324,6 +1329,63 @@ ${BROKEN_PACKAGES}"
 
   PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${DISCORD_WEBHOOK_USERNAME_DEFAULT}" "${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
   SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('debsums_last_run','${UNIX_TIME}');"
+}
+
+ CHECK_RKHUNTER() {
+  # Get the last time this check was ran.
+  RKHUNTER_LAST_RUN=$( SQL_QUERY "SELECT value FROM variables WHERE key == 'rkhunter_last_run' " )
+  if [[ -z "${RKHUNTER_LAST_RUN}" ]]
+  then
+    RKHUNTER_LAST_RUN=0
+  fi
+  UNIX_TIME=$( date -u +%s )
+  # Only run once every 2 hours.
+  RKHUNTER_LAST_RUN=$(( RKHUNTER_LAST_RUN + 7200 ))
+  if [[ "${RKHUNTER_LAST_RUN}" -gt "${UNIX_TIME}" ]]
+  then
+    if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+    then
+      echo "RK Hunter was already ran. ${RKHUNTER_LAST_RUN} -gt ${UNIX_TIME}"
+      echo
+    fi
+    return
+  fi
+
+  sudo rkhunter --propupd >/dev/null
+  if [[ "${RKHUNTER_LAST_RUN}" -eq 0 ]] && [[ "$( sudo rkhunter -c --enable system_configs_ssh --rwo | grep -ic root )" -gt 0 ]]
+  then
+    echo 'RK Hunter adjusted for root login.'
+    echo 'ALLOW_SSH_ROOT_USER=yes' | sudo tee -a /etc/rkhunter.conf >/dev/null
+  fi
+  sudo rkhunter -C >/dev/null
+
+  NAME='rkhunter_check'
+  MESSAGE_ERROR=''
+  MESSAGE_WARNING=''
+  MESSAGE_INFO=''
+  MESSAGE_SUCCESS=''
+
+  RECOVERED_MESSAGE_SUCCESS="rkhunter doesn't show any errors."
+  RECOVERED_TITLE_SUCCESS="rkhunter is good."
+
+  RKHUNTER_OUTPUT=$( sudo rkhunter -c --rwo 2>&1 )
+  # Debug Output
+  if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo "Timing: ${RKHUNTER_LAST_RUN} -gt ${UNIX_TIME}"
+    echo "RK Hunter Output: ${RKHUNTER_OUTPUT}"
+    echo
+  fi
+
+  if [[ ! -z "${RKHUNTER_OUTPUT}" ]]
+  then
+    MESSAGE_ERROR="There are issues with the 'rkhunter -c --rwo' command:
+${RKHUNTER_OUTPUT}"
+
+  fi
+
+  PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${DISCORD_WEBHOOK_USERNAME_DEFAULT}" "${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
+  SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('rkhunter_last_run','${UNIX_TIME}');"
 }
 
  REPORT_INFO_ABOUT_NODE () {
@@ -2142,7 +2204,7 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
     REPLY='n'
     PREFIX='Redo'
   fi
-  printf "${PREFIX} Discord Bot webhook URLs (y/n)? \e[3m"
+  echo -en "${PREFIX} Discord Bot webhook URLs (y/n)? \e[3m"
   read -e -i "${REPLY}" -r
   printf "\e[0m"
   REPLY=${REPLY,,} # tolower
@@ -2166,7 +2228,7 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
     REPLY='n'
     PREFIX='Redo'
   fi
-  printf "\e[3m${PREFIX} Telegram Bot token (y/n)?\e[0m "
+  echo -en "\e[3m${PREFIX} Telegram Bot token (y/n)?\e[0m "
   read -e -i "${REPLY}" -r
   printf "\e[0m"
   REPLY=${REPLY,,} # tolower
@@ -2200,6 +2262,7 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
     CHECK_OOM_KILLS
     CHECK_CLOCK
     CHECK_DEBSUMS
+#     CHECK_RKHUNTER
     GET_ALL_NODES
   fi
 
