@@ -1014,6 +1014,11 @@ ${MESSAGE}"
 }
 
  GET_LATEST_LOGINS () {
+  if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo 'Checking SSH logins'
+  fi
+
   LAST_LOGIN_TIME_CHECK=$( SQL_QUERY "SELECT value FROM variables WHERE key == 'last_login_time_check' " )
   if [[ -z "${LAST_LOGIN_TIME_CHECK}" ]]
   then
@@ -1237,11 +1242,35 @@ ${MESSAGE}"
 }
 
  CHECK_CLOCK () {
+   # Get the last time this check was ran.
+  CHECK_CLOCK_LAST_RUN=$( SQL_QUERY "SELECT value FROM variables WHERE key == 'system_clock_last_run' " )
+  if [[ -z "${CHECK_CLOCK_LAST_RUN}" ]]
+  then
+    CHECK_CLOCK_LAST_RUN=0
+  fi
+  UNIX_TIME=$( date -u +%s )
+  # Only run once every 30 min.
+  CHECK_CLOCK_LAST_RUN=$(( CHECK_CLOCK_LAST_RUN + 1800 ))
+  if [[ "${CHECK_CLOCK_LAST_RUN}" -gt "${UNIX_TIME}" ]]
+  then
+    if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+    then
+      echo "System clock check was already ran. ${CHECK_CLOCK_LAST_RUN} -gt ${UNIX_TIME}"
+      echo
+    fi
+    return
+  fi
+
   NAME='system_clock_check'
   MESSAGE_ERROR=''
   MESSAGE_WARNING=''
   MESSAGE_INFO=''
   MESSAGE_SUCCESS=''
+
+  if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo 'Checking system clock'
+  fi
 
   TIME_OFFSET=$( ntpdate -q pool.ntp.org | tail -n 1 | grep -o 'offset.*' | awk '{print $2 }' | tr -d '-' )
 
@@ -1263,6 +1292,7 @@ ${MESSAGE}"
   RECOVERED_MESSAGE_SUCCESS="System clock is now at ${TIME_OFFSET} seconds."
   RECOVERED_TITLE_SUCCESS="System clock is back to normal."
   PROCESS_MESSAGES "${NAME}" "${MESSAGE_ERROR}" "${MESSAGE_WARNING}" "${MESSAGE_INFO}" "${MESSAGE_SUCCESS}" "${RECOVERED_MESSAGE_SUCCESS}" "${RECOVERED_TITLE_SUCCESS}" "${DISCORD_WEBHOOK_USERNAME_DEFAULT}" "${DISCORD_WEBHOOK_AVATAR_DEFAULT}"
+  SQL_QUERY "REPLACE INTO variables (key,value) VALUES ('system_clock_last_run','${UNIX_TIME}');"
 }
 
  CHECK_DEBSUMS() {
@@ -1283,6 +1313,11 @@ ${MESSAGE}"
       echo
     fi
     return
+  fi
+
+  if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo 'Running debsums'
   fi
 
   NAME='debsums_check'
@@ -1349,6 +1384,11 @@ ${BROKEN_PACKAGES}"
       echo
     fi
     return
+  fi
+
+  if [[ "${DEBUG_OUTPUT}" -eq 1 ]]
+  then
+    echo 'Running rkhunter'
   fi
 
   sudo rkhunter --propupd >/dev/null
@@ -2262,7 +2302,7 @@ Number of staking inputs: ${NUMBER_OF_STAKING_INPUTS}"
     CHECK_OOM_KILLS
     CHECK_CLOCK
     CHECK_DEBSUMS
-#     CHECK_RKHUNTER
+    CHECK_RKHUNTER
     GET_ALL_NODES
   fi
 
