@@ -75,13 +75,18 @@ rm -f ~/___mn.sh
 while [[ ! -f ~/___mn.sh ]] || [[ $( grep -Fxc "# End of masternode setup script." ~/___mn.sh ) -eq 0 ]]
 do
   rm -f ~/___mn.sh
-  echo "Downloading Masternode Setup Script."
-  wget -4qo- gist.githack.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O ~/___mn.sh
+  if [[ -f "${HOME}/1637d98130ac7dfbfa4d24bac0598107/mcarper.sh" ]]
+  then
+    cp "${HOME}/1637d98130ac7dfbfa4d24bac0598107/mcarper.sh" ~/___mn.sh
+  else
+    echo "Downloading Node Setup Script."
+    wget -4qo- gist.githack.com/mikeytown2/1637d98130ac7dfbfa4d24bac0598107/raw/mcarper.sh -O ~/___mn.sh
+  fi
   COUNTER=$((COUNTER+1))
   if [[ "${COUNTER}" -gt 3 ]]
   then
     echo
-    echo "Download of masternode setup script failed."
+    echo "Download of node setup script failed."
     echo
     exit 1
   fi
