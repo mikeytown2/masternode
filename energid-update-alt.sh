@@ -33,7 +33,7 @@ COLLATERAL=10000
 # Explorer URL.
 EXPLORER_URL='https://explore.energi.network/'
 # Direct Daemon Download if github has no releases.
-DAEMON_DOWNLOAD='https://s3-us-west-2.amazonaws.com/download.energi.software/releases/energi/v2.3.0.1/energicore-2.3.0.1-linux.tar.gz'
+DAEMON_DOWNLOAD='https://s3-us-west-2.amazonaws.com/download.energi.software/releases/energi/v2.3.0.2/energicore-2.3.0.2-linux.tar.gz'
 
 # Dropbox Addnodes.
 DROPBOX_ADDNODES='ayu1r026swtmoat'
