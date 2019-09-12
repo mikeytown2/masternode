@@ -330,6 +330,13 @@ _get_node_info() {
     sudo snap install ffsend
   fi
 
+  if [ ! -x "$( command -v ffsend )" ]
+  then
+    FFSEND_URL=$( wget -4qO- -o- https://api.github.com/repos/timvisee/ffsend/releases/latest | jq -r '.assets[].browser_download_url' | grep static | grep linux )
+    mkdir -p "${HOME}/.local/bin/"
+    wget -4q -o- "${FFSEND_URL}" -O "${HOME}/.local/bin/ffsend"
+    chmod +x "${HOME}/.local/bin/ffsend"
+  fi
 
   # Load in functions.
   stty sane 2>/dev/null
@@ -637,7 +644,12 @@ _copy_wallet() {
 
     # Trim white space.
     REPLY=$( echo "${REPLY}" | xargs )
-    ffsend download -y --verbose "${REPLY}" -o "${TEMP_DIR_NAME1}/"
+    if [[ -f "${HOME}/.local/bin/ffsend" ]]
+    then
+      "${HOME}/.local/bin/ffsend" download -y --verbose "${REPLY}" -o "${TEMP_DIR_NAME1}/"
+    else
+      ffsend download -y --verbose "${REPLY}" -o "${TEMP_DIR_NAME1}/"
+    fi
     fullfile=$( find "${TEMP_DIR_NAME1}/" -type f )
     if [[ -z "${fullfile}" ]]
     then

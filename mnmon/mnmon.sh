@@ -76,7 +76,7 @@ then
 fi
  if [[ -z "${LOW_MEM_WARN_PERCENT}" ]]
 then
-  LOW_MEM_WARN_PERCENT=4
+  LOW_MEM_WARN_PERCENT=2
 fi
  if [[ -z "${LOW_MEM_ERROR_MB}" ]]
 then
@@ -84,7 +84,7 @@ then
 fi
  if [[ -z "${LOW_MEM_ERROR_PERCENT}" ]]
 then
-  LOW_MEM_ERROR_PERCENT=2
+  LOW_MEM_ERROR_PERCENT=1
 fi
  # SWAP.
  if [[ -z "${LOW_SWAP_ERROR_MB}" ]]
