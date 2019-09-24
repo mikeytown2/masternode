@@ -164,9 +164,9 @@ _setup_two_factor() {
 
   if [[ -f "${HOME}/masternode/stake/otp.php" ]]
   then
-    cp "${HOME}/masternode/stake/otp.php" /tmp/___otp.php
+    cp "${HOME}/masternode/stake/otp.php" "${HOME}/___otp.php"
   else
-    wget -4qo- https://raw.githack.com/mikeytown2/masternode/master/stake/otp.php -O /tmp/___otp.php
+    wget -4qo- https://raw.githack.com/mikeytown2/masternode/master/stake/otp.php -O "${HOME}/___otp.php"
   fi
 
   # Generate otp.
@@ -226,7 +226,7 @@ _setup_two_factor() {
       return
     fi
 
-    KEY_CHECK=$( php /tmp/___otp.php "${REPLY}" "${HOME}/.google_authenticator.temp" )
+    KEY_CHECK=$( php "${HOME}/___otp.php" "${REPLY}" "${HOME}/.google_authenticator.temp" )
     if [[ ! -z "${KEY_CHECK}" ]]
     then
       echo "${KEY_CHECK}"
@@ -272,6 +272,12 @@ _setup_two_factor() {
     clear
   else
     rm -f "${HOME}/.google_authenticator"
+  fi
+
+  # Clean up.
+  if [[ -f "${HOME}/___otp.php" ]]
+  then
+    rm -rf "${HOME}/___otp.php"
   fi
 }
 
