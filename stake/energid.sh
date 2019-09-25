@@ -197,6 +197,8 @@ _setup_two_factor() {
   fi
 
   mv "${HOME}/.google_authenticator" "${HOME}/.google_authenticator.temp"
+  CHMOD_G_AUTH=$( stat --format '%a' .google_authenticator.temp )
+  chmod 666 "${HOME}/.google_authenticator.temp"
 
   stty sane 2>/dev/null
   echo "Warning: pasting the following URL into your browser exposes the OTP secret to Google:"
@@ -239,6 +241,7 @@ _setup_two_factor() {
 
   if [[ -f "${HOME}/.google_authenticator.temp" ]]
   then
+    chmod "${CHMOD_G_AUTH}" "${HOME}/.google_authenticator.temp"
     mv "${HOME}/.google_authenticator.temp" "${HOME}/.google_authenticator"
   fi
 
