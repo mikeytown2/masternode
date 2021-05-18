@@ -33,7 +33,7 @@ EXPLORER_URL='https://explorer.dogec.io/'
 # Rate limit explorer.
 EXPLORER_SLEEP=1
 #EXPLORER_PEERS='api/peer'
-EXPLORER_BLOCKCOUNT_OFFSET='+8'
+#EXPLORER_BLOCKCOUNT_OFFSET='+8'
 # Amount of Collateral needed.
 COLLATERAL=5000
 # Direct Daemon Download if github has no releases.
