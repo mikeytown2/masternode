@@ -55,7 +55,7 @@ MASTERNODE_LIST='listmasternodes'
 TIPS='DTu1fh3F6ujvEoZsqMtFZ31VFJzfkBeUpf'
 # Dropbox Addnodes.
 DROPBOX_ADDNODES='s0pdil1rehsy4fu'
-USE_DROPBOX_ADDNODES=0
+#USE_DROPBOX_ADDNODES=0
 # Dropbox Bootstrap.
 DROPBOX_BOOTSTRAP='rawf808f0hv9jg'
 # Dropbox blocks and chainstake folders.
